@@ -2,6 +2,7 @@
 #include <idp.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
+#include <dbg.hpp>
 
 #include "api.hpp"
 #include <x86Specifications.hpp>
@@ -10,6 +11,32 @@ using namespace triton;
 using namespace triton::arch;
 using namespace triton::arch::x86;
 
+
+void other(){
+	// Set the default start address to the user cursur position
+	ea_t eaddr, saddr = get_screen_ea();
+	// Allow the user to specify a start address
+	askaddr(&saddr, "Address to start tracing at");
+	// Set the end address to the end of the current function
+	func_t *func = get_func(saddr);
+	eaddr = func->endEA;
+	// Allow the user to specify an end address
+	askaddr(&eaddr, "Address to end tracing at");
+	// Queue the following
+	// Run to the start address
+	request_run_to(saddr);
+	// Then enable tracing
+	request_enable_insn_trace();
+	// Run to the end address, tracing all stops in between
+	request_run_to(eaddr);
+	// Turn off tracing once we've hit the end address
+	request_disable_insn_trace();
+	// Stop the process once we have what we want
+	request_exit_process();
+	// Run the above queued requests
+	run_requests();
+
+}
 
 void myfunc(){
 	/* Set the arch */
