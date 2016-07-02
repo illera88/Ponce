@@ -1,0 +1,51 @@
+*.db
+*.i64
+*.o
+*.so
+*.log
+*.tlog
+*.swp
+.gdb_history
+data/*
+obj-intel64/*
+peda-session*
+pin.log
+pintool.log
+private/*
+www/*
+doc/*
+
+libz3-static.lib
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+
+# Executables
+*.out
+*.app
+
+*.opensdf
+*.sdf
+*.pdb
+*.exp
+
+*.id*
+*.nam
