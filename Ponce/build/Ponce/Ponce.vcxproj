@@ -16,13 +16,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="gui.cpp" />
+    <ClCompile Include="actions.cpp" />
+    <ClCompile Include="callbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gui.hpp" />
+    <ClInclude Include="actions.hpp" />
+    <ClInclude Include="callbacks.hpp" />
+    <ClInclude Include="globals.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B0CF5E1C-D7B1-493A-8A84-4DD65A629F63}</ProjectGuid>
@@ -92,7 +95,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\include;C:\PonceProject\Triton\external-libs\x86\boost_1_60_0;C:\PonceProject\Triton\src\libtriton\includes;C:\PonceProject\Ponce\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\PonceProject\Ponce\build\Ponce;C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\include;C:\PonceProject\Triton\external-libs\x86\boost_1_60_0;C:\PonceProject\Triton\src\libtriton\includes;C:\PonceProject\Ponce\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
