@@ -4,9 +4,68 @@
 #include <idp.hpp>
 #include <dbg.hpp>
 #include <loader.hpp>
+#include <pro.h>
+
 
 #include "globals.hpp"
 #include "callbacks.hpp"
+
+#include "api.hpp"
+
+
+/*This function will create and fill the Triton object for every instruction*/
+void tritonize(va_list va)
+{
+	/*Check tha the runtime Trigger is on just in case*/
+	if (!runtimeTrigger.getState())
+		return;
+
+	using namespace triton;
+	arch::Instruction* tritonInst = new arch::Instruction();
+
+	ea_t pc = va_arg(va, ea_t);
+	thid_t threadID = va_arg(va, thid_t);
+
+	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
+	if (!decode_insn(pc))
+	{
+		warning("[!] Some error decoding instruction at %p",pc);
+	}
+
+	///* Setup Triton information */
+	tritonInst->partialReset();
+	tritonInst->setOpcodes((triton::uint8*)pc, cmd.size);
+	tritonInst->setAddress(pc);
+	tritonInst->setThreadId(threadID);
+
+	/* Disassemble the instruction */
+	try{
+		api.disassembly(*tritonInst);
+	}
+	catch (...){
+		msg("[-]Dissasembling error at "HEX_FORMAT" Opcodes:");
+		for (auto i = 0; i < cmd.size; i++)
+			msg("%2x ", *(unsigned char*)(pc + i));
+		msg("\n");
+		return;
+	}
+
+	/* Trust operands */
+	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
+		op->setTrust(true);
+
+	/* Process the IR and taint */
+	api.buildSemantics(*tritonInst);
+
+	if (tritonInst->isTainted()){
+		// colour the instruction in IDA view
+	}
+
+	//bgcolor_t *bgcolor = va_arg(va, bgcolor_t *);
+	//DEFCOLOR
+	//SetColor(0x123456, CIC_ITEM, 0xc7c7ff);
+
+}
 
 
 int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va)
@@ -20,7 +79,7 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 		msg("trace:process start\n");
 		// reset instruction counter
 		break;
-
+		
 		//case dbg_run_to:
 		//	msg("tracer: entrypoint reached\n");
 		//	enable_insn_trace(true);
@@ -34,9 +93,13 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 		// notification is only generated if step tracing is enabled.
 	case dbg_trace:
 	{
-		/*thid_t tid =*/ va_arg(va, thid_t);
-		ea_t ip = va_arg(va, ea_t);
-		msg("[%d] tracing over: %a\n", g_nb_insn, ip);
+		/*Create the triton instance for the Instruction*/
+		tritonize(va);
+
+		thid_t tid = va_arg(va, thid_t);
+		ea_t pc = va_arg(va, ea_t);
+
+		msg("[%d] tracing over: %a\n", g_nb_insn, pc);
 		if (g_nb_insn == g_max_insn)
 		{
 			// stop the trace mode and suspend the process

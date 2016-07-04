@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="actions.cpp" />
     <ClCompile Include="callbacks.cpp" />
+    <ClCompile Include="trigger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\README.md" />
@@ -26,6 +27,7 @@
     <ClInclude Include="actions.hpp" />
     <ClInclude Include="callbacks.hpp" />
     <ClInclude Include="globals.hpp" />
+    <ClInclude Include="trigger.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B0CF5E1C-D7B1-493A-8A84-4DD65A629F63}</ProjectGuid>

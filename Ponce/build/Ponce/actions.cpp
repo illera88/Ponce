@@ -1,9 +1,13 @@
+//IDA
 #include <idp.hpp>
 #include <dbg.hpp>
 #include <loader.hpp>
 
+//Ponce
 #include "globals.hpp"
 
+//Triton
+#include "api.hpp"
 
 struct printsel_TRegister : public action_handler_t
 {
@@ -11,6 +15,13 @@ struct printsel_TRegister : public action_handler_t
 	{
 		msg(" EA: %p register type=%d", get_screen_ea(), get_opnum());
 		msg("Taint register. Here I should call Triton to taint the register\n");
+		/*When the user taints something for the first time we should enable step_tracing*/
+		if (!is_something_tainted){
+			enable_insn_trace(true);
+		}
+
+		is_something_tainted = true;
+		runtimeTrigger.enable();
 		return 1;
 	}
 
@@ -35,6 +46,13 @@ struct printsel_TMemory : public action_handler_t
 	{
 		msg(" EA: %p register type=%d", get_screen_ea(), get_opnum());
 		msg("Taint Memory. Here I should call Triton to taint the memory\n");
+		/*When the user taints something for the first time we should enable step_tracing*/
+		if (!is_something_tainted){
+			enable_insn_trace(true);
+		}
+
+		is_something_tainted = true;
+		runtimeTrigger.enable();
 		return 1;
 	}
 
@@ -49,7 +67,7 @@ static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
 	"TMemory", // The action name. This acts like an ID and must be unique
 	"Taint Memory", //The action text.
 	&taint_memory, //The action handler.
-	"Ctrl + H", //Optional: the action shortcut
+	"Ctrl + J", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	200); //Optional: the action icon (shows when in menus/toolbars)
 

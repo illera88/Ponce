@@ -4,3 +4,4 @@
 
 int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
 int idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
+void tritonize(va_list va);
