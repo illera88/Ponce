@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="actions.cpp" />
     <ClCompile Include="callbacks.cpp" />
+    <ClCompile Include="memoryinstrumentation.cpp" />
     <ClCompile Include="trigger.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -27,6 +28,7 @@
     <ClInclude Include="actions.hpp" />
     <ClInclude Include="callbacks.hpp" />
     <ClInclude Include="globals.hpp" />
+    <ClInclude Include="memoryinstrumentation.hpp" />
     <ClInclude Include="trigger.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -97,9 +99,9 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>C:\PonceProject\Ponce\build\Ponce;C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\include;C:\PonceProject\Triton\external-libs\x86\boost_1_60_0;C:\PonceProject\Triton\src\libtriton\includes;C:\PonceProject\Ponce\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\PonceProject\Ponce\build\Ponce;C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\include;C:\PonceProject\Triton\external-libs\x86\boost_1_60_0;C:\PonceProject\Triton\src\libtriton\includes;C:\PonceProject\Ponce\include;C:\TritonProject\dynamorio\include;C:\TritonProject\dynamorio\ext\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>StdCall</CallingConvention>
@@ -113,10 +115,12 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib"</AdditionalDependencies>
+      <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib";"C:\TritonProject\dynamorio\lib32\release\drdecode.lib";"C:\TritonProject\dynamorio\lib32\release\dynamorio.lib";C:\TritonProject\dynamorio\lib32\release\*.lib1;C:\TritonProject\dynamorio\ext\lib32\release\*.lib1</AdditionalDependencies>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/ignore:4099 /VERBOSE %(AdditionalOptions)</AdditionalOptions>
+      <LinkStatus>false</LinkStatus>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>

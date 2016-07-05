@@ -50,7 +50,7 @@ struct printsel_TMemory : public action_handler_t
 		if (!is_something_tainted){
 			enable_insn_trace(true);
 		}
-
+		
 		is_something_tainted = true;
 		runtimeTrigger.enable();
 		return 1;
@@ -71,9 +71,36 @@ static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	200); //Optional: the action icon (shows when in menus/toolbars)
 
+struct printsel_Solver : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *)
+	{
+		/*We check if the selected instruction is tainted and if it is at the end of a BB*/
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static printsel_Solver solver;
+
+static const action_desc_t action_IDA_solver = ACTION_DESC_LITERAL(
+	"Solver", // The action name. This acts like an ID and must be unique
+	"Solve formula", //The action text.
+	&solver, //The action handler.
+	"Ctrl + J", //Optional: the action shortcut
+	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
+	201); //Optional: the action icon (shows when in menus/toolbars)
+
+
+
+
 struct action action_list[] =
 {
 	{ "TRegister", "Taint Register", &action_IDA_taint_register, { BWN_DISASM, BWN_IMPORTS, NULL } },
 	{ "TMemory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, NULL } },
+	{ "Solver", "Solve formula", &action_IDA_solver, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

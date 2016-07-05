@@ -1108,8 +1108,8 @@ struct debugger_t
 };
 
 #ifndef NO_OBSOLETE_FUNCS
-DEPRECATED typedef thid_t thread_id_t;
-DEPRECATED typedef pid_t process_id_t;
+//DEPRECATED typedef thid_t thread_id_t;
+//DEPRECATED typedef pid_t process_id_t;
 #define PROCESS_NO_THREAD 0          // No thread
 DEPRECATED struct idd_opinfo_old_t { ea_t addr; uval_t value;  bool modified; };
 idaman DEPRECATED error_t ida_export appcall(ea_t func_ea, thid_t tid, const type_t *type, const p_list *fields, int argnum, idc_value_t *argv, idc_value_t *r);
