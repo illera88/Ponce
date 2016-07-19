@@ -107,6 +107,7 @@
       <CallingConvention>StdCall</CallingConvention>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -115,10 +116,10 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib";"C:\TritonProject\dynamorio\lib32\release\drdecode.lib";"C:\TritonProject\dynamorio\lib32\release\dynamorio.lib";C:\TritonProject\dynamorio\lib32\release\*.lib1;C:\TritonProject\dynamorio\ext\lib32\release\*.lib1</AdditionalDependencies>
+      <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib";"C:\TritonProject\dynamorio\lib32\release\drdecode.lib"</AdditionalDependencies>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>false</DataExecutionPrevention>
-      <AdditionalOptions>/ignore:4099 /VERBOSE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>

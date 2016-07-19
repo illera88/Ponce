@@ -78,7 +78,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	}
 
 	/*We need to extract the memory that has been read from or write to*/
-	instrumentMemoryAccess(opcodes, tritonInst);
+	//instrumentMemoryAccess(opcodes, tritonInst);
 
 
 }
