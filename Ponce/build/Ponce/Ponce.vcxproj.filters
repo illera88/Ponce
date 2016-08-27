@@ -27,7 +27,7 @@
     <ClCompile Include="trigger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="memoryinstrumentation.cpp">
+    <ClCompile Include="context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <ClInclude Include="trigger.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="memoryinstrumentation.hpp">
+    <ClInclude Include="context.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

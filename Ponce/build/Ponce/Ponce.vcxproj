@@ -18,7 +18,7 @@
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="actions.cpp" />
     <ClCompile Include="callbacks.cpp" />
-    <ClCompile Include="memoryinstrumentation.cpp" />
+    <ClCompile Include="context.cpp" />
     <ClCompile Include="trigger.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -28,7 +28,7 @@
     <ClInclude Include="actions.hpp" />
     <ClInclude Include="callbacks.hpp" />
     <ClInclude Include="globals.hpp" />
-    <ClInclude Include="memoryinstrumentation.hpp" />
+    <ClInclude Include="context.hpp" />
     <ClInclude Include="trigger.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -99,7 +99,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>C:\PonceProject\Ponce\build\Ponce;C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\include;C:\PonceProject\Triton\external-libs\x86\boost_1_60_0;C:\PonceProject\Triton\src\libtriton\includes;C:\PonceProject\Ponce\include;C:\TritonProject\dynamorio\include;C:\TritonProject\dynamorio\ext\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -107,7 +107,7 @@
       <CallingConvention>StdCall</CallingConvention>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <CompileAs>CompileAsC</CompileAs>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -116,7 +116,7 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib";"C:\TritonProject\dynamorio\lib32\release\drdecode.lib"</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\lib\x86_win_vc_32\ida.lib;%(AdditionalDependencies);$(SolutionDir)..\..\external-libs\libs\ALL_static_MD_x86\*.lib</AdditionalDependencies>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>false</DataExecutionPrevention>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>

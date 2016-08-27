@@ -13,7 +13,7 @@ struct printsel_TRegister : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *)
 	{
-		char registers[] = {"eax", "ebx", "ecx","edx","edi", "esi","ebp","esp"};
+		char *registers[] = {"eax", "ebx", "ecx","edx","edi", "esi","ebp","esp"};
 		msg(" EA: %p register type=%d", get_screen_ea(), get_opnum());
 		msg("Taint register. Here I should call Triton to taint the register\n");
 
@@ -26,7 +26,7 @@ struct printsel_TRegister : public action_handler_t
 
 		if (get_highlighted_identifier(selected, 20, 0))
 			msg("Selected_output_text %s\n",selected);
-		if (selected && triton::arch::)
+		if (selected)
 			msg("Selected range: %a -> %a\n", saddr, eaddr);
 		else
 			msg("No selection.\n");
