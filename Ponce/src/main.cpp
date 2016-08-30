@@ -6,8 +6,8 @@
 #include "callbacks.hpp"
 #include "actions.hpp"
 #include "globals.hpp"
+#include "trigger.hpp"
 
-//#include "api.hpp"
 //#include <x86Specifications.hpp>
 //
 //using namespace triton;

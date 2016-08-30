@@ -27,8 +27,8 @@
   <ItemGroup>
     <ClInclude Include="actions.hpp" />
     <ClInclude Include="callbacks.hpp" />
-    <ClInclude Include="globals.hpp" />
     <ClInclude Include="context.hpp" />
+    <ClInclude Include="globals.hpp" />
     <ClInclude Include="trigger.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -122,6 +122,7 @@
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
