@@ -40,8 +40,8 @@
 
 #endif
 
-#define COLOR_TAINTED 0xc7c7ff
-#define COLOR_TAINTED_JUMP 0xc9c7ff
+#define COLOR_TAINTED 0x99FFCE
+#define COLOR_TAINTED_CONDITION 0x00b377
 
 extern int g_nb_insn;
 extern const int g_max_insn;

@@ -1,12 +1,17 @@
+//IDA
 #include <idp.hpp>
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
 
+//Ponce
 #include "callbacks.hpp"
 #include "actions.hpp"
 #include "globals.hpp"
 #include "trigger.hpp"
+
+//Triton
+#include <api.hpp>
 
 //#include <x86Specifications.hpp>
 //
@@ -61,6 +66,10 @@ void idaapi run(int)
 			warning("Could not hook tracer callback");
 			return;
 		}
+		//We need to set the architecture for Triton
+		//ToDo: We should use the IDA api to get the architecture of the binary, x86 o x64 and set the architecture with that info
+		triton::api.setArchitecture(triton::arch::ARCH_X86);
+		msg("Plugin running\n");
 		hooked = true;
 	}
 }
@@ -73,6 +82,7 @@ int idaapi init(void)
 		if (action_list[i].name == NULL){
 			break;
 		}
+		//Here we register all the actions
 		if (!register_action(*action_list[i].callback))
 		{
 			warning("Failed to register %s actions. Exiting Ponce plugin\n",action_list[i].name);

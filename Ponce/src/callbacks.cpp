@@ -5,21 +5,15 @@
 #include "globals.hpp"
 #include "context.hpp"
 
-
 //IDA
 #include <ida.hpp>
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <intel.hpp>
 
-
-
-
 //Triton
 #include "api.hpp"
 
-//DR
-//#include "dr_api.h"
 
 /*This function will create and fill the Triton object for every instruction*/
 void tritonize(ea_t pc, thid_t threadID)
@@ -37,9 +31,9 @@ void tritonize(ea_t pc, thid_t threadID)
 		warning("[!] Some error decoding instruction at %p", pc);	
 	
 	//thid_t threadID = va_arg(va, thid_t);
-	char buf[50];
-	ua_mnem(pc, buf, sizeof(buf));
-	msg("At "HEX_FORMAT" %s size %d thread id: %d\n", pc, buf, cmd.size, threadID);
+	/*char buf[50];
+	ua_mnem(pc, buf, sizeof(buf));*/
+	msg("Triton At "HEX_FORMAT" thread id: %d\n", pc, threadID);
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, sizeof(opcodes));
 
@@ -70,17 +64,15 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	if (tritonInst->isTainted())
 	{
-		msg("Estoy tintado\n");
-		if(insn_jcc()) // Check if it is a conditional jump
-			set_item_color(pc, COLOR_TAINTED_JUMP);
+		msg("Instruction tainted at "HEX_FORMAT"\n", pc);
+		if (tritonInst->isBranch()) // Check if it is a conditional jump
+			set_item_color(pc, COLOR_TAINTED_CONDITION);
 		else
 			set_item_color(pc, COLOR_TAINTED);
 	}
 
 	/*We need to extract the memory that has been read from or write to*/
 	//instrumentMemoryAccess(opcodes, tritonInst);
-
-
 }
 
 
@@ -92,14 +84,27 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 	switch (notification_code)
 	{
 	case dbg_process_start:
+	{
 		msg("trace:process start\n");
 		// reset instruction counter
 		break;
-
-		// A step occured (one instruction was executed). This event
-		// notification is only generated if step tracing is enabled.
+	}
+	case dbg_step_into:
+	case dbg_step_over:
+	{
+		//We want to enable the user to do step into/over, so he could choose whitch functions skip and with conditions negate
+		debug_event_t* debug_event = va_arg(va, debug_event_t*);
+		thid_t tid = debug_event->tid;
+		ea_t pc = debug_event->ea;
+		msg("Stepping %s: "HEX_FORMAT" (%d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+		tritonize(pc, tid);
+		break;
+	}
 	case dbg_trace:
 	{
+		// A step occured (one instruction was executed). This event
+		// notification is only generated if step tracing is enabled.
+		msg("dbg_trace\n");
 		/*Create the triton instance for the Instruction*/
 
 		thid_t tid = va_arg(va, thid_t);
