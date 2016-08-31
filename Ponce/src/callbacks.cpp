@@ -148,9 +148,14 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 			//warning("Breakpoint reached\n");
 			break;
 		}
-
 		case dbg_process_exit:
 		{
+			if (ENABLE_TRACING_WHEN_TAINTING)
+			{
+				if (DEBUG)
+					msg("[+] Clearing trace...\n");
+				clear_trace();
+			}
 			//msg("In dbg_process_exit, reseting everything\n");
 			//Do we want to unhook this event?
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
