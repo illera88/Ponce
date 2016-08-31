@@ -72,6 +72,8 @@ int idaapi init(void)
 			return PLUGIN_SKIP;
 		}	
 	}
+	if (AUTO_RUN)
+		run(0);
 	return PLUGIN_KEEP;
 }
 

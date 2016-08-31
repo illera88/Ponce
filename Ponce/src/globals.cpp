@@ -8,7 +8,7 @@ int total_number_traced_ins = 0;
 //This variable is used to count how many instructions were executed after the user was asked
 int current_trace_counter = 0;
 //This is the max number of instructions executed during tracing before ask to the user if he wants to execute more
-int max_traced_instructions = 20;
+int max_traced_instructions = 100;
 //A variable to store if the plugin has hooked the ui and debugger events
 bool hooked = false;
 //Is it something tainted?

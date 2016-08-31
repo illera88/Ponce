@@ -83,18 +83,29 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 	{
 		case dbg_process_start:
 		{
-			//msg("trace:process start\n");
-			// reset instruction counter
+			if (DEBUG)
+				msg("[+] Starting the debugged process. Reseting all the engines.\n");
+			//We reset everything at the beginning
+			triton::api.resetEngines();
+			runtimeTrigger.disable();
+			is_something_tainted = false;
+			//Reset instruction counter
+			total_number_traced_ins = current_trace_counter = 0;
 			break;
 		}
 		case dbg_step_into:
 		case dbg_step_over:
 		{
+			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
+			if (ENABLE_TRACING_WHEN_TAINTING)
+				break;
 			//We want to enable the user to do step into/over, so he could choose whitch functions skip and with conditions negate
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-			//msg("Stepping %s: "HEX_FORMAT" (%d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+			if (DEBUG)
+				//This is too much info...maybe we should delete it or define a EXTRADEBUG
+				msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
 			tritonize(pc, tid);
 			break;
 		}
@@ -140,11 +151,8 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 
 		case dbg_process_exit:
 		{
-			msg("In dbg_process_exit, reseting everything\n");
-			triton::api.resetEngines();
-			runtimeTrigger.disable();
-			is_something_tainted = false;
-			//Do we want to unhook this event? 
+			//msg("In dbg_process_exit, reseting everything\n");
+			//Do we want to unhook this event?
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
 			break;
 		}

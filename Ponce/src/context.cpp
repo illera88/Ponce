@@ -25,7 +25,8 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg);
 //this next two callbacks are used to get memory and registers and update them.
 void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem) 
 {
-	msg("We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
+	if (EXTRADEBUG)
+		msg("[+] We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue(mem.getAddress(), mem.getSize());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
@@ -33,7 +34,8 @@ void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 
 void __cdecl needConcreteRegisterValue(triton::arch::Register& reg)
 {
-	msg("We need a register! Register: %s\n", reg.getName().c_str());
+	if (EXTRADEBUG)
+		msg("[+] We need a register! Register: %s\n", reg.getName().c_str());
 	auto regValue = getCurrentRegisterValue(reg);
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
