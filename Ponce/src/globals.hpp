@@ -39,6 +39,8 @@
 #define ENABLE_TRACING_WHEN_TAINTING true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
+#define ENABLE_TAINTING_ENGINE true
+#define ENABLE_SYMBOLIC_ENGINE true
 
 struct action{
 	char* name;

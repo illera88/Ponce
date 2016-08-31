@@ -21,6 +21,7 @@
 //using namespace triton::arch;
 //using namespace triton::arch::x86;
 
+/*This function is called once in the ide plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
 void triton_init()
 {
 	//We need to set the architecture for Triton
