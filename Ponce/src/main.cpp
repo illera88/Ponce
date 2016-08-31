@@ -21,15 +21,6 @@
 //using namespace triton::arch;
 //using namespace triton::arch::x86;
 
-//--------------------------------------------------------------------------
-int g_nb_insn = 0;
-const int g_max_insn = 20;
-bool hooked = false;
-bool is_something_tainted = false;
-Trigger runtimeTrigger;
-
-//--------------------------------------------------------------------------
-
 void triton_init()
 {
 	//We need to set the architecture for Triton

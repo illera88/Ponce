@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\actions.cpp" />
     <ClCompile Include="..\..\src\callbacks.cpp" />
     <ClCompile Include="..\..\src\context.cpp" />
+    <ClCompile Include="..\..\src\globals.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\trigger.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />

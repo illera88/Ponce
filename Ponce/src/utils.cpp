@@ -43,7 +43,7 @@ int ask_for_a_snapshot()
 		return 1;
 	while (true)
 	{
-		int answer = askyn_c(1, "[? ] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
+		int answer = askyn_c(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
 		if (answer == 1) //Yes
 		{
 			snapshot_t snapshot;

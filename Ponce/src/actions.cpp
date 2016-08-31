@@ -27,22 +27,18 @@ struct printsel_TRegister : public action_handler_t
 			triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
 			if (register_to_taint != NULL)
 			{
-				msg("Tainted register %s\n", selected);
+				msg("[!] Tainted register %s\n", selected);
 				triton::api.taintRegister(*register_to_taint);
 				/*When the user taints something for the first time we should enable step_tracing*/
 				if (!is_something_tainted)
 				{
 					runtimeTrigger.enable();
 					is_something_tainted = true;
+					if (ENABLE_TRACING_WHEN_TAINTING)
+						enable_insn_trace(true);
 				}
 			}
 		}
-		/*When the user taints something for the first time we should enable step_tracing*/
-		//if (!is_something_tainted)
-		//{
-		//	runtimeTrigger.enable();
-		//	//enable_insn_trace(true);
-		//}
 		return 1;
 	}
 
@@ -74,7 +70,7 @@ struct printsel_TMemory : public action_handler_t
 		{
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
 			{
-				msg("from or to is NULL\n");
+				//msg("from or to is NULL\n");
 				return 0;
 			}
 			//We get the selection bounds from the action activation context
@@ -84,7 +80,7 @@ struct printsel_TMemory : public action_handler_t
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
 		{
-			msg("Dissas windows no supported for memory tainting\n");
+			msg("[!] Disassembly windows no supported for memory tainting...yet\n");
 			/*int selected = read_selection(&selection_starts, &selection_ends);
 			msg("selectted : %d\n", selected);
 			if (!selected)*/
@@ -96,7 +92,8 @@ struct printsel_TMemory : public action_handler_t
 
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		unsigned int selection_length = selection_ends - selection_starts + 1;
-		msg("Tainting memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
+		if (DEBUG)
+			msg("[+] Tainting memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
@@ -104,12 +101,10 @@ struct printsel_TMemory : public action_handler_t
 		{
 			runtimeTrigger.enable();
 			is_something_tainted = true;
+			if (ENABLE_TRACING_WHEN_TAINTING)
+				enable_insn_trace(true);
 		}
 
-		/*When the user taints something for the first time we should enable step_tracing*/
-		/*if (!is_something_tainted){
-			enable_insn_trace(true);
-		}*/
 //		ea_t saddr, eaddr;
 
 		// Get the address range selected, or return false if
