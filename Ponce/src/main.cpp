@@ -10,6 +10,7 @@
 #include "globals.hpp"
 #include "trigger.hpp"
 #include "context.hpp"
+#include "utils.hpp"
 
 //Triton
 #include <api.hpp>
@@ -44,19 +45,24 @@ void triton_init()
 void idaapi run(int)
 {
 	if (!hooked){
-		if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
+		//First we ask the user to take a snapshot
+		if (ask_for_a_snapshot())
 		{
-			warning("Could not hook ui callback");
-			return;
+			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
+			{
+				warning("Could not hook ui callback");
+				return;
+			}
+			if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
+			{
+				warning("Could not hook tracer callback");
+				return;
+			}
+		
+			triton_init();
+			msg("Plugin running\n");
+			hooked = true;
 		}
-		if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
-		{
-			warning("Could not hook tracer callback");
-			return;
-		}
-		triton_init();
-		msg("Plugin running\n");
-		hooked = true;
 	}
 }
 
