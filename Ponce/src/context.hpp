@@ -1,8 +1,7 @@
-
 #pragma once
 
-
 //Triton
-#include <instruction.hpp>
+#include <api.hpp>
 
-//void instrumentMemoryAccess(byte *opcodes, triton::arch::Instruction* tritonInst);
+void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem);
+void __cdecl needConcreteRegisterValue(triton::arch::Register& reg);

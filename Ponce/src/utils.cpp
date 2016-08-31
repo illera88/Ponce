@@ -14,3 +14,12 @@ triton::arch::Register *str_to_register(std::string register_name)
 	}
 	return NULL;
 }
+
+/*We need this helper because triton doesn't allow to taint memory regions unalinged, so we taint every byte*/
+void taint_all_memory(triton::__uint address, triton::__uint size)
+{
+	for (unsigned int i = 0; i < size; i++)
+	{
+		triton::api.taintMemory(address + i);
+	}
+}

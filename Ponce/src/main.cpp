@@ -9,6 +9,7 @@
 #include "actions.hpp"
 #include "globals.hpp"
 #include "trigger.hpp"
+#include "context.hpp"
 
 //Triton
 #include <api.hpp>
@@ -28,29 +29,16 @@ Trigger runtimeTrigger;
 
 //--------------------------------------------------------------------------
 
-
-//void myfunc(){
-//	/* Set the arch */
-//	api.setArchitecture(ARCH_X86_64);
-//
-//	msg("Name        : %s\n", TRITON_X86_REG_AH.getName().c_str());
-//	msg("Size byte   : %d\n", TRITON_X86_REG_AH.getSize());
-//	msg("Size bit    : %d\n", TRITON_X86_REG_AH.getBitSize());
-//	msg("Highed bit  : %d\n", TRITON_X86_REG_AH.getHigh());
-//	msg("Lower  bit  : %d\n", TRITON_X86_REG_AH.getLow());
-//	msg("Parent      : %s", TRITON_X86_REG_AH.getParent().getName().c_str());
-//
-//	msg("----------------------------");
-//
-//	auto reg = api.getAllRegisters();
-//	for (auto it = reg.begin(); it != reg.end(); it++) {
-//		RegisterOperand r = **it;
-//		msg("%s\n", r.getName().c_str());
-//	}
-//
-//}
-
-
+void triton_init()
+{
+	//We need to set the architecture for Triton
+	//ToDo: We should use the IDA api to get the architecture of the binary, x86 o x64 and set the architecture with that info
+	triton::api.setArchitecture(triton::arch::ARCH_X86);
+	// Memory access callback
+	triton::api.addCallback(needConcreteMemoryValue);
+	// Register access callback
+	triton::api.addCallback(needConcreteRegisterValue);
+}
 
 //--------------------------------------------------------------------------
 void idaapi run(int)
@@ -66,9 +54,7 @@ void idaapi run(int)
 			warning("Could not hook tracer callback");
 			return;
 		}
-		//We need to set the architecture for Triton
-		//ToDo: We should use the IDA api to get the architecture of the binary, x86 o x64 and set the architecture with that info
-		triton::api.setArchitecture(triton::arch::ARCH_X86);
+		triton_init();
 		msg("Plugin running\n");
 		hooked = true;
 	}

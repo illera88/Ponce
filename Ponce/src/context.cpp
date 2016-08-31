@@ -1,19 +1,11 @@
-//! \file
-/*
-**  Copyright (C) - Triton
-**
-**  This program is under the terms of the LGPLv3 License.
-*/
-
 #include <cstring>
 #include <stdexcept>
 
-/* libTriton */
+/* Triton */
 #include <cpuSize.hpp>
 #include <coreUtils.hpp>
 #include <x86Specifications.hpp>
 #include <api.hpp>
-
 #include "context.hpp"
 #include "globals.hpp"
 
@@ -22,19 +14,26 @@
 #include <pro.h>
 //#include <kernwin.hpp>
 
+//Ponce
+#include "globals.hpp"
+
 bool     mustBeExecuted = false;
 
 triton::uint128 getCurrentMemoryValue(triton::__uint addr, triton::uint32 size);
 triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg);
 
 //this next two callbacks are used to get memory and registers and update them.
-void needConcreteMemoryValue(triton::arch::MemoryAccess& mem) {
+void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem) 
+{
+	msg("We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue(mem.getAddress(), mem.getSize());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
 }
 
-void needConcreteRegisterValue(triton::arch::Register& reg){
+void __cdecl needConcreteRegisterValue(triton::arch::Register& reg)
+{
+	msg("We need a register! Register: %s\n", reg.getName().c_str());
 	auto regValue = getCurrentRegisterValue(reg);
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
@@ -42,10 +41,10 @@ void needConcreteRegisterValue(triton::arch::Register& reg){
 
 triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 {
-	regval_t* reg_value;
+	regval_t reg_value;
 	triton::uint512 value;
-	get_reg_val(reg.getName().c_str(), reg_value); 		
-	value = reg_value->ival; //TODO : reg_value->ival is ui64 won't work for xmm and larger registers
+	get_reg_val(reg.getName().c_str(), &reg_value);
+	value = reg_value.ival; //TODO : reg_value->ival is ui64 won't work for xmm and larger registers
 
 	/* Sync with the libTriton */
 	triton::arch::Register syncReg;
@@ -59,7 +58,6 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 	//value = triton::utils::fromBufferToUint<triton::uint512>(buffer);
 	syncReg.setConcreteValue(value);
 	triton::api.setConcreteRegisterValue(syncReg);
-
 	/* Returns the good casted value */
 	return triton::api.getConcreteRegisterValue(reg, false);
 }

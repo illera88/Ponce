@@ -29,15 +29,20 @@ struct printsel_TRegister : public action_handler_t
 			{
 				msg("Tainted register %s\n", selected);
 				triton::api.taintRegister(*register_to_taint);
-				is_something_tainted = true;
+				/*When the user taints something for the first time we should enable step_tracing*/
+				if (!is_something_tainted)
+				{
+					runtimeTrigger.enable();
+					is_something_tainted = true;
+				}
 			}
 		}
 		/*When the user taints something for the first time we should enable step_tracing*/
-		if (!is_something_tainted)
-		{
-			runtimeTrigger.enable();
-			//enable_insn_trace(true);
-		}
+		//if (!is_something_tainted)
+		//{
+		//	runtimeTrigger.enable();
+		//	//enable_insn_trace(true);
+		//}
 		return 1;
 	}
 
@@ -93,8 +98,13 @@ struct printsel_TMemory : public action_handler_t
 		unsigned int selection_length = selection_ends - selection_starts + 1;
 		msg("Tainting memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
-		/*triton::arch::MemoryAccess mem_access = triton::arch::MemoryAccess(selection_starts, selection_length, 0);
-		triton::api.taintMemory(mem_access);*/
+		taint_all_memory(selection_starts, selection_length);
+		/*When the user taints something for the first time we should enable step_tracing*/
+		if (!is_something_tainted)
+		{
+			runtimeTrigger.enable();
+			is_something_tainted = true;
+		}
 
 		/*When the user taints something for the first time we should enable step_tracing*/
 		/*if (!is_something_tainted){
