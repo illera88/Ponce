@@ -42,6 +42,7 @@
 
 #define COLOR_TAINTED 0x99FFCE
 #define COLOR_TAINTED_CONDITION 0x00b377
+#define SNAPSHOT_DESCRIPTION "Before use the script"
 
 extern int g_nb_insn;
 extern const int g_max_insn;

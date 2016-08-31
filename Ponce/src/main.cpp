@@ -45,8 +45,8 @@ void triton_init()
 void idaapi run(int)
 {
 	if (!hooked){
-		//First we ask the user to take a snapshot
-		if (ask_for_a_snapshot())
+		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
+		if (ask_for_a_snapshot() != -1)
 		{
 			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
 			{
