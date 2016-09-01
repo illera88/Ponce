@@ -34,7 +34,7 @@
 #define COLOR_TAINTED_CONDITION 0x00b377
 #define SNAPSHOT_DESCRIPTION "Before use the script"
 #define DEBUG true
-#define EXTRADEBUG false
+#define EXTRADEBUG true
 //It enables the instruction tracing the first time a register/memory is tainted
 #define ENABLE_TRACING_WHEN_TAINTING true
 //It runs the plugin when it is initiallized
@@ -45,6 +45,7 @@
 #define TAINT_ARGC true
 #define SKIP_ARGV0 true
 #define TAINT_END_OF_STRING false
+#define ADD_COMMENTS_WITH_TAINTING_INFORMATION true
 
 struct action{
 	char* name;

@@ -65,7 +65,8 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	api.buildSemantics(*tritonInst);
 
-	get_tainted_operands_and_add_comment(tritonInst, pc);
+	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
+		get_tainted_operands_and_add_comment(tritonInst, pc);
 
 	if (tritonInst->isTainted())
 	{

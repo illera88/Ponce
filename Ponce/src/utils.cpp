@@ -180,10 +180,11 @@ triton::__uint get_args_pointer(int argument_number, bool skip_ret)
 //Use templates??
 char read_char_from_ida(ea_t address)
 {
+	msg("read_char_from_ida: "HEX_FORMAT"\n", address);
 	char value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(address, sizeof(value));
+	//invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		warning("Error reading memory from "HEX_FORMAT"\n", address);
 	return value;
@@ -191,10 +192,11 @@ char read_char_from_ida(ea_t address)
 
 triton::__uint read_uint_from_ida(ea_t address)
 {
+	//msg("read_uint_from_ida: "HEX_FORMAT"\n", address);
 	triton::__uint value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(address, sizeof(value));
+	//invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		warning("Error reading memory from "HEX_FORMAT"\n", address);
 	return value;

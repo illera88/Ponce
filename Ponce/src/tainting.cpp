@@ -12,9 +12,13 @@
 
 void taint_main_callback(ea_t main_address)
 {
+	//We need to invalidate the memory to forze IDA to reaload all the segments and new allocs
+	invalidate_dbgmem_config();
+
 	//Iterate through argc, argv[argc] and taint every byte and argc
 	triton::__uint argc = get_args(0, true);
 	triton::__uint argv = get_args(1, true);
+	//msg("argc: %d argv: "HEX_FORMAT"\n", argc, argv);
 	if (TAINT_ARGC)
 	{
 		//First we taint the argc
@@ -37,6 +41,11 @@ void taint_main_callback(ea_t main_address)
 	for (unsigned int i = SKIP_ARGV0; i < argc; i++)
 	{
 		triton::__uint current_argv = read_uint_from_ida(argv + i * REG_SIZE);
+		if (current_argv == 0xffffffff)
+		{
+			msg("[!] Error reading mem~ "HEX_FORMAT"\n", argv + i * REG_SIZE);
+			break;
+		}
 		//We iterate through all the bytes of the current argument
 		int j = 0;
 		char current_char;
@@ -124,6 +133,4 @@ void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst,
 	{
 		set_cmt(pc, comment.str().c_str(), false);
 	}
-
-	msg("Comment: %s\n", comment.str().c_str());
 }
