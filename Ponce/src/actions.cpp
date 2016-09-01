@@ -30,13 +30,7 @@ struct printsel_TRegister : public action_handler_t
 				msg("[!] Tainted register %s\n", selected);
 				triton::api.taintRegister(*register_to_taint);
 				/*When the user taints something for the first time we should enable step_tracing*/
-				if (!is_something_tainted)
-				{
-					runtimeTrigger.enable();
-					is_something_tainted = true;
-					if (ENABLE_TRACING_WHEN_TAINTING)
-						enable_insn_trace(true);
-				}
+				start_tainting_analysis();
 			}
 		}
 		return 1;
@@ -97,13 +91,7 @@ struct printsel_TMemory : public action_handler_t
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
-		if (!is_something_tainted)
-		{
-			runtimeTrigger.enable();
-			is_something_tainted = true;
-			if (ENABLE_TRACING_WHEN_TAINTING)
-				enable_insn_trace(true);
-		}
+		start_tainting_analysis();
 
 //		ea_t saddr, eaddr;
 

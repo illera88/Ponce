@@ -1,12 +1,27 @@
 #include <string>
 //Triton
 #include <api.hpp>
+
 //IDA
 #include <idp.hpp>
 #include <loader.hpp>
+#include <dbg.hpp>
+
 //Ponce
 #include "utils.hpp"
 #include "globals.hpp"
+
+/*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
+void start_tainting_analysis()
+{
+	if (!is_something_tainted)
+	{
+		runtimeTrigger.enable();
+		is_something_tainted = true;
+		if (ENABLE_TRACING_WHEN_TAINTING)
+			enable_insn_trace(true);
+	}
+}
 
 /*This functions gets a string and return the triton register assign or NULL
 This is using the triton current architecture so it is more generic.*/
@@ -83,4 +98,104 @@ bool already_exits_a_snapshot()
 	bool exists = false;
 	visit_snapshot_tree(&root, &snapshot_visitor, &exists);
 	return exists;
+}
+
+/*This function is a helper to find a function having its name.
+It is likely IDA SDK has another API to do this but I can't find it.
+Source: http://www.openrce.org/reference_library/files/ida/idapw.pdf */
+ea_t find_function(char *function_name)
+{
+	// get_func_qty() returns the number of functions in file(s) loaded.
+	for (unsigned int f = 0; f < get_func_qty(); f++)
+	{
+		// getn_func() returns a func_t struct for the function number supplied
+		func_t *curFunc = getn_func(f);
+		char funcName[MAXSTR];
+		// get_func_name gets the name of a function,
+		// stored in funcName
+		get_func_name(curFunc->startEA, funcName, sizeof(funcName) - 1);
+		if (strcmp(funcName, function_name) == 0)
+			return curFunc->startEA;
+	}
+	return -1;
+}
+
+//This function return the real value of the argument.
+triton::__uint get_args(int argument_number, bool skip_ret)
+{
+	triton::__uint memprogram = get_args_pointer(argument_number, skip_ret);
+	//We first get the pointer and then we dereference it
+	triton::__uint value = 0;
+	value = read_uint_from_ida(memprogram);
+	return value;
+}
+
+// Return the argument at the "argument_number" position. It is independant of the architecture and the OS.
+// We suppossed the function is using the default call convention, stdcall or cdelc in x86, no fastcall and fastcall in x64
+triton::__uint get_args_pointer(int argument_number, bool skip_ret)
+{
+	int skip_ret_index = skip_ret ? 1 : 0;
+#ifdef X86_32
+	regval_t esp_value;
+	get_reg_val("esp", &esp_value);
+	//msg("argument_number: %d\n", argument_number);
+	//msg("esp: "HEX_FORMAT"\n", (unsigned int)esp_value.ival);
+	triton::__uint arg = (triton::__uint)esp_value.ival + (argument_number + skip_ret_index) * 4;
+	//msg("arg: "HEX_FORMAT"\n", arg);
+	return arg;
+#elif X86_64
+	//Not converted to IDA we should use get_reg_val
+#ifdef _WIN32 // note the underscore: without it, it's not msdn official!
+	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
+	switch (argument_number)
+	{
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<__uint>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<__uint>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<__uint>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<__uint>();
+	default:
+		__uint esp = (__uint)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<__uint>();
+		__uint arg = esp + (argument_number - 4 + skip_ret_index) * 8;
+		return *(__uint*)arg;
+	}
+#elif __unix__
+	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
+	switch (argument_number)
+	{
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<__uint>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<__uint>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<__uint>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<__uint>();
+	case 4: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<__uint>();
+	case 5: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<__uint>();
+	default:
+		__uint esp = (__uint)getCurrentRegisterValue(TRITON_X86_REG_RSP);
+		__uint arg = esp + (argument_number - 6 + skip_ret_index) * 8;
+		return *(__uint*)arg;
+	}
+#endif
+#endif
+}
+
+//Use templates??
+char read_char_from_ida(ea_t address)
+{
+	char value;
+	//This is the way to force IDA to read the value from the debugger
+	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+	invalidate_dbgmem_contents(address, sizeof(value));
+	if (!get_many_bytes(address, &value, sizeof(value)))
+		warning("Error reading memory from "HEX_FORMAT"\n", address);
+	return value;
+}
+
+triton::__uint read_uint_from_ida(ea_t address)
+{
+	triton::__uint value;
+	//This is the way to force IDA to read the value from the debugger
+	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+	invalidate_dbgmem_contents(address, sizeof(value));
+	if (!get_many_bytes(address, &value, sizeof(value)))
+		warning("Error reading memory from "HEX_FORMAT"\n", address);
+	return value;
 }

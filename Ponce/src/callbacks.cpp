@@ -1,8 +1,10 @@
-
+#include <list>
 // Ponce
 #include "callbacks.hpp"
 #include "globals.hpp"
 #include "context.hpp"
+#include "utils.hpp"
+#include "tainting.hpp"
 
 //IDA
 #include <ida.hpp>
@@ -13,6 +15,7 @@
 //Triton
 #include "api.hpp"
 
+std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
 /*This function will create and fill the Triton object for every instruction*/
 void tritonize(ea_t pc, thid_t threadID)
@@ -90,6 +93,8 @@ void triton_restart_engines()
 	is_something_tainted = false;
 	//Reset instruction counter
 	total_number_traced_ins = current_trace_counter = 0;
+	breakpoint_pending_actions.clear();
+	set_automatic_tainting();
 }
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
@@ -124,7 +129,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
 			//msg("dbg_trace\n");
-			/*Create the triton instance for the Instruction*/
+			//Create the triton instance for the Instruction
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
@@ -155,11 +160,34 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
-			//warning("Breakpoint reached\n");
+			//warning("dbg_bpt\n");
+			thid_t tid = va_arg(va, thid_t);
+			ea_t pc = va_arg(va, ea_t);
+			int *warn = va_arg(va, int *);
+			//msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
+			//We look if there is a pending action for this breakpoint
+			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
+			{
+				breakpoint_pending_action bpa = *it;
+				//If we find a pendign action we execute the callback
+				if (pc == bpa.address)
+				{
+					bpa.callback(pc);
+					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
+					if (!bpa.ignore_breakpoint)
+					{
+						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
+						del_bpt(pc);
+						continue_process();
+					}
+				}
+			}
 			break;
 		}
 		case dbg_process_exit:
 		{
+			if (DEBUG)
+				msg("[!] Process_exiting...\n");
 			if (ENABLE_TRACING_WHEN_TAINTING)
 			{
 				if (DEBUG)

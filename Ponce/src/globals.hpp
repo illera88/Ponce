@@ -6,7 +6,7 @@
 #include <kernwin.hpp>
 
 #if defined(__i386) || defined(_M_IX86)
-//#define X86_32
+//#define X86_32 It is already defined in the preprocessor options
 #define TRITON_X86_REG_XSP triton::arch::x86::x86_reg_esp
 #define TRITON_REG_XIP triton::arch::x86::x86_reg_eip
 #define TRITON_REG_ID_XAX triton::arch::x86::ID_REG_EAX
@@ -41,6 +41,10 @@
 #define AUTO_RUN true
 #define ENABLE_TAINTING_ENGINE true
 #define ENABLE_SYMBOLIC_ENGINE true
+#define TAINT_ARGV true
+#define TAINT_ARGC true
+#define SKIP_ARGV0 true
+#define TAINT_END_OF_STRING false
 
 struct action{
 	char* name;
