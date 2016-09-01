@@ -98,3 +98,32 @@ void set_automatic_tainting()
 		}
 	}
 }
+
+
+void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst, ea_t pc)
+{
+	//ToDo: Externalize this to another function
+	std::stringstream comment;
+	/*Here we check all the registers and memory read to know which are tainted*/
+	auto regs = tritonInst->getReadRegisters();
+	for (auto it = regs.begin(); it != regs.end(); it++)
+	{
+		auto reg = it->first;
+		if (triton::api.isRegisterTainted(reg))
+			comment << "Reg " << reg.getName() << " is tainted ";
+	}
+	auto accesses = tritonInst->getLoadAccess();
+	for (auto it = accesses.begin(); it != accesses.end(); it++)
+	{
+		auto mem = it->first;
+		if (triton::api.isMemoryTainted(mem))
+			comment << "Mem 0x" << std::hex << mem.getAddress() << " is tainted ";
+	}
+	//We set the comment
+	if (comment.str().size() > 0)
+	{
+		set_cmt(pc, comment.str().c_str(), false);
+	}
+
+	msg("Comment: %s\n", comment.str().c_str());
+}

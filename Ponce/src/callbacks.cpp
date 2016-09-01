@@ -40,7 +40,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, sizeof(opcodes));
 
-	///* Setup Triton information */
+	/* Setup Triton information */
 	tritonInst->partialReset();
 	tritonInst->setOpcodes((triton::uint8*)opcodes, cmd.size);
 	tritonInst->setAddress(pc);
@@ -64,6 +64,8 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/* Process the IR and taint */
 	api.buildSemantics(*tritonInst);
+
+	get_tainted_operands_and_add_comment(tritonInst, pc);
 
 	if (tritonInst->isTainted())
 	{
