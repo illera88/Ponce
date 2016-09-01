@@ -109,10 +109,11 @@ void set_automatic_tainting()
 }
 
 /*This function gets the tainted operands for an instruction and add a comment to that instruction with this info*/
-void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst, ea_t pc)
+void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst, ea_t pc)//, std::list<triton::arch::OperandWrapper> &tainted_reg_operands)
 {
 	//ToDo: Externalize this to another function
 	std::stringstream comment;
+
 	/*Here we check all the registers and memory read to know which are tainted*/
 	auto regs = tritonInst->getReadRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
@@ -120,17 +121,44 @@ void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst,
 		auto reg = it->first;
 		if (triton::api.isRegisterTainted(reg))
 			comment << "Reg " << reg.getName() << " is tainted ";
+		/*for (auto it_op = tainted_reg_operands.begin(); it_op != tainted_reg_operands.end(); it_op++)
+		{
+			auto op = *it_op;
+			if (op.getType() == triton::arch::OP_REG && op.reg.getId() == reg.getId())
+			{
+				comment << "Reg " << reg.getName() << " is tainted ";
+			}
+		}*/
 	}
 	auto accesses = tritonInst->getLoadAccess();
 	for (auto it = accesses.begin(); it != accesses.end(); it++)
 	{
 		auto mem = it->first;
+		//For the memory we can't use the operand because they don't have yet the real value of the address
 		if (triton::api.isMemoryTainted(mem))
 			comment << "Mem 0x" << std::hex << mem.getAddress() << " is tainted ";
 	}
+
 	//We set the comment
 	if (comment.str().size() > 0)
 	{
 		set_cmt(pc, comment.str().c_str(), false);
 	}
 }
+
+/*This function get the */
+//std::list<triton::arch::OperandWrapper> get_tainted_regs_operands(triton::arch::Instruction* tritonInst)
+//{
+//	std::list<triton::arch::OperandWrapper> tainted_reg_operands;
+//	for (auto it = tritonInst->operands.begin(); it != tritonInst->operands.end(); it++) 
+//	{
+//		auto op = *it;
+//		if (op.getType() == triton::arch::OP_REG)
+//		{
+//			msg("op reg: %s\n", op.reg.getName().c_str());
+//			if (triton::api.isTainted(*it))
+//				tainted_reg_operands.push_back(*it);
+//		}
+//	}
+//	return tainted_reg_operands;
+//}

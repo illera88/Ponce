@@ -60,11 +60,15 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 	}
 
+	/*std::list<triton::arch::OperandWrapper> tainted_reg_operands;
 	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
-		get_tainted_operands_and_add_comment(tritonInst, pc);
+		tainted_reg_operands = get_tainted_regs_operands(tritonInst);*/
 
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
+
+	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
+		get_tainted_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
 
 	/* Trust operands */
 	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
@@ -137,6 +141,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = debug_event->ea;
 			if (EXTRADEBUG)
 				msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+			if (PAINT_EXECUTED_INSTRUCTIONS)
+				set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
 			tritonize(pc, tid);
 			break;
 		}
@@ -144,14 +150,15 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		{
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
-			//msg("dbg_trace\n");
+			msg("dbg_trace\n");
 			//Create the triton instance for the Instruction
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 
 			//msg("[%d] tracing over: "HEX_FORMAT"\n", g_nb_insn, pc);
-
+			if (PAINT_EXECUTED_INSTRUCTIONS)
+				set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
 			tritonize(pc, tid);
 
 			current_trace_counter++;
@@ -176,7 +183,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
-			//warning("dbg_bpt\n");
+			msg("dbg_bpt\n");
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
@@ -189,6 +196,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				if (pc == bpa.address)
 				{
 					bpa.callback(pc);
+					if (PAINT_EXECUTED_INSTRUCTIONS)
+						set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
+					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
 					{
@@ -196,6 +206,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						del_bpt(pc);
 						continue_process();
 					}
+					else
+					{
+
+					}
+					break;
 				}
 			}
 			break;

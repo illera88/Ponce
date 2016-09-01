@@ -35,11 +35,13 @@
 
 #define COLOR_TAINTED 0x99FFCE
 #define COLOR_TAINTED_CONDITION 0x00b377
+#define COLOR_EXECUTED_INSTRUCTION 0xe6e6e6
 #define SNAPSHOT_DESCRIPTION "Before use the script"
 #define DEBUG true
 #define EXTRADEBUG true
 //It enables the instruction tracing the first time a register/memory is tainted
 #define ENABLE_TRACING_WHEN_TAINTING true
+#define PAINT_EXECUTED_INSTRUCTIONS true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
 #define ENABLE_TAINTING_ENGINE true
