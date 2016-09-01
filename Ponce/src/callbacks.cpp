@@ -24,9 +24,11 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (!runtimeTrigger.getState())
 		return;
 
-	using namespace triton;
-	arch::Instruction* tritonInst = new arch::Instruction();
-
+	//We delete the last_instruction
+	if (last_triton_instruction != NULL)
+		delete last_triton_instruction;
+	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
+	last_triton_instruction = tritonInst;
 	//ea_t pc = va_arg(va, ea_t);
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!decode_insn(pc))
@@ -48,7 +50,7 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/* Disassemble the instruction */
 	try{
-		api.disassembly(*tritonInst);
+		triton::api.disassembly(*tritonInst);
 	}
 	catch (...){
 		msg("[!] Dissasembling error at "HEX_FORMAT" Opcodes:",pc);
@@ -58,15 +60,16 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 	}
 
+	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
+		get_tainted_operands_and_add_comment(tritonInst, pc);
+
+	/* Process the IR and taint */
+	triton::api.buildSemantics(*tritonInst);
+
 	/* Trust operands */
 	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
 		op->setTrust(true);
 
-	/* Process the IR and taint */
-	api.buildSemantics(*tritonInst);
-
-	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
-		get_tainted_operands_and_add_comment(tritonInst, pc);
 
 	if (tritonInst->isTainted())
 	{
@@ -77,6 +80,16 @@ void tritonize(ea_t pc, thid_t threadID)
 		else
 			set_item_color(pc, COLOR_TAINTED);
 	}
+}
+
+/*This function is called when we taint a register that is used in the current instruction*/
+void reanalize_current_instruction()
+{
+	if (DEBUG)
+		msg("Reanalizyng instruction at "HEX_FORMAT"\n");
+	uint64 eip;
+	get_reg_val("eip", &eip);
+	tritonize((triton::__uint)eip, get_current_thread());
 }
 
 /*This functions is called every time a new debugger session starts*/

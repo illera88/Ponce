@@ -108,7 +108,7 @@ void set_automatic_tainting()
 	}
 }
 
-
+/*This function gets the tainted operands for an instruction and add a comment to that instruction with this info*/
 void get_tainted_operands_and_add_comment(triton::arch::Instruction* tritonInst, ea_t pc)
 {
 	//ToDo: Externalize this to another function

@@ -6,6 +6,7 @@
 //Ponce
 #include "globals.hpp"
 #include "utils.hpp"
+#include "callbacks.hpp"
 
 //Triton
 #include "api.hpp"
@@ -15,11 +16,6 @@ struct printsel_TRegister : public action_handler_t
 	/*Event called when the user taint a register*/
 	virtual int idaapi activate(action_activation_ctx_t *)
 	{
-		//char *registers[] = {"eax", "ebx", "ecx","edx","edi", "esi","ebp","esp"};
-		//msg(" EA: %p register type=%d\n", get_screen_ea(), get_opnum());
-		//msg("Taint register. Here I should call Triton to taint the register\n");
-//		ea_t saddr, eaddr;
-
 		// Get the address range selected, or return false if there was no selection
 		char selected[20];
 		if (get_highlighted_identifier(selected, 20, 0))
@@ -31,6 +27,19 @@ struct printsel_TRegister : public action_handler_t
 				triton::api.taintRegister(*register_to_taint);
 				/*When the user taints something for the first time we should enable step_tracing*/
 				start_tainting_analysis();
+				//If the register tainted is a source for the instruction then we need to reanalize the instruction
+				//So the self instruction will be tainted
+				auto read_registers = last_triton_instruction->getReadRegisters();
+				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
+				{
+					auto reg = it->first;
+					msg("Register read: %s\n", reg.getName().c_str());
+					if (reg.getId() == register_to_taint->getId())
+					{
+						msg("reanalyzing\n");
+						reanalize_current_instruction();
+					}
+				}
 			}
 		}
 		return 1;
@@ -92,7 +101,9 @@ struct printsel_TMemory : public action_handler_t
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_analysis();
-
+		//We reanalyse the instruction where the pc is right now
+		//Todo: We could only do this if the instruction is affected by the memory modified
+		reanalize_current_instruction();
 //		ea_t saddr, eaddr;
 
 		// Get the address range selected, or return false if

@@ -5,6 +5,9 @@
 //IDA
 #include <kernwin.hpp>
 
+//Triton
+#include <api.hpp>
+
 #if defined(__i386) || defined(_M_IX86)
 //#define X86_32 It is already defined in the preprocessor options
 #define TRITON_X86_REG_XSP triton::arch::x86::x86_reg_esp
@@ -62,3 +65,4 @@ extern int max_traced_instructions;
 extern bool hooked;
 extern bool is_something_tainted;
 extern Trigger runtimeTrigger;
+extern triton::arch::Instruction* last_triton_instruction;
