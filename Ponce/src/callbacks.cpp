@@ -79,6 +79,8 @@ void tritonize(ea_t pc, thid_t threadID)
 	{
 		if (DEBUG)
 			msg("[!] Instruction tainted at "HEX_FORMAT"\n", pc);
+		if (RENAME_TAINTED_FUNCTIONS)
+			rename_tainted_function(pc);
 		if (tritonInst->isBranch()) // Check if it is a conditional jump
 			set_item_color(pc, COLOR_TAINTED_CONDITION);
 		else
@@ -111,6 +113,7 @@ void triton_restart_engines()
 		triton::api.getSymbolicEngine()->enable(false);
 	runtimeTrigger.disable();
 	is_something_tainted = false;
+	tainted_functions_index = 0;
 	//Reset instruction counter
 	total_number_traced_ins = current_trace_counter = 0;
 	breakpoint_pending_actions.clear();

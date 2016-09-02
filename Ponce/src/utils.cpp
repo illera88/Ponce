@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string>
 //Triton
 #include <api.hpp>
@@ -6,6 +7,7 @@
 #include <idp.hpp>
 #include <loader.hpp>
 #include <dbg.hpp>
+#include <name.hpp>
 
 //Ponce
 #include "utils.hpp"
@@ -200,4 +202,26 @@ triton::__uint read_uint_from_ida(ea_t address)
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		warning("Error reading memory from "HEX_FORMAT"\n", address);
 	return value;
+}
+
+/*This function renames a tainted function with the prefix RENAME_TAINTED_FUNCTIONS_PREFIX, by default "T%03d_"*/
+void rename_tainted_function(ea_t address)
+{
+	char func_name[MAXSTR];
+	//First we get the current function name
+	if (get_func_name(address, func_name, sizeof(func_name)) != NULL)
+	{
+		//If the function isn't already renamed
+		if (strstr(func_name, "T0") != func_name)
+		{
+			char new_func_name[MAXSTR];
+			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
+			sprintf_s(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", tainted_functions_index, func_name);
+			//We need the start of the function we can have that info with our function find_function
+			set_name(find_function(func_name), new_func_name);
+			if (DEBUG)
+				msg("[+] Renaming function %s -> %s\n", func_name, new_func_name);
+			tainted_functions_index += 1;
+		}
+	}
 }

@@ -13,3 +13,4 @@ triton::__uint get_args(int argument_number, bool skip_ret);
 triton::__uint get_args_pointer(int argument_number, bool skip_ret);
 char read_char_from_ida(ea_t address);
 triton::__uint read_uint_from_ida(ea_t address);
+void rename_tainted_function(ea_t address);

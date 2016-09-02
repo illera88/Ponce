@@ -51,6 +51,8 @@
 #define SKIP_ARGV0 true
 #define TAINT_END_OF_STRING false
 #define ADD_COMMENTS_WITH_TAINTING_INFORMATION true
+#define RENAME_TAINTED_FUNCTIONS true
+#define RENAME_TAINTED_FUNCTIONS_PREFIX "T%03d_"
 
 struct action{
 	char* name;
@@ -61,10 +63,11 @@ struct action{
 
 extern struct action action_list[];
 extern bool limit_traced_instructions;
-extern int total_number_traced_ins;
-extern int current_trace_counter;
-extern int max_traced_instructions;
+extern unsigned int total_number_traced_ins;
+extern unsigned int current_trace_counter;
+extern unsigned int max_traced_instructions;
 extern bool hooked;
 extern bool is_something_tainted;
+extern unsigned int tainted_functions_index;
 extern Trigger runtimeTrigger;
 extern triton::arch::Instruction* last_triton_instruction;
