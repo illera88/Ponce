@@ -20,8 +20,9 @@ void start_tainting_analysis()
 	{
 		runtimeTrigger.enable();
 		is_something_tainted = true;
-		if (ENABLE_TRACING_WHEN_TAINTING)
-			enable_insn_trace(true);
+		if (ENABLE_STEP_INTO_WHEN_TAINTING)
+			automatically_continue_after_step = true;
+			//enable_insn_trace(true);
 	}
 }
 
@@ -139,6 +140,7 @@ triton::__uint get_args_pointer(int argument_number, bool skip_ret)
 	int skip_ret_index = skip_ret ? 1 : 0;
 #ifdef X86_32
 	regval_t esp_value;
+	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val("esp", &esp_value);
 	//msg("argument_number: %d\n", argument_number);
 	//msg("esp: "HEX_FORMAT"\n", (unsigned int)esp_value.ival);
@@ -186,7 +188,7 @@ char read_char_from_ida(ea_t address)
 	char value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	//invalidate_dbgmem_contents(address, sizeof(value));
+	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		warning("Error reading memory from "HEX_FORMAT"\n", address);
 	return value;
@@ -198,7 +200,7 @@ triton::__uint read_uint_from_ida(ea_t address)
 	triton::__uint value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	//invalidate_dbgmem_contents(address, sizeof(value));
+	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		warning("Error reading memory from "HEX_FORMAT"\n", address);
 	return value;

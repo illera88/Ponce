@@ -1,10 +1,8 @@
 #pragma once
-
+//Ponce
 #include "trigger.hpp"
-
 //IDA
 #include <kernwin.hpp>
-
 //Triton
 #include <api.hpp>
 
@@ -33,6 +31,7 @@
 #define CPUSIZE 64
 #endif
 
+//All the options:
 #define COLOR_TAINTED 0x99FFCE
 #define COLOR_TAINTED_CONDITION 0x00b377
 #define COLOR_EXECUTED_INSTRUCTION 0xe6e6e6
@@ -40,7 +39,7 @@
 #define DEBUG true
 #define EXTRADEBUG true
 //It enables the instruction tracing the first time a register/memory is tainted
-#define ENABLE_TRACING_WHEN_TAINTING true
+#define ENABLE_STEP_INTO_WHEN_TAINTING true
 #define PAINT_EXECUTED_INSTRUCTIONS true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
@@ -51,8 +50,9 @@
 #define SKIP_ARGV0 true
 #define TAINT_END_OF_STRING false
 #define ADD_COMMENTS_WITH_TAINTING_INFORMATION true
-#define RENAME_TAINTED_FUNCTIONS true
+#define RENAME_TAINTED_FUNCTIONS false
 #define RENAME_TAINTED_FUNCTIONS_PREFIX "T%03d_"
+
 
 struct action{
 	char* name;
@@ -61,6 +61,7 @@ struct action{
 	int view_type[44]; // This are the posible views
 };
 
+//All the global variables:
 extern struct action action_list[];
 extern bool limit_traced_instructions;
 extern unsigned int total_number_traced_ins;
@@ -71,3 +72,4 @@ extern bool is_something_tainted;
 extern unsigned int tainted_functions_index;
 extern Trigger runtimeTrigger;
 extern triton::arch::Instruction* last_triton_instruction;
+extern bool automatically_continue_after_step;

@@ -22,3 +22,5 @@ unsigned int tainted_functions_index = 0;
 Trigger runtimeTrigger;
 //This is the last instruction executed by triton, we need to reference to reanalize if the user taint a register
 triton::arch::Instruction* last_triton_instruction;
+//This variable is use to automatically do step into after a previous step_into, and in this way analyze a instruction by instruction a program
+bool automatically_continue_after_step = false;

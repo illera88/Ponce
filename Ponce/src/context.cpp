@@ -29,9 +29,9 @@ void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
 void __cdecl needConcreteRegisterValue(triton::arch::Register& reg)
 {
-	if (EXTRADEBUG)
-		msg("[+] We need a register! Register: %s\n", reg.getName().c_str());
 	auto regValue = getCurrentRegisterValue(reg);
+	if (EXTRADEBUG)
+		msg("[+] We need a register! Register: %s Value: "HEX_FORMAT"\n", reg.getName().c_str(), (unsigned int)regValue);
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
 }
@@ -40,6 +40,8 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 {
 	regval_t reg_value;
 	triton::uint512 value;
+	//We need to invalidate the registers. If not IDA uses the last value when program was stopped
+	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val(reg.getName().c_str(), &reg_value);
 	value = reg_value.ival; //TODO : reg_value->ival is ui64 won't work for xmm and larger registers
 

@@ -122,7 +122,7 @@ void triton_restart_engines()
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 {
-	//msg("Notification code:%d\n",notification_code);
+	msg("Notification code:%d\n",notification_code);
 	switch (notification_code)
 	{
 		case dbg_process_start:
@@ -135,18 +135,43 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_into:
 		case dbg_step_over:
 		{
+			msg("dbg_step_?\n");
 			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
-			if (ENABLE_TRACING_WHEN_TAINTING)
-				break;
+			/*if (ENABLE_TRACING_WHEN_TAINTING)
+				break;*/
 			//We want to enable the user to do step into/over, so he could choose whitch functions skip and with conditions negate
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-			if (EXTRADEBUG)
-				msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
-			if (PAINT_EXECUTED_INSTRUCTIONS)
-				set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
-			tritonize(pc, tid);
+			msg("dbg_step_? at "HEX_FORMAT"\n", pc);
+			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
+			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
+			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
+			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() != pc)
+			{
+				if (EXTRADEBUG)
+					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+				if (PAINT_EXECUTED_INSTRUCTIONS)
+					set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
+				tritonize(pc, tid);
+			}
+			else
+			{
+				if (last_triton_instruction == NULL)
+					msg("last_triton)isntructionn NULL\n");
+				else
+					msg("last_triton_instruction->getAddress(): "HEX_FORMAT"\n", last_triton_instruction->getAddress());
+			}
+			//Continue stepping
+			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
+			if (automatically_continue_after_step)
+				if (notification_code == dbg_step_into)
+				{
+					msg("request_step_into();\n");
+					request_step_into();
+				}
+				else
+					request_step_over();
 			break;
 		}
 		case dbg_trace:
@@ -207,11 +232,16 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					{
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
-						continue_process();
-					}
-					else
-					{
-
+						msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
+						if (ENABLE_STEP_INTO_WHEN_TAINTING && automatically_continue_after_step)
+						{
+							msg("after bp request_step_into\n");
+							//request_step_into();
+							request_set_resume_mode(get_current_thread(), RESMOD_INTO);
+							continue_process();
+						}
+						else
+							continue_process();
 					}
 					break;
 				}
@@ -222,12 +252,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		{
 			if (DEBUG)
 				msg("[!] Process_exiting...\n");
-			if (ENABLE_TRACING_WHEN_TAINTING)
+			/*if (ENABLE_TRACING_WHEN_TAINTING)
 			{
 				if (DEBUG)
 					msg("[+] Clearing trace...\n");
 				clear_trace();
-			}
+			}*/
 			//msg("In dbg_process_exit, reseting everything\n");
 			//Do we want to unhook this event?
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);

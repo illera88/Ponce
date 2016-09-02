@@ -24,6 +24,7 @@ void taint_main_callback(ea_t main_address)
 		//First we taint the argc
 #ifdef X86_32
 		//In x86 we taint the memory of the first arg, argc
+		msg("Tainting argc at memory: "HEX_FORMAT"\n", get_args_pointer(0, true));
 		triton::api.taintMemory(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
 		if (DEBUG)
 			msg("[!] argc tainted\n");
