@@ -15,21 +15,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\actions.cpp" />
+    <ClCompile Include="..\..\src\callbacks.cpp" />
+    <ClCompile Include="..\..\src\context.cpp" />
+    <ClCompile Include="..\..\src\globals.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="actions.cpp" />
-    <ClCompile Include="callbacks.cpp" />
-    <ClCompile Include="context.cpp" />
-    <ClCompile Include="trigger.cpp" />
+    <ClCompile Include="..\..\src\trigger.cpp" />
+    <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="actions.hpp" />
-    <ClInclude Include="callbacks.hpp" />
-    <ClInclude Include="globals.hpp" />
-    <ClInclude Include="context.hpp" />
-    <ClInclude Include="trigger.hpp" />
+    <ClInclude Include="..\..\src\actions.hpp" />
+    <ClInclude Include="..\..\src\callbacks.hpp" />
+    <ClInclude Include="..\..\src\context.hpp" />
+    <ClInclude Include="..\..\src\globals.hpp" />
+    <ClInclude Include="..\..\src\trigger.hpp" />
+    <ClInclude Include="..\..\src\utils.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B0CF5E1C-D7B1-493A-8A84-4DD65A629F63}</ProjectGuid>
@@ -104,7 +107,7 @@
       <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <CallingConvention>StdCall</CallingConvention>
+      <CallingConvention>Cdecl</CallingConvention>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -122,6 +125,7 @@
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>

@@ -21,8 +21,10 @@
 
 #ifndef __KERNWIN_HPP
 #define __KERNWIN_HPP
+#include "pro.h"
 #pragma pack(push, 1)           // IDA uses 1 byte alignments!
 
+typedef int mmmchar;
 
 #ifndef SWIG
 typedef uchar color_t;          ///< see <lines.hpp>
