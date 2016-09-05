@@ -61,3 +61,4 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+external-libs/libs/ALL_static_MT_x86/libz3-static-x86-MT.lib filter=lfs diff=lfs merge=lfs -text

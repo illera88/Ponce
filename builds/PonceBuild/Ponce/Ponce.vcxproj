@@ -17,6 +17,25 @@
   <ItemGroup>
     <None Include="..\..\README.md" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Ponce\src\actions.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\callbacks.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\globals.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\tainting.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\trigger.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\utils.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Ponce\src\actions.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\callbacks.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\context.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\globals.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\main.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\tainting.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\trigger.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\utils.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B0CF5E1C-D7B1-493A-8A84-4DD65A629F63}</ProjectGuid>
     <RootNamespace>Ponce</RootNamespace>
@@ -85,7 +104,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -102,7 +121,7 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(SolutionDir)..\lib\x86_win_vc_32\ida.lib;%(AdditionalDependencies);$(SolutionDir)..\..\external-libs\libs\ALL_static_MD_x86\*.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\..\Ponce\lib\x86_win_vc_32\ida.lib;$(SolutionDir)..\..\external-libs\libs\ALL_static_MT_x86\*.lib</AdditionalDependencies>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>false</DataExecutionPrevention>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>

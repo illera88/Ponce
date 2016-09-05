@@ -17,7 +17,7 @@
 #include "globals.hpp"
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
-void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem) 
+void __stdcall needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
 	if (EXTRADEBUG)
 		msg("[+] We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
@@ -27,7 +27,7 @@ void __cdecl needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
-void __cdecl needConcreteRegisterValue(triton::arch::Register& reg)
+void __stdcall needConcreteRegisterValue(triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
 	if (EXTRADEBUG)
