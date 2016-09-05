@@ -56,7 +56,7 @@ static const action_desc_t action_IDA_taint_register = ACTION_DESC_LITERAL(
 	"TRegister", // The action name. This acts like an ID and must be unique
 	"Taint Register", //The action text.
 	&taint_register, //The action handler.
-	"Ctrl + H", //Optional: the action shortcut
+	"Ctrl + R", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	199); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -65,7 +65,6 @@ struct printsel_TMemory : public action_handler_t
 	/*Event called when the user taint a memory*/
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
-		msg("In activate\n");
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
@@ -142,7 +141,7 @@ static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
 	"TMemory", // The action name. This acts like an ID and must be unique
 	"Taint Memory", //The action text.
 	&taint_memory, //The action handler.
-	"Ctrl + J", //Optional: the action shortcut
+	"Ctrl + M", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	200); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -165,7 +164,7 @@ static const action_desc_t action_IDA_solver = ACTION_DESC_LITERAL(
 	"Solver", // The action name. This acts like an ID and must be unique
 	"Solve formula", //The action text.
 	&solver, //The action handler.
-	"Ctrl + J", //Optional: the action shortcut
+	"Ctrl + S", //Optional: the action shortcut
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 

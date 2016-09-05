@@ -281,6 +281,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
 			int view_type= get_tform_type(form);
 
+			
 			/*Iterate over all the actions*/
 			for (int i = 0;; i++)
 			{
@@ -295,7 +296,8 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					}
 					if (action_list[i].view_type[j] == view_type){
 						attach_action_to_popup(form, popup_handle, action_list[i].name, NULL, SETMENU_FIRST);
-
+						// Here we should decide if we want the action to be activated or not. To disable the action use the next line
+						//enable_menu_item(action_list[i].name,false);
 					}
 				}	
 			}
