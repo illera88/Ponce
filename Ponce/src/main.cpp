@@ -25,8 +25,14 @@
 void triton_init()
 {
 	//We need to set the architecture for Triton
-	//ToDo: We should use the IDA api to get the architecture of the binary, x86 o x64 and set the architecture with that info
-	triton::api.setArchitecture(triton::arch::ARCH_X86);
+	if(inf.is_32bit())
+		triton::api.setArchitecture(triton::arch::ARCH_X86);
+	else if (inf.is_64bit())
+		triton::api.setArchitecture(triton::arch::ARCH_X86_64);
+	else{
+		warning("The architecture does not seem to be 32 or 64 bits. Exiting...");
+		return; // TODO: We should close the plugin loading but not IDA itself
+	}
 	// Memory access callback
 	triton::api.addCallback(needConcreteMemoryValue);
 	// Register access callback
