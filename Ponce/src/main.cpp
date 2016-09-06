@@ -12,8 +12,12 @@
 #include "context.hpp"
 #include "utils.hpp"
 
+#include "formChoser.hpp"
+
 //Triton
 #include <api.hpp>
+
+struct cmdOptionStruct cmdOptions;
 
 //#include <x86Specifications.hpp>
 //
@@ -30,8 +34,7 @@ void triton_init()
 	else if (inf.is_64bit())
 		triton::api.setArchitecture(triton::arch::ARCH_X86_64);
 	else{
-		warning("The architecture does not seem to be 32 or 64 bits. Exiting...");
-		return; // TODO: We should close the plugin loading but not IDA itself
+		error("The architecture does not seem to be 32 or 64 bits. Exiting...");
 	}
 	// Memory access callback
 	triton::api.addCallback(needConcreteMemoryValue);
@@ -42,6 +45,31 @@ void triton_init()
 //--------------------------------------------------------------------------
 void idaapi run(int)
 {
+	uval_t ln = 1;
+	char buf[MAXSTR] = "hola";
+
+	ushort check = 0x12;
+	bgcolor_t bgc = 0x556677;
+	uval_t x_op1 = -1;
+	uval_t y_op1 = -1;
+	uval_t w_op1 = -1;
+	uval_t h_op1 = -1;
+	if (AskUsingForm_c(form, modcb, &ln, buf, &x_op1, &y_op1, &w_op1, &h_op1, &check, btn_cb, &bgc) > 0)
+	//if (AskUsingForm_c(form, modcb, &cmdOptions) > 0)
+	{
+		/*msg("operand: %s\n", buf);
+		msg("check = %d\n", check);
+		msg("dim = %a %a %a %a\n", x_op1, y_op1, w_op1, h_op1);
+		msg("bgc = %x\n", bgc);*/
+	}
+
+
+
+
+
+
+
+
 	if (!hooked){
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
 		if (ask_for_a_snapshot() != -1)

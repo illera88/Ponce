@@ -168,11 +168,49 @@ static const action_desc_t action_IDA_solver = ACTION_DESC_LITERAL(
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
+
+struct formchooser_ah_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		msg("Menu item clicked. Current selection:");
+		for (int i = 0, n = ctx->chooser_selection.size(); i < n; ++i)
+			msg(" %d", ctx->chooser_selection[i]);
+		msg("\n");
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		bool ok = ctx->form_type == BWN_CHOOSER;
+		if (ok)
+		{
+			char name[MAXSTR];
+			ok = get_tform_title(ctx->form, name, sizeof(name))
+				&& strneq(name, "Form with choosers", qstrlen("Form with choosers"));
+		}
+		return ok ? AST_ENABLE_FOR_FORM : AST_DISABLE_FOR_FORM;
+	}
+};
+static formchooser_ah_t formchooser_ah;
+
+static const action_desc_t action_IDA_choser = ACTION_DESC_LITERAL(
+	"Choser",
+	"User Choser", 
+	&formchooser_ah, 
+	"Ctrl-K", 
+	NULL, 
+	12);
+
+
+
+
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
 	{ "TRegister", "Taint Register", &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL } },
 	{ "TMemory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL } },
 	{ "Solver", "Solve formula", &action_IDA_solver, { BWN_DISASM, NULL } },
+	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

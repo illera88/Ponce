@@ -73,3 +73,20 @@ extern unsigned int tainted_functions_index;
 extern Trigger runtimeTrigger;
 extern triton::arch::Instruction* last_triton_instruction;
 extern bool automatically_continue_after_step;
+
+
+//User options
+struct cmdOptionStruct{
+	bool showDebugInfo = false;
+	bool manageSymbolicIndexing = false;
+	bool enableTracingAsTainted = false;
+	bool limitInstructionsTracingMode = false;
+	bool limitInstructionsBeforeAskingUser = false;
+	bool limitTime = false;
+	bool onlyTainting = false;
+	bool RenameFunctionNames = false;
+	bool automatedTainting = false;
+	bool taintArgv0 = false;
+	bool taintArgc = false;	
+};
+extern struct cmdOptionStruct cmdOptions;

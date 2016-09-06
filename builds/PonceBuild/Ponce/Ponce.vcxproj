@@ -25,6 +25,7 @@
     <ClInclude Include="..\..\..\Ponce\src\actions.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\callbacks.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\globals.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\tainting.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\trigger.hpp" />
@@ -34,6 +35,7 @@
     <ClCompile Include="..\..\..\Ponce\src\actions.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\callbacks.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\context.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\formChoser.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\globals.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\main.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\tainting.cpp" />

@@ -39,6 +39,9 @@
     <ClInclude Include="..\..\..\Ponce\src\utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Ponce\src\actions.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Ponce\src\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Ponce\src\formChoser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
