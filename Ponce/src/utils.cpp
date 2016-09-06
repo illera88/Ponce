@@ -20,8 +20,8 @@ void start_tainting_analysis()
 	{
 		runtimeTrigger.enable();
 		is_something_tainted = true;
-		if (ENABLE_STEP_INTO_WHEN_TAINTING)
-			automatically_continue_after_step = true;
+		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
+			automatically_continue_after_step = true;*/
 			//enable_insn_trace(true);
 	}
 }

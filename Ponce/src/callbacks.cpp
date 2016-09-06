@@ -130,6 +130,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (DEBUG)
 				msg("[+] Starting the debugged process. Reseting all the engines.\n");
 			triton_restart_engines();
+			clear_requests_queue();
 			break;
 		}
 		case dbg_step_into:
@@ -165,13 +166,18 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Continue stepping
 			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
 			if (automatically_continue_after_step)
+			{
 				if (notification_code == dbg_step_into)
 				{
-					msg("request_step_into();\n");
+					msg("dbg_step request_step_into();\n");
 					request_step_into();
 				}
 				else
+				{
+					msg("dbg_step request_step_over();\n");
 					request_step_over();
+				}
+			}
 			break;
 		}
 		case dbg_trace:
@@ -211,10 +217,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
-			msg("dbg_bpt\n");
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
+			msg("dbg_bpt at "HEX_FORMAT"\n", pc);
+			//This variable defines if a breakpoint is a user-defined breakpoint or not
+			bool user_bp = true;
 			//msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
@@ -230,15 +238,17 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
 					{
+						//If it a breakpoint the plugin set not a user-defined bp
+						user_bp = false;
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
-						msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
-						if (ENABLE_STEP_INTO_WHEN_TAINTING && automatically_continue_after_step)
+						//msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
+						if (ENABLE_STEP_INTO_WHEN_TAINTING)// && automatically_continue_after_step)
 						{
-							msg("after bp request_step_into\n");
-							//request_step_into();
-							request_set_resume_mode(get_current_thread(), RESMOD_INTO);
-							continue_process();
+							automatically_continue_after_step = true;
+							//msg("after bp request_step_into\n");
+							request_step_into();
+							run_requests();
 						}
 						else
 							continue_process();
@@ -246,6 +256,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					break;
 				}
 			}
+			//If it is a user-defined bp we disable the automatic stepping
+			if (user_bp)
+				automatically_continue_after_step = false;
 			break;
 		}
 		case dbg_process_exit:
