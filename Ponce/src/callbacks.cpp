@@ -4,7 +4,7 @@
 #include "globals.hpp"
 #include "context.hpp"
 #include "utils.hpp"
-#include "tainting.hpp"
+#include "tainting_n_symbolic.hpp"
 
 //IDA
 #include <ida.hpp>
@@ -14,6 +14,7 @@
 
 //Triton
 #include "api.hpp"
+#include "x86Specifications.hpp"
 
 std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
@@ -25,6 +26,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 
 	//We delete the last_instruction
+	//Maybe in the future we need to keep the instruction in memory to negate the condition at any moment
 	if (last_triton_instruction != NULL)
 		delete last_triton_instruction;
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
@@ -67,8 +69,8 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
-	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
-		get_tainted_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
+	if (ADD_COMMENTS_WITH_CONTROLLED_OPERAND)
+		get_controlled_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
 
 	if (ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS)
 		add_symbolic_expressions(tritonInst, pc);
@@ -77,11 +79,11 @@ void tritonize(ea_t pc, thid_t threadID)
 	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
 		op->setTrust(true);
 
-
-	if (tritonInst->isTainted())
+	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
+	if (tritonInst->isTainted() || tritonInst->isSymbolized())
 	{
 		if (DEBUG)
-			msg("[!] Instruction tainted at "HEX_FORMAT"\n", pc);
+			msg("[!] Instruction %s at "HEX_FORMAT"\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
 		if (RENAME_TAINTED_FUNCTIONS)
 			rename_tainted_function(pc);
 		if (tritonInst->isBranch()) // Check if it is a conditional jump
@@ -89,6 +91,21 @@ void tritonize(ea_t pc, thid_t threadID)
 		else
 			set_item_color(pc, COLOR_TAINTED);
 	}
+
+	if (tritonInst->isBranch() && tritonInst->isSymbolized())
+	{
+		triton::__uint addr1 = (triton::__uint)tritonInst->getNextAddress();
+		triton::__uint addr2 = (triton::__uint)tritonInst->operands[0].getImmediate().getValue();
+		if (DEBUG)
+			msg("[+] Branch symbolized detected at "HEX_FORMAT": "HEX_FORMAT" or "HEX_FORMAT", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+		triton::__uint ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
+		if (tritonInst->isConditionTaken())
+			myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1));
+		else
+			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2));
+	}
+	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
+	//instructions_executed_map[pc].push_back(tritonInst);
 }
 
 /*This function is called when we taint a register that is used in the current instruction*/
@@ -108,19 +125,19 @@ void triton_restart_engines()
 		msg("[+] Restarting triton engines...\n");
 	//We reset everything at the beginning
 	triton::api.resetEngines();
-	//We disable the tainting engine if the user doesn't want to use it
-	if (!ENABLE_TAINTING_ENGINE)
-		triton::api.getTaintEngine()->enable(false);
-	//We disable the symbolic engine if the user doesn't want to use it
-	if (!ENABLE_SYMBOLIC_ENGINE)
-		triton::api.getSymbolicEngine()->enable(false);
+	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
+	triton::api.getTaintEngine()->enable(MODE == TAINT);
+	//ToDo: Replace when we use the last triton lib
+	//triton::api.getSymbolicEngine()->enable(MODE == SYMBOLIC);
+	triton::api.getSymbolicEngine()->enable(true);
 	runtimeTrigger.disable();
-	is_something_tainted = false;
+	is_something_tainted_or_symbolize = false;
 	tainted_functions_index = 0;
 	//Reset instruction counter
 	total_number_traced_ins = current_trace_counter = 0;
 	breakpoint_pending_actions.clear();
-	set_automatic_tainting();
+	set_automatic_taint_n_simbolic();
+	myPathConstraints.clear();
 }
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
@@ -311,6 +328,11 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						break;
 					}
 					if (action_list[i].view_type[j] == view_type){
+						//We only attach to the popup if the action makes sense with the current configuration
+						/*if (MODE == TAINT)
+						{
+							if (strstr(action_list[i].name, "Taint") == action_list[i].name)
+						}*/
 						attach_action_to_popup(form, popup_handle, action_list[i].name, NULL, SETMENU_FIRST);
 						// Here we should decide if we want the action to be activated or not. To disable the action use the next line
 						//enable_menu_item(action_list[i].name,false);

@@ -1,5 +1,7 @@
 /*This file containts all the global variables used around the plugin code*/
+#include <map>
 //Ponce
+#include "globals.hpp"
 #include "trigger.hpp"
 //Triton
 #include "api.hpp"
@@ -14,8 +16,8 @@ unsigned int current_trace_counter = 0;
 unsigned int max_traced_instructions = 100;
 //A variable to store if the plugin has hooked the ui and debugger events
 bool hooked = false;
-//Is it something tainted?
-bool is_something_tainted = false;
+//Is it something tainted or symbolize?
+bool is_something_tainted_or_symbolize = false;
 //This index is used when we are renaming the tainted funcitons, to know the index
 unsigned int tainted_functions_index = 0;
 //Trigger to enable/disable triton
@@ -24,3 +26,8 @@ Trigger runtimeTrigger;
 triton::arch::Instruction* last_triton_instruction;
 //This variable is use to automatically do step into after a previous step_into, and in this way analyze a instruction by instruction a program
 bool automatically_continue_after_step = false;
+//This map stores all the executed instructions, the key is the address, and the value is a list of TritonInstructions. 
+//One instruction could be executed more than one time
+//std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
+//This variable stores all the path constraints executed before reach the current instruction
+std::vector<PathConstraint> myPathConstraints;

@@ -14,12 +14,12 @@
 #include "globals.hpp"
 
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
-void start_tainting_analysis()
+void start_tainting_or_symbolic_analysis()
 {
-	if (!is_something_tainted)
+	if (!is_something_tainted_or_symbolize)
 	{
 		runtimeTrigger.enable();
-		is_something_tainted = true;
+		is_something_tainted_or_symbolize = true;
 		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
 			automatically_continue_after_step = true;*/
 			//enable_insn_trace(true);
@@ -46,6 +46,15 @@ void taint_all_memory(triton::__uint address, triton::__uint size)
 	for (unsigned int i = 0; i < size; i++)
 	{
 		triton::api.taintMemory(address + i);
+	}
+}
+
+/*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
+void symbolize_all_memory(triton::__uint address, triton::__uint size)
+{
+	for (unsigned int i = 0; i < size; i++)
+	{
+		triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(address + i, 1, 0));
 	}
 }
 

@@ -43,16 +43,21 @@
 #define PAINT_EXECUTED_INSTRUCTIONS true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
-#define ENABLE_TAINTING_ENGINE true
+//The two different modes, only one can be activated at one time
+#define TAINT 0
+#define SYMBOLIC 1
+//This is the current mode
+#define MODE SYMBOLIC
 #define ENABLE_SYMBOLIC_ENGINE true
 #define TAINT_ARGV true
 #define TAINT_ARGC true
 #define SKIP_ARGV0 true
 #define TAINT_END_OF_STRING false
-#define ADD_COMMENTS_WITH_TAINTING_INFORMATION true
+#define ADD_COMMENTS_WITH_CONTROLLED_OPERAND true
 #define RENAME_TAINTED_FUNCTIONS false
 #define RENAME_TAINTED_FUNCTIONS_PREFIX "T%03d_"
-#define ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS true
+#define ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS false
+
 
 
 struct action{
@@ -69,12 +74,13 @@ extern unsigned int total_number_traced_ins;
 extern unsigned int current_trace_counter;
 extern unsigned int max_traced_instructions;
 extern bool hooked;
-extern bool is_something_tainted;
+extern bool is_something_tainted_or_symbolize;
 extern unsigned int tainted_functions_index;
 extern Trigger runtimeTrigger;
 extern triton::arch::Instruction* last_triton_instruction;
 extern bool automatically_continue_after_step;
-
+//We could use this if we want to keep all the instructions in memory
+//extern std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
 
 //User options
 struct cmdOptionStruct{
@@ -91,3 +97,19 @@ struct cmdOptionStruct{
 	bool taintArgc = false;	
 };
 extern struct cmdOptionStruct cmdOptions;
+
+struct PathConstraint{
+	triton::__uint conditionRipId;
+	triton::__uint conditionAddr;
+	triton::__uint takenAddr;
+	triton::__uint notTakenAddr;
+
+	PathConstraint(triton::__uint conditionRipId, triton::__uint conditionAddr, triton::__uint takenAddr, triton::__uint notTakenAddr)
+	{
+		this->conditionRipId = conditionRipId;
+		this->conditionAddr = conditionAddr;
+		this->takenAddr = takenAddr;
+		this->notTakenAddr = notTakenAddr;
+	}
+};
+extern std::vector<PathConstraint> myPathConstraints;
