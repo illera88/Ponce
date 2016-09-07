@@ -45,18 +45,55 @@ void triton_init()
 //--------------------------------------------------------------------------
 void idaapi run(int)
 {
-	uval_t ln = 1;
-	char buf[MAXSTR] = "hola";
 
-	ushort check = 0x12;
-	bgcolor_t bgc = 0x556677;
-	uval_t x_op1 = -1;
-	uval_t y_op1 = -1;
-	uval_t w_op1 = -1;
-	uval_t h_op1 = -1;
-	if (AskUsingForm_c(form, modcb, &ln, buf, &x_op1, &y_op1, &w_op1, &h_op1, &check, btn_cb, &bgc) > 0)
-	//if (AskUsingForm_c(form, modcb, &cmdOptions) > 0)
+	if (AskUsingForm_c(form, 
+		modcb, 
+		&cmdOptions.limitInstructionsBeforeAskingUser, 
+		&cmdOptions.limitTime,
+		&cmdOptions.limitInstructionsTracingMode,
+		&cmdOptions.showDebugInfo,
+		&cmdOptions.manageSymbolicIndexing,
+		&cmdOptions.enableTracingAsTainted,
+		&cmdOptions.onlyTainting,
+		&cmdOptions.RenameFunctionNames,
+		&cmdOptions.automatedTainting,
+		&cmdOptions.taintArgv0,
+		&cmdOptions.taintArgc,
+		&cmdOptions.taintRecv,
+		&cmdOptions.taintFread
+		) > 0)
+	//if (AskUsingForm_c(form, modcb) > 0)
 	{
+		msg("%lld\n%lld\n%lld\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n", 
+			cmdOptions.limitInstructionsBeforeAskingUser,
+			cmdOptions.limitTime,
+			cmdOptions.limitInstructionsTracingMode ,
+			cmdOptions.showDebugInfo ? "true" : "false",
+			cmdOptions.manageSymbolicIndexing ? "true" : "false",
+			cmdOptions.enableTracingAsTainted ? "true" : "false",
+			cmdOptions.onlyTainting ? "true" : "false",
+			cmdOptions.RenameFunctionNames ? "true" : "false",
+			cmdOptions.automatedTainting ? "true" : "false",
+			cmdOptions.taintArgv0 ? "true" : "false",
+			cmdOptions.taintArgc ? "true" : "false",
+			cmdOptions.taintRecv ? "true" : "false",
+			cmdOptions.taintFread ? "true" : "false");
+
+		/*msg("%d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+		cmdOptions.limitInstructionsBeforeAskingUser,
+		cmdOptions.limitTime,
+		cmdOptions.limitInstructionsTracingMode,
+		cmdOptions.showDebugInfo ? "true" : "false",
+		cmdOptions.manageSymbolicIndexing ? "true" : "false",
+		cmdOptions.enableTracingAsTainted ? "true" : "false",
+		cmdOptions.onlyTainting ? "true" : "false",
+		cmdOptions.RenameFunctionNames ? "true" : "false",
+		cmdOptions.automatedTainting ? "true" : "false",
+		cmdOptions.taintArgv0 ? "true" : "false",
+		cmdOptions.taintArgc ? "true" : "false",
+		cmdOptions.taintRecv ? "true" : "false",
+		cmdOptions.taintFread ? "true" : "false");*/
+
 		/*msg("operand: %s\n", buf);
 		msg("check = %d\n", check);
 		msg("dim = %a %a %a %a\n", x_op1, y_op1, w_op1, h_op1);
