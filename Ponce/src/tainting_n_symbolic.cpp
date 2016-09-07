@@ -118,30 +118,43 @@ void set_automatic_taint_n_simbolic()
 /*This function gets the tainted operands for an instruction and add a comment to that instruction with this info*/
 void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonInst, ea_t pc)//, std::list<triton::arch::OperandWrapper> &tainted_reg_operands)
 {
-	//ToDo: Externalize this to another function
 	std::stringstream comment;
+	std::stringstream regs_controlled;
+	std::stringstream mems_controlled;
 
 	/*Here we check all the registers and memory read to know which are tainted*/
 	auto regs = tritonInst->getReadRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
 		auto reg = it->first;
-		if (MODE == TAINT && triton::api.isRegisterTainted(reg))
-			comment << "Reg " << reg.getName() << " is tainted ";
-		if (MODE == SYMBOLIC && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized())
-			comment << "Reg " << reg.getName() << " is symbolized ";
+		if ((MODE == TAINT && triton::api.isRegisterTainted(reg)) ||
+			(MODE == SYMBOLIC && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized()))
+			regs_controlled << reg.getName() << " ";
+	}
+	if (regs_controlled.str().size() > 0)
+	{
+		if (MODE == TAINT)
+			comment << "Tainted regs: " << regs_controlled.str();
+		else
+			comment << "Symbolized regs: " << regs_controlled.str();
 	}
 	auto accesses = tritonInst->getLoadAccess();
 	for (auto it = accesses.begin(); it != accesses.end(); it++)
 	{
 		auto mem = it->first;
 		//For the memory we can't use the operand because they don't have yet the real value of the address
-		if (MODE == TAINT && triton::api.isMemoryTainted(mem))
-			comment << "Mem 0x" << std::hex << mem.getAddress() << " is tainted ";
-		if (MODE == SYMBOLIC && triton::api.getSymbolicMemoryId(mem.getAddress()) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicMemoryId(mem.getAddress()))->isSymbolized())
-			comment << "Mem 0x" << std::hex << mem.getAddress() << " is symbolized ";
+		if ((MODE == TAINT && triton::api.isMemoryTainted(mem)) ||
+			(MODE == SYMBOLIC && triton::api.getSymbolicMemoryId(mem.getAddress()) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicMemoryId(mem.getAddress()))->isSymbolized()))
+			mems_controlled << "0x" << std::hex << mem.getAddress() << " ";
 	}
-
+	if (mems_controlled.str().size() > 0)
+	{
+		if (MODE == TAINT)
+			comment << "Tainted memory: " << mems_controlled.str();
+		else
+			comment << "Symbolized memory: " << mems_controlled.str();
+	}
+		
 	//We set the comment
 	if (comment.str().size() > 0)
 	{
