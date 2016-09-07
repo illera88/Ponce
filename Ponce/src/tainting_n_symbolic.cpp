@@ -28,7 +28,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		if (MODE == TAINT)
 			triton::api.taintMemory(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
 		else
-			triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
+			triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc), "argc");
 		if (DEBUG)
 			msg("[!] argc %s\n", MODE == TAINT ? "Tainted" : "Symbolized");
 #elif 
@@ -63,7 +63,11 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			if (MODE == TAINT)
 				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j, 1, current_char));
 			else
-				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, 1, current_char));
+			{
+				char comment[256];
+				sprintf_s(comment, 256, "argv[%d][%d]", i, j);
+				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, 1, current_char), comment);
+			}
 			j++;
 		} while (current_char != '\0');
 		if (j > 1)

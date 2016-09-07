@@ -50,11 +50,11 @@ void taint_all_memory(triton::__uint address, triton::__uint size)
 }
 
 /*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(triton::__uint address, triton::__uint size)
+void symbolize_all_memory(triton::__uint address, triton::__uint size, char *comment)
 {
 	for (unsigned int i = 0; i < size; i++)
 	{
-		triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(address + i, 1, 0));
+		triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(address + i, 1, 0), comment);
 	}
 }
 

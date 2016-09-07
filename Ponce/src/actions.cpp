@@ -63,7 +63,7 @@ static const action_desc_t action_IDA_taint_register = ACTION_DESC_LITERAL(
 struct ah_symbolize_register_t : public action_handler_t
 {
 	/*Event called when the user symbolize a register*/
-	virtual int idaapi activate(action_activation_ctx_t *)
+	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
 		// Get the address range selected, or return false if there was no selection
 		char selected[20];
@@ -73,7 +73,9 @@ struct ah_symbolize_register_t : public action_handler_t
 			if (register_to_symbolize != NULL)
 			{
 				msg("[!] Symbolizing register %s\n", selected);
-				triton::api.convertRegisterToSymbolicVariable(*register_to_symbolize);
+				char comment[256];
+				sprintf_s(comment, 256, "Reg %s at address: "HEX_FORMAT"\n", selected, action_activation_ctx->cur_ea);
+				triton::api.convertRegisterToSymbolicVariable(*register_to_symbolize, comment);
 				/*When the user symbolize something for the first time we should enable step_tracing*/
 				start_tainting_or_symbolic_analysis();
 				//If the register symbolize is a source for the instruction then we need to reanalize the instruction
@@ -231,7 +233,9 @@ struct ah_symbolize_memory_t : public action_handler_t
 		if (DEBUG)
 			msg("[+] Symbolizing memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
-		symbolize_all_memory(selection_starts, selection_length);
+		char comment[256];
+		sprintf_s(comment, 256, "Mem "HEX_FORMAT"-"HEX_FORMAT" at address: "HEX_FORMAT"\n", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+		symbolize_all_memory(selection_starts, selection_length, comment);
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now
@@ -278,7 +282,7 @@ static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
 	200); //Optional: the action icon (shows when in menus/toolbars)
 
 
-struct printsel_Solver : public action_handler_t
+struct ah_solve_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
@@ -287,9 +291,10 @@ struct printsel_Solver : public action_handler_t
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (DEBUG)
-				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
+				msg("[+] Solving condition at "HEX_FORMAT"\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
-			for (unsigned int i = 0; i < myPathConstraints.size(); i++)
+			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
+			for (unsigned int i = myPathConstraints.size() - 1; i >= 0; i--)
 			{
 				auto path_constraint = myPathConstraints[i];
 				if (path_constraint.conditionAddr == pc)
@@ -299,18 +304,21 @@ struct printsel_Solver : public action_handler_t
 					unsigned int j;
 					for (j = 0; j < i; j++)
 					{
-						msg("Keeping condition %d\n", j);
+						if (EXTRADEBUG)
+							msg("Keeping condition %d\n", j);
 						triton::__uint ripId = myPathConstraints[j].conditionRipId;
 						auto symExpr = triton::api.getFullAstFromId(ripId);
 						triton::__uint takenAddr = myPathConstraints[j].takenAddr;
 						expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 					}
-					msg("Inverting condition %d\n", i);
+					if (EXTRADEBUG)
+						msg("Inverting condition %d\n", i);
 					//And now we negate the selected condition
 					triton::__uint ripId = myPathConstraints[i].conditionRipId;
 					auto symExpr = triton::api.getFullAstFromId(ripId);
 					triton::__uint notTakenAddr = myPathConstraints[i].notTakenAddr;
-					msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
+					if (EXTRADEBUG)
+						msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
 					expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 					//Time to solve
 					auto final_expr = triton::ast::compound(expr);
@@ -318,13 +326,44 @@ struct printsel_Solver : public action_handler_t
 						msg("[+] Solving formula...\n");
 					std::stringstream ss;
 					ss << final_expr;
+					if (EXTRADEBUG)
+						msg("Formula: %s\n", ss.str().c_str());
 					auto model = triton::api.getModel(final_expr);
 					if (model.size() > 0)
 					{
-						msg("We got a solution!\n");
+						msg("Solution found! Values:\n");
+						for (auto it = model.begin(); it != model.end(); it++)
+						{
+							auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
+							std::string  symbVarComment = symbVar->getComment();
+							triton::engines::symbolic::symkind_e symbVarKind = symbVar->getKind();
+							triton::uint512 secondValue = it->second.getValue();
+							/*if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
+								//newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
+							else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
+								//newinput->regOperand.push_back(triton::arch::Register(symbVar->getKindValue(), secondValue));*/
+							//We represent the number different 
+							switch (symbVar->getSize())
+							{
+								case 8:
+									msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>());
+									break;
+								case 16:
+									msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
+									break;
+								case 32:
+									msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint>());
+									break;
+								case 64:
+									msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
+									break;
+								default:
+									msg("Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
+							}
+						}
 					}
 					else
-						msg("No solutions :(\n");
+						msg("No solution found :(\n");
 					break;
 				}
 			}
@@ -337,14 +376,153 @@ struct printsel_Solver : public action_handler_t
 		return AST_ENABLE_ALWAYS;
 	}
 };
-static printsel_Solver solver;
+static ah_solve_t ah_solve;
 
-static const action_desc_t action_IDA_solver = ACTION_DESC_LITERAL(
-	"Solver", // The action name. This acts like an ID and must be unique
+static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
+	"ah_solve", // The action name. This acts like an ID and must be unique
 	"Solve formula", //The action text.
-	&solver, //The action handler.
+	&ah_solve, //The action handler.
 	"Ctrl + S", //Optional: the action shortcut
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
+	201); //Optional: the action icon (shows when in menus/toolbars)
+
+struct ah_negate_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
+	{
+		//This is only working from the disassembly windows
+		if (action_activation_ctx->form_type == BWN_DISASM)
+		{
+			ea_t pc = action_activation_ctx->cur_ea;
+			if (DEBUG)
+				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
+			//We need to get the instruction associated with this address, we look for the addres in the map
+			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
+			for (unsigned int i = myPathConstraints.size() - 1; i >= 0; i--)
+			{
+				auto path_constraint = myPathConstraints[i];
+				if (path_constraint.conditionAddr == pc)
+				{
+					std::vector <triton::ast::AbstractNode *> expr;
+					//First we add to the expresion all the previous path constrains
+					unsigned int j;
+					for (j = 0; j < i; j++)
+					{
+						if (EXTRADEBUG)
+							msg("Keeping condition %d\n", j);
+						triton::__uint ripId = myPathConstraints[j].conditionRipId;
+						auto symExpr = triton::api.getFullAstFromId(ripId);
+						triton::__uint takenAddr = myPathConstraints[j].takenAddr;
+						expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
+					}
+					if (EXTRADEBUG)
+						msg("Inverting condition %d\n", i);
+					//And now we negate the selected condition
+					triton::__uint ripId = myPathConstraints[i].conditionRipId;
+					auto symExpr = triton::api.getFullAstFromId(ripId);
+					triton::__uint notTakenAddr = myPathConstraints[i].notTakenAddr;
+					if (EXTRADEBUG)
+						msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
+					expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
+					//Time to solve
+					auto final_expr = triton::ast::compound(expr);
+					if (DEBUG)
+						msg("[+] Solving formula...\n");
+					std::stringstream ss;
+					ss << final_expr;
+					if (EXTRADEBUG)
+						msg("Formula: %s\n", ss.str().c_str());
+					auto model = triton::api.getModel(final_expr);
+					if (model.size() > 0)
+					{
+						msg("Solution found! Values:\n");
+						for (auto it = model.begin(); it != model.end(); it++)
+						{
+							auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
+							std::string  symbVarComment = symbVar->getComment();
+							triton::engines::symbolic::symkind_e symbVarKind = symbVar->getKind();
+							triton::uint512 secondValue = it->second.getValue();
+							/*if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
+							//newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
+							else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
+							//newinput->regOperand.push_back(triton::arch::Register(symbVar->getKindValue(), secondValue));*/
+							//We represent the number different 
+							switch (symbVar->getSize())
+							{
+							case 8:
+								msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>());
+								break;
+							case 16:
+								msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
+								break;
+							case 32:
+								msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint>());
+								break;
+							case 64:
+								msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
+								break;
+							default:
+								msg("Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
+							}
+							//We need to inject the solution in the memory/registers
+							if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
+							{
+								auto address = symbVar->getKindValue();
+								put_many_bytes((ea_t)address, &secondValue, symbVar->getSize() / 8);
+							}
+							else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
+							{
+								auto reg = symbVar->getKindValue();
+								triton::arch::Register r = triton::arch::Register((uint32)reg, 0);
+								set_reg_val(r.getName().c_str(), (uint64)secondValue);
+							}
+						}
+						//We need to modify the last path constrain
+						auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
+						myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
+						myPathConstraints[myPathConstraints.size() - 1].takenAddr = temp;
+						//We need to modify some of the symbolized flag to negate the condition
+						if (last_triton_instruction->getAddress() == pc)
+						{
+							auto regs = last_triton_instruction->getReadRegisters();
+							for (auto it = regs.begin(); it != regs.end(); it++)
+							{
+								auto reg = it->first;
+								//If the register is a flag and it is symbolized, we have a candidate to negate
+								if (reg.isFlag() && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized())
+								{
+									uint64 val;
+									auto old_value = get_reg_val(reg.getName().c_str(), &val);
+									//Negating flag
+									val = !val;
+									set_reg_val(reg.getName().c_str(), val);
+									break;
+								}
+							}
+						}
+					}
+					else
+						msg("No solution found :(\n");
+					break;
+				}
+			}
+		}
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static ah_negate_t ah_negate;
+
+static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
+	"ah_negate", // The action name. This acts like an ID and must be unique
+	"Negate condition", //The action text.
+	&ah_negate, //The action handler.
+	"Ctrl + N", //Optional: the action shortcut
+	"Negate the current condition", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
 
@@ -388,7 +566,8 @@ struct action action_list[] =
 	{ "ah_symbolize_register", "Symbolize Register", &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL } },
 	{ "ah_taint_memory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL } },
 	{ "ah_symbolize_memory", "Symbolize Memory", &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL } },
-	{ "Solver", "Solve formula", &action_IDA_solver, { BWN_DISASM, NULL } },
+	{ "ah_solve", "Solve formula", &action_IDA_solve, { BWN_DISASM, NULL } },
+	{ "ah_negate", "Negate condition", &action_IDA_negate, { BWN_DISASM, NULL } },
 	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };
