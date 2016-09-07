@@ -64,6 +64,8 @@ struct action{
 	char* label;
 	const action_desc_t* callback;
 	int view_type[44]; // This are the posible views
+	bool taint;
+	bool symbolic;
 };
 
 //All the global variables:

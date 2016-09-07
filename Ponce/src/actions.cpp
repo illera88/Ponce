@@ -45,9 +45,20 @@ struct ah_taint_register_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Only in runtime mode
+		if (runtimeTrigger.getState())
+		{
+			char selected[20];
+			if (get_highlighted_identifier(selected, 20, 0))
+			{
+				triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
+				if (register_to_taint != NULL)
+					return AST_ENABLE;
+			}
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_taint_register_t ah_taint_register;
@@ -96,9 +107,20 @@ struct ah_symbolize_register_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Only in runtime mode
+		if (runtimeTrigger.getState())
+		{
+			char selected[20];
+			if (get_highlighted_identifier(selected, 20, 0))
+			{
+				triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
+				if (register_to_taint != NULL)
+					return AST_ENABLE;
+			}
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_symbolize_register_t ah_symbolize_register;
@@ -181,9 +203,23 @@ struct ah_taint_memory_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Only in runtime mode
+		if (runtimeTrigger.getState())
+		{
+			if (action_update_ctx_t->form_type == BWN_DUMP)
+			{
+				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
+				{
+					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
+					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
+					if (selection_ends - selection_starts > 0)
+						return AST_ENABLE;
+				}
+			}
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_taint_memory_t ah_taint_memory;
@@ -266,9 +302,23 @@ struct ah_symbolize_memory_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Only in runtime mode
+		if (runtimeTrigger.getState())
+		{
+			if (action_update_ctx_t->form_type == BWN_DUMP)
+			{
+				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
+				{
+					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
+					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
+					if (selection_ends - selection_starts > 0)
+						return AST_ENABLE;
+				}
+			}
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_symbolize_memory_t ah_symbolize_memory;
@@ -371,9 +421,19 @@ struct ah_solve_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Only enabled with symbolize conditions
+		//If we are in runtime and it is the last instruction we can test if it is symbolize
+		if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+			return AST_ENABLE;
+		//If we are in offline mode we can check if the condition is in the path constrains
+		for (unsigned int i = 0; i < myPathConstraints.size(); i++)
+		{
+			if (myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
+				return AST_ENABLE;
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_solve_t ah_solve;
@@ -510,9 +570,17 @@ struct ah_negate_t : public action_handler_t
 		return 1;
 	}
 
-	virtual action_state_t idaapi update(action_update_ctx_t *)
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		return AST_ENABLE_ALWAYS;
+		//Negate it can only be used in runtime
+		if (runtimeTrigger.getState())
+		{
+			//Only enabled with symbolize conditions
+			//If we are in runtime and it is the last instruction we can test if it is symbolize
+			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+				return AST_ENABLE;
+		}
+		return AST_DISABLE;
 	}
 };
 static ah_negate_t ah_negate;
@@ -562,12 +630,12 @@ static const action_desc_t action_IDA_choser = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-	{ "ah_taint_register", "Taint Register", &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL } },
-	{ "ah_symbolize_register", "Symbolize Register", &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL } },
-	{ "ah_taint_memory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL } },
-	{ "ah_symbolize_memory", "Symbolize Memory", &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL } },
-	{ "ah_solve", "Solve formula", &action_IDA_solve, { BWN_DISASM, NULL } },
-	{ "ah_negate", "Negate condition", &action_IDA_negate, { BWN_DISASM, NULL } },
+	{ "ah_taint_register", "Taint Register", &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false},
+	{ "ah_symbolize_register", "Symbolize Register", &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true},
+	{ "ah_taint_memory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
+	{ "ah_symbolize_memory", "Symbolize Memory", &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
+	{ "ah_solve", "Solve formula", &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
+	{ "ah_negate", "Negate condition", &action_IDA_negate, { BWN_DISASM, NULL }, false, true},
 	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

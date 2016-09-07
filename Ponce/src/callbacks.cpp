@@ -293,6 +293,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//msg("In dbg_process_exit, reseting everything\n");
 			//Do we want to unhook this event?
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
+			runtimeTrigger.disable();
 			break;
 		}
 	}
@@ -326,15 +327,15 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					if (action_list[i].view_type[j] == NULL){
 						break;
 					}
-					if (action_list[i].view_type[j] == view_type){
+					if (action_list[i].view_type[j] == view_type)
+					{
 						//We only attach to the popup if the action makes sense with the current configuration
-						/*if (MODE == TAINT)
+						if (MODE == TAINT && action_list[i].taint || MODE == SYMBOLIC && action_list[i].symbolic)
 						{
-							if (strstr(action_list[i].name, "Taint") == action_list[i].name)
-						}*/
-						attach_action_to_popup(form, popup_handle, action_list[i].name, NULL, SETMENU_FIRST);
-						// Here we should decide if we want the action to be activated or not. To disable the action use the next line
-						//enable_menu_item(action_list[i].name,false);
+							attach_action_to_popup(form, popup_handle, action_list[i].name, NULL, SETMENU_FIRST);
+						}
+						//To disable an action
+						//enable_menu_item(action_list[i].name, false);
 					}
 				}	
 			}
