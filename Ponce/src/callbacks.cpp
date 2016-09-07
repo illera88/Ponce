@@ -127,9 +127,8 @@ void triton_restart_engines()
 	triton::api.resetEngines();
 	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
 	triton::api.getTaintEngine()->enable(MODE == TAINT);
-	//ToDo: Replace when we use the last triton lib
-	//triton::api.getSymbolicEngine()->enable(MODE == SYMBOLIC);
-	triton::api.getSymbolicEngine()->enable(true);
+	triton::api.getSymbolicEngine()->enable(MODE == SYMBOLIC);
+	//triton::api.getSymbolicEngine()->enable(true);
 	runtimeTrigger.disable();
 	is_something_tainted_or_symbolize = false;
 	tainted_functions_index = 0;

@@ -27,7 +27,7 @@
     <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\globals.hpp" />
-    <ClInclude Include="..\..\..\Ponce\src\tainting.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\tainting_n_symbolic.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\trigger.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\utils.hpp" />
   </ItemGroup>
@@ -38,7 +38,7 @@
     <ClCompile Include="..\..\..\Ponce\src\formChoser.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\globals.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\main.cpp" />
-    <ClCompile Include="..\..\..\Ponce\src\tainting.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\tainting_n_symbolic.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\trigger.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\utils.cpp" />
   </ItemGroup>

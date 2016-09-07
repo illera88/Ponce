@@ -48,7 +48,6 @@
 #define SYMBOLIC 1
 //This is the current mode
 #define MODE SYMBOLIC
-#define ENABLE_SYMBOLIC_ENGINE true
 #define TAINT_ARGV true
 #define TAINT_ARGC true
 #define SKIP_ARGV0 true
