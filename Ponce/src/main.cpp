@@ -134,13 +134,13 @@ int idaapi init(void)
 {
 	for (int i = 0;; i++)
 	{
-		if (action_list[i].name == NULL){
+		if (action_list[i].action_decs == NULL){
 			break;
 		}
 		//Here we register all the actions
-		if (!register_action(*action_list[i].callback))
+		if (!register_action(*action_list[i].action_decs))
 		{
-			warning("Failed to register %s actions. Exiting Ponce plugin\n",action_list[i].name);
+			warning("Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
 			return PLUGIN_SKIP;
 		}	
 	}

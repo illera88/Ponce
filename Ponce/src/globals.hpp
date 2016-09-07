@@ -60,9 +60,7 @@
 
 
 struct action{
-	char* name;
-	char* label;
-	const action_desc_t* callback;
+	const action_desc_t* action_decs;
 	int view_type[44]; // This are the posible views
 	bool taint;
 	bool symbolic;
