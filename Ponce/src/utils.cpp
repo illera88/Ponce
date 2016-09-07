@@ -20,8 +20,8 @@ void start_tainting_analysis()
 	{
 		runtimeTrigger.enable();
 		is_something_tainted = true;
-		if (ENABLE_STEP_INTO_WHEN_TAINTING)
-			automatically_continue_after_step = true;
+		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
+			automatically_continue_after_step = true;*/
 			//enable_insn_trace(true);
 	}
 }
@@ -225,5 +225,16 @@ void rename_tainted_function(ea_t address)
 				msg("[+] Renaming function %s -> %s\n", func_name, new_func_name);
 			tainted_functions_index += 1;
 		}
+	}
+}
+
+void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
+{
+	for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++) 
+	{
+		auto expr = tritonInst->symbolicExpressions[exp_index];
+		std::ostringstream oss;
+		oss << expr;
+		add_long_cmt(address, false, oss.str().c_str());
 	}
 }

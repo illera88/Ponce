@@ -70,6 +70,9 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
 		get_tainted_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
 
+	if (ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS)
+		add_symbolic_expressions(tritonInst, pc);
+
 	/* Trust operands */
 	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
 		op->setTrust(true);
@@ -122,7 +125,7 @@ void triton_restart_engines()
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 {
-	msg("Notification code:%d\n",notification_code);
+	//msg("Notification code:%d\n",notification_code);
 	switch (notification_code)
 	{
 		case dbg_process_start:
@@ -130,12 +133,13 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (DEBUG)
 				msg("[+] Starting the debugged process. Reseting all the engines.\n");
 			triton_restart_engines();
+			clear_requests_queue();
 			break;
 		}
 		case dbg_step_into:
 		case dbg_step_over:
 		{
-			msg("dbg_step_?\n");
+			//msg("dbg_step_?\n");
 			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
 			/*if (ENABLE_TRACING_WHEN_TAINTING)
 				break;*/
@@ -143,7 +147,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-			msg("dbg_step_? at "HEX_FORMAT"\n", pc);
+			//msg("dbg_step_? at "HEX_FORMAT"\n", pc);
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
 			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
@@ -155,30 +159,35 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
 				tritonize(pc, tid);
 			}
-			else
+			/*else
 			{
 				if (last_triton_instruction == NULL)
 					msg("last_triton)isntructionn NULL\n");
 				else
 					msg("last_triton_instruction->getAddress(): "HEX_FORMAT"\n", last_triton_instruction->getAddress());
-			}
+			}*/
 			//Continue stepping
 			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
 			if (automatically_continue_after_step)
+			{
 				if (notification_code == dbg_step_into)
 				{
-					msg("request_step_into();\n");
+					//msg("dbg_step request_step_into();\n");
 					request_step_into();
 				}
 				else
+				{
+					//msg("dbg_step request_step_over();\n");
 					request_step_over();
+				}
+			}
 			break;
 		}
 		case dbg_trace:
 		{
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
-			msg("dbg_trace\n");
+			//msg("dbg_trace\n");
 			//Create the triton instance for the Instruction
 
 			thid_t tid = va_arg(va, thid_t);
@@ -211,10 +220,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
-			msg("dbg_bpt\n");
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
+			//msg("dbg_bpt at "HEX_FORMAT"\n", pc);
+			//This variable defines if a breakpoint is a user-defined breakpoint or not
+			bool user_bp = true;
 			//msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
@@ -230,15 +241,17 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
 					{
+						//If it a breakpoint the plugin set not a user-defined bp
+						user_bp = false;
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
-						msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
-						if (ENABLE_STEP_INTO_WHEN_TAINTING && automatically_continue_after_step)
+						//msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
+						if (ENABLE_STEP_INTO_WHEN_TAINTING)// && automatically_continue_after_step)
 						{
-							msg("after bp request_step_into\n");
-							//request_step_into();
-							request_set_resume_mode(get_current_thread(), RESMOD_INTO);
-							continue_process();
+							automatically_continue_after_step = true;
+							//msg("after bp request_step_into\n");
+							request_step_into();
+							run_requests();
 						}
 						else
 							continue_process();
@@ -246,6 +259,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					break;
 				}
 			}
+			//If it is a user-defined bp we disable the automatic stepping
+			if (user_bp)
+				automatically_continue_after_step = false;
 			break;
 		}
 		case dbg_process_exit:
