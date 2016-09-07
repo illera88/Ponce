@@ -77,16 +77,19 @@ extern bool automatically_continue_after_step;
 
 //User options
 struct cmdOptionStruct{
-	bool showDebugInfo = false;
-	bool manageSymbolicIndexing = false;
-	bool enableTracingAsTainted = false;
-	bool limitInstructionsTracingMode = false;
-	bool limitInstructionsBeforeAskingUser = false;
-	bool limitTime = false;
-	bool onlyTainting = false;
-	bool RenameFunctionNames = false;
-	bool automatedTainting = false;
-	bool taintArgv0 = false;
-	bool taintArgc = false;	
+	uint64 limitInstructionsTracingMode = 1000;
+	uint64 limitInstructionsBeforeAskingUser = 2000;
+	uint64 limitTime = 100; //seconds
+
+	ushort  showDebugInfo = false;
+	ushort  manageSymbolicIndexing = false;
+	ushort  enableTracingAsTainted = false;
+	ushort  onlyTainting = false;
+	ushort  RenameFunctionNames = false;
+	ushort  automatedTainting = false;
+	ushort  taintArgv0 = true;
+	ushort  taintArgc = true;
+	ushort  taintRecv = true;
+	ushort  taintFread = true;
 };
 extern struct cmdOptionStruct cmdOptions;

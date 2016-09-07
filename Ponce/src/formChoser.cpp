@@ -20,8 +20,9 @@ void idaapi btn_cb(TView *[], int)
 //--------------------------------------------------------------------------
 int idaapi modcb(int fid, form_actions_t &fa)
 {
-	ushort isActivated;
-	fa.get_checkbox_value(fid, &isActivated);
+	return 1;
+	ushort isActivated=0;
+	
 	
 	msg("fid is %d and it is: %d\n", fid, isActivated);
 	switch (fid)
@@ -33,39 +34,44 @@ int idaapi modcb(int fid, form_actions_t &fa)
 		msg("terminating\n");
 		break;
 	case 10:     // show debug info
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.showDebugInfo = isActivated ? 1 : 0;
 		break;
 	case 11:     // manage symbolic indexing
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.manageSymbolicIndexing = isActivated ? 1 : 0;
 		break;
 	case 12:     // enable tracing first time something is tainted
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.enableTracingAsTainted = isActivated ? 1 : 0;
 		break;
-	case 13:     // Limit the number of instructions in tracing mode
-		/*if (isActivated)
-			fa.enable_field(4, true);*/
-		cmdOptions.limitInstructionsTracingMode = isActivated ? 1 : 0;
-		break;
-	case 14:     // Limit of instructions to execute before ask to the user
-		cmdOptions.limitInstructionsBeforeAskingUser = isActivated ? 1 : 0;
-		break;
-	case 15:     // Time limit before ask user
-		cmdOptions.limitTime = isActivated ? 1 : 0;
-		break;
 	case 16:     // Only use tainting mode
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.onlyTainting = isActivated ? 1 : 0;
 		break;
 	case 17:     // Automatically rename the functions with tainted instructions/conditions
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.RenameFunctionNames = isActivated ? 1 : 0;
 		break;
 	case 18:     // Configure automated tainting
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.automatedTainting = isActivated ? 1 : 0;
 		break;
-	case 19:     // Taint argv[0]
+	case 19:     // taint argv[0]
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.taintArgv0 = isActivated ? 1 : 0;
 		break;
-	case 20:     // Taint argc
+	case 24:     // taint argc
+		fa.get_checkbox_value(fid, &isActivated);
 		cmdOptions.taintArgc = isActivated ? 1 : 0;
+		break;
+	case 25:     // taint recv
+		fa.get_checkbox_value(fid, &isActivated);
+		cmdOptions.taintRecv = isActivated ? 1 : 0;
+		break;
+	case 26:     // Taint fread
+		fa.get_checkbox_value(fid, &isActivated);
+		cmdOptions.taintFread = isActivated ? 1 : 0;
 		break;
 	default:
 		msg("unknown id %d\n", fid);
