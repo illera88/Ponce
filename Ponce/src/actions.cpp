@@ -47,8 +47,8 @@ struct ah_taint_register_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx)
 	{
-		//Only in runtime mode
-		if (runtimeTrigger.getState())
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK)
 		{
 			char selected[20];
 			if (get_highlighted_identifier(selected, 20, 0))
@@ -109,8 +109,8 @@ struct ah_symbolize_register_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		//Only in runtime mode
-		if (runtimeTrigger.getState())
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK)
 		{
 			char selected[20];
 			if (get_highlighted_identifier(selected, 20, 0))
@@ -205,8 +205,8 @@ struct ah_taint_memory_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		//Only in runtime mode
-		if (runtimeTrigger.getState())
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK)
 		{
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
@@ -304,8 +304,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		//Only in runtime mode
-		if (runtimeTrigger.getState())
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK)
 		{
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
@@ -572,8 +572,8 @@ struct ah_negate_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		//Negate it can only be used in runtime
-		if (runtimeTrigger.getState())
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK)
 		{
 			//Only enabled with symbolize conditions
 			//If we are in runtime and it is the last instruction we can test if it is symbolize
