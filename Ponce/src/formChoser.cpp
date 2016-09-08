@@ -162,7 +162,8 @@ void prompt_conf_window(void){
 
 
 		if (cmdOptions.showDebugInfo){
-			msg("limitInstructionsBeforeAskingUser: %lld\n"
+			msg("\n"
+				"limitInstructionsBeforeAskingUser: %lld\n"
 				"limitTime: %lld\n"
 				"limitInstructionsTracingMode: %lld\n"
 				"use_symbolic_engine: %s\n"

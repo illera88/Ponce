@@ -217,9 +217,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			current_trace_counter++;
 			total_number_traced_ins++;
 
-			if (limit_traced_instructions && current_trace_counter == max_traced_instructions)
+			if (cmdOptions.limitInstructionsTracingMode && current_trace_counter == cmdOptions.limitInstructionsTracingMode)
 			{
-				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", total_number_traced_ins, max_traced_instructions);
+				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
