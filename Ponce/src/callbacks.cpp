@@ -26,7 +26,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 
 	//We delete the last_instruction
-	//Maybe in the future we need to keep the instruction in memory to negate the condition at any moment
+	//Maybe in the future we need to keep the in instruction memory to negate the condition at any moment
 	if (last_triton_instruction != NULL)
 		delete last_triton_instruction;
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
@@ -39,8 +39,6 @@ void tritonize(ea_t pc, thid_t threadID)
 	//thid_t threadID = va_arg(va, thid_t);
 	/*char buf[50];
 	ua_mnem(pc, buf, sizeof(buf));*/
-	if (cmdOptions.showDebugInfo)
-		msg("[+] Triton At "HEX_FORMAT" thread id: %d\n", pc, threadID);
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, sizeof(opcodes));
 
@@ -61,6 +59,8 @@ void tritonize(ea_t pc, thid_t threadID)
 		msg("\n");
 		return;
 	}
+	if (cmdOptions.showDebugInfo)
+		msg("[+] Triton At "HEX_FORMAT": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
 	/*std::list<triton::arch::OperandWrapper> tainted_reg_operands;
 	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
@@ -141,7 +141,7 @@ void triton_restart_engines()
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 {
-	//msg("Notification code:%d\n",notification_code);
+	//msg("Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
 	switch (notification_code)
 	{
 		case dbg_process_start:
@@ -186,21 +186,28 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
 			if (automatically_continue_after_step)
 			{
-				if (notification_code == dbg_step_into)
+				//This is the wow64 switching, we need to skip it
+				if (last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
 				{
-					//msg("dbg_step request_step_into();\n");
-					request_step_into();
-				}
-				else
-				{
-					//msg("dbg_step request_step_over();\n");
+					msg("wow64 switching! request_step_over();\n");
 					request_step_over();
 				}
+				else// if (notification_code == dbg_step_into)
+				{
+					msg("dbg_step request_step_into();\n");
+					request_step_into();
+				}
+				/*else
+				{
+					msg("dbg_step request_step_over();\n");
+					request_step_over();
+				}*/
 			}
 			break;
 		}
 		case dbg_trace:
 		{
+			break;
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
 			//msg("dbg_trace\n");
@@ -265,7 +272,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						if (ENABLE_STEP_INTO_WHEN_TAINTING)// && automatically_continue_after_step)
 						{
 							automatically_continue_after_step = true;
-							//msg("after bp request_step_into\n");
+							msg("after bp request_step_into\n");
 							request_step_into();
 							run_requests();
 						}

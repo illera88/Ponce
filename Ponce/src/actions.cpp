@@ -635,7 +635,7 @@ struct action action_list[] =
 	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
 	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
-	{ &action_IDA_negate, { BWN_DISASM, NULL }},
+	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true},
 	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

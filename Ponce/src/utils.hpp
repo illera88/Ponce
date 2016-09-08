@@ -16,4 +16,5 @@ char read_char_from_ida(ea_t address);
 triton::__uint read_uint_from_ida(ea_t address);
 void rename_tainted_function(ea_t address);
 void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address);
+std::string notification_code_to_string(int notification_code);
 
