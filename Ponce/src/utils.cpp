@@ -248,3 +248,54 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 		add_long_cmt(address, false, oss.str().c_str());
 	}
 }
+
+std::string notification_code_to_string(int notification_code)
+{
+	switch (notification_code)
+	{
+		case 0:
+			return std::string("dbg_null");
+		case 1:
+			return std::string("dbg_process_start");
+		case 2:
+			return std::string("dbg_process_exit");
+		case 3:
+			return std::string("dbg_process_attach");
+		case 4:
+			return std::string("dbg_process_detach");
+		case 5:
+			return std::string("dbg_thread_start");
+		case 6:
+			return std::string("dbg_thread_exit");
+		case 7:
+			return std::string("dbg_library_load");
+		case 8:
+			return std::string("dbg_library_unload");
+		case 9:
+			return std::string("dbg_information");
+		case 10:
+			return std::string("dbg_exception");
+		case 11:
+			return std::string("dbg_suspend_process");
+		case 12:
+			return std::string("dbg_bpt");
+		case 13:
+			return std::string("dbg_trace");
+		case 14:
+			return std::string("dbg_request_error");
+		case 15:
+			return std::string("dbg_step_into");
+		case 16:
+			return std::string("dbg_step_over");
+		case 17:
+			return std::string("dbg_run_to");
+		case 18:
+			return std::string("dbg_step_until_ret");
+		case 19:
+			return std::string("dbg_bpt_changed");
+		case 20:
+			return std::string("dbg_last");
+		default:
+			return std::string("Not defined");
+	}
+}

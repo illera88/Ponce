@@ -635,7 +635,12 @@ struct action action_list[] =
 	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
 	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
+<<<<<<< HEAD
 	{ &action_IDA_negate, { BWN_DISASM, NULL }},
-	{&action_IDA_createSnapshot, { BWN_DISASM, NULL } },
+	{ "Snapshot", "Create Snapshot", &action_IDA_createSnapshot, { BWN_DISASM, NULL } },
+=======
+	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true},
+	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
+>>>>>>> e81e7f164f5d64fd733740b6851f4b9b62943a5a
 	{ NULL, NULL, NULL }
 };
