@@ -630,12 +630,12 @@ static const action_desc_t action_IDA_choser = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-	{ "ah_taint_register", "Taint Register", &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false},
-	{ "ah_symbolize_register", "Symbolize Register", &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true},
-	{ "ah_taint_memory", "Taint Memory", &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
-	{ "ah_symbolize_memory", "Symbolize Memory", &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
-	{ "ah_solve", "Solve formula", &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
-	{ "ah_negate", "Negate condition", &action_IDA_negate, { BWN_DISASM, NULL }, false, true},
+	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false},
+	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true},
+	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
+	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
+	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
+	{ &action_IDA_negate, { BWN_DISASM, NULL }},
 	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

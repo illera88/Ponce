@@ -318,7 +318,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			/*Iterate over all the actions*/
 			for (int i = 0;; i++)
 			{
-				if (action_list[i].name == NULL)
+				if (action_list[i].action_decs == NULL)
 					break;
 			
 				/*Iterate over the view types of every action*/
@@ -332,10 +332,11 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						//We only attach to the popup if the action makes sense with the current configuration
 						if (MODE == TAINT && action_list[i].taint || MODE == SYMBOLIC && action_list[i].symbolic)
 						{
-							attach_action_to_popup(form, popup_handle, action_list[i].name, NULL, SETMENU_FIRST);
+							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, NULL, SETMENU_FIRST);
+							
 						}
 						//To disable an action
-						//enable_menu_item(action_list[i].name, false);
+						//enable_menu_item(action_list[i].action_decs->name, false);
 					}
 				}	
 			}
