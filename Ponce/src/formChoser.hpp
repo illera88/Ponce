@@ -13,7 +13,6 @@ static const char form[] =
 //"@0:477[]\n"
 "Ponce Configuration\n\n"
 "%/"
-"<#number of instructions2#Limit of instructions to execute before ask to the user\t     :L22:10:10>\n"
 "<#time in seconds#Time limit before ask user\t                                  :L23:10:10>\n"
 "<#number of instructions1#Limit the number of instructions in tracing mode\t            :L21:10:10>\n"
 "\n"

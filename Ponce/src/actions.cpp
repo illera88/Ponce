@@ -594,7 +594,7 @@ static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
 
-struct formchooser_ah_t : public action_handler_t
+struct createSnapshot_ah_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
@@ -617,15 +617,15 @@ struct formchooser_ah_t : public action_handler_t
 		return ok ? AST_ENABLE_FOR_FORM : AST_DISABLE_FOR_FORM;
 	}
 };
-static formchooser_ah_t formchooser_ah;
+static createSnapshot_ah_t createSnapshot_ah;
 
-static const action_desc_t action_IDA_choser = ACTION_DESC_LITERAL(
-	"Choser",
-	"User Choser", 
-	&formchooser_ah, 
-	"Ctrl-K", 
+static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
+	"Snapshot",
+	"Create Snapshot", 
+	&createSnapshot_ah,
+	"Ctrl-S", 
 	NULL, 
-	12);
+	15);
 
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
@@ -636,6 +636,6 @@ struct action action_list[] =
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
 	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
 	{ &action_IDA_negate, { BWN_DISASM, NULL }},
-	//{ "Choser", "User Choser", &action_IDA_choser, { BWN_DISASM, NULL } },
+	{ "Snapshot", "Create Snapshot", &action_IDA_createSnapshot, { BWN_DISASM, NULL } },
 	{ NULL, NULL, NULL }
 };

@@ -85,7 +85,6 @@ extern bool automatically_continue_after_step;
 //User options
 struct cmdOptionStruct{
 	uint64 limitInstructionsTracingMode = 1000;
-	uint64 limitInstructionsBeforeAskingUser = 2000;
 	uint64 limitTime = 100; //seconds
 
 	//all this variables should be false and initialized in prompt_conf_window in utils.cpp
