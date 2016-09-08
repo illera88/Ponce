@@ -12,6 +12,7 @@
 //Ponce
 #include "utils.hpp"
 #include "globals.hpp"
+#include "formChoser.hpp"
 
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
 void start_tainting_or_symbolic_analysis()
@@ -230,7 +231,7 @@ void rename_tainted_function(ea_t address)
 			sprintf_s(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", tainted_functions_index, func_name);
 			//We need the start of the function we can have that info with our function find_function
 			set_name(find_function(func_name), new_func_name);
-			if (DEBUG)
+			if (cmdOptions.showDebugInfo)
 				msg("[+] Renaming function %s -> %s\n", func_name, new_func_name);
 			tainted_functions_index += 1;
 		}

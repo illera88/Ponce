@@ -167,7 +167,7 @@ struct ah_taint_memory_t : public action_handler_t
 
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		unsigned int selection_length = selection_ends - selection_starts + 1;
-		if (DEBUG)
+		if (cmdOptions.showDebugInfo)
 			msg("[+] Tainting memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
@@ -266,7 +266,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		unsigned int selection_length = selection_ends - selection_starts + 1;
-		if (DEBUG)
+		if (cmdOptions.showDebugInfo)
 			msg("[+] Symbolizing memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		char comment[256];
@@ -340,7 +340,7 @@ struct ah_solve_t : public action_handler_t
 		if (action_activation_ctx->form_type == BWN_DISASM)
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (DEBUG)
+			if (cmdOptions.showDebugInfo)
 				msg("[+] Solving condition at "HEX_FORMAT"\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
@@ -354,29 +354,29 @@ struct ah_solve_t : public action_handler_t
 					unsigned int j;
 					for (j = 0; j < i; j++)
 					{
-						if (EXTRADEBUG)
+						if (cmdOptions.showExtraDebugInfo)
 							msg("Keeping condition %d\n", j);
 						triton::__uint ripId = myPathConstraints[j].conditionRipId;
 						auto symExpr = triton::api.getFullAstFromId(ripId);
 						triton::__uint takenAddr = myPathConstraints[j].takenAddr;
 						expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 					}
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("Inverting condition %d\n", i);
 					//And now we negate the selected condition
 					triton::__uint ripId = myPathConstraints[i].conditionRipId;
 					auto symExpr = triton::api.getFullAstFromId(ripId);
 					triton::__uint notTakenAddr = myPathConstraints[i].notTakenAddr;
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
 					expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 					//Time to solve
 					auto final_expr = triton::ast::compound(expr);
-					if (DEBUG)
+					if (cmdOptions.showDebugInfo)
 						msg("[+] Solving formula...\n");
 					std::stringstream ss;
 					ss << final_expr;
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("Formula: %s\n", ss.str().c_str());
 					auto model = triton::api.getModel(final_expr);
 					if (model.size() > 0)
@@ -454,7 +454,7 @@ struct ah_negate_t : public action_handler_t
 		if (action_activation_ctx->form_type == BWN_DISASM)
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (DEBUG)
+			if (cmdOptions.showDebugInfo)
 				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
@@ -468,29 +468,29 @@ struct ah_negate_t : public action_handler_t
 					unsigned int j;
 					for (j = 0; j < i; j++)
 					{
-						if (EXTRADEBUG)
+						if (cmdOptions.showExtraDebugInfo)
 							msg("Keeping condition %d\n", j);
 						triton::__uint ripId = myPathConstraints[j].conditionRipId;
 						auto symExpr = triton::api.getFullAstFromId(ripId);
 						triton::__uint takenAddr = myPathConstraints[j].takenAddr;
 						expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 					}
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("Inverting condition %d\n", i);
 					//And now we negate the selected condition
 					triton::__uint ripId = myPathConstraints[i].conditionRipId;
 					auto symExpr = triton::api.getFullAstFromId(ripId);
 					triton::__uint notTakenAddr = myPathConstraints[i].notTakenAddr;
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
 					expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 					//Time to solve
 					auto final_expr = triton::ast::compound(expr);
-					if (DEBUG)
+					if (cmdOptions.showDebugInfo)
 						msg("[+] Solving formula...\n");
 					std::stringstream ss;
 					ss << final_expr;
-					if (EXTRADEBUG)
+					if (cmdOptions.showExtraDebugInfo)
 						msg("Formula: %s\n", ss.str().c_str());
 					auto model = triton::api.getModel(final_expr);
 					if (model.size() > 0)

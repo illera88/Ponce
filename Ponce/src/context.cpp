@@ -19,7 +19,7 @@
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
-	if (EXTRADEBUG)
+	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue((triton::__uint)mem.getAddress(), mem.getSize());
 	mem.setConcreteValue(memValue);
@@ -30,7 +30,7 @@ void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 void needConcreteRegisterValue(triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
-	if (EXTRADEBUG)
+	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] We need a register! Register: %s Value: "HEX_FORMAT"\n", reg.getName().c_str(), (unsigned int)regValue);
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);

@@ -39,7 +39,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	//thid_t threadID = va_arg(va, thid_t);
 	/*char buf[50];
 	ua_mnem(pc, buf, sizeof(buf));*/
-	if (DEBUG)
+	if (cmdOptions.showDebugInfo)
 		msg("[+] Triton At "HEX_FORMAT" thread id: %d\n", pc, threadID);
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, sizeof(opcodes));
@@ -69,10 +69,10 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
-	if (ADD_COMMENTS_WITH_CONTROLLED_OPERAND)
+	if (cmdOptions.addCommentsControlledOperands)
 		get_controlled_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
 
-	if (ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS)
+	if (cmdOptions.addCommentsSymbolicExpresions)
 		add_symbolic_expressions(tritonInst, pc);
 
 	/* Trust operands */
@@ -82,21 +82,21 @@ void tritonize(ea_t pc, thid_t threadID)
 	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
 	if (tritonInst->isTainted() || tritonInst->isSymbolized())
 	{
-		if (DEBUG)
+		if (cmdOptions.showDebugInfo)
 			msg("[!] Instruction %s at "HEX_FORMAT"\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
-		if (RENAME_TAINTED_FUNCTIONS)
+		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
 		if (tritonInst->isBranch()) // Check if it is a conditional jump
-			set_item_color(pc, COLOR_TAINTED_CONDITION);
+			set_item_color(pc, cmdOptions.color_tainted_condition);
 		else
-			set_item_color(pc, COLOR_TAINTED);
+			set_item_color(pc, cmdOptions.color_tainted);
 	}
 
 	if (tritonInst->isBranch() && tritonInst->isSymbolized())
 	{
 		triton::__uint addr1 = (triton::__uint)tritonInst->getNextAddress();
 		triton::__uint addr2 = (triton::__uint)tritonInst->operands[0].getImmediate().getValue();
-		if (DEBUG)
+		if (cmdOptions.showDebugInfo)
 			msg("[+] Branch symbolized detected at "HEX_FORMAT": "HEX_FORMAT" or "HEX_FORMAT", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 		triton::__uint ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
@@ -111,7 +111,7 @@ void tritonize(ea_t pc, thid_t threadID)
 /*This function is called when we taint a register that is used in the current instruction*/
 void reanalize_current_instruction()
 {
-	if (DEBUG)
+	if (cmdOptions.showDebugInfo)
 		msg("Reanalizyng instruction at "HEX_FORMAT"\n");
 	uint64 eip;
 	get_reg_val("eip", &eip);
@@ -121,13 +121,13 @@ void reanalize_current_instruction()
 /*This functions is called every time a new debugger session starts*/
 void triton_restart_engines()
 {
-	if (DEBUG)
+	if (cmdOptions.showDebugInfo)
 		msg("[+] Restarting triton engines...\n");
 	//We reset everything at the beginning
 	triton::api.resetEngines();
 	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
-	triton::api.getTaintEngine()->enable(MODE == TAINT);
-	triton::api.getSymbolicEngine()->enable(MODE == SYMBOLIC);
+	triton::api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
+	triton::api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
 	//triton::api.getSymbolicEngine()->enable(true);
 	runtimeTrigger.disable();
 	is_something_tainted_or_symbolize = false;
@@ -146,7 +146,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 	{
 		case dbg_process_start:
 		{
-			if (DEBUG)
+			if (cmdOptions.showDebugInfo)
 				msg("[+] Starting the debugged process. Reseting all the engines.\n");
 			triton_restart_engines();
 			clear_requests_queue();
@@ -169,10 +169,10 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
 			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() != pc)
 			{
-				if (EXTRADEBUG)
+				if (cmdOptions.showExtraDebugInfo)
 					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
-				if (PAINT_EXECUTED_INSTRUCTIONS)
-					set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
+				if (cmdOptions.paintExecutedInstructions)
+					set_item_color(pc, cmdOptions.color_executed_instruction);
 				tritonize(pc, tid);
 			}
 			/*else
@@ -210,8 +210,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = va_arg(va, ea_t);
 
 			//msg("[%d] tracing over: "HEX_FORMAT"\n", g_nb_insn, pc);
-			if (PAINT_EXECUTED_INSTRUCTIONS)
-				set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
+			if (cmdOptions.paintExecutedInstructions)
+				set_item_color(pc, cmdOptions.color_executed_instruction);
 			tritonize(pc, tid);
 
 			current_trace_counter++;
@@ -251,8 +251,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				if (pc == bpa.address)
 				{
 					bpa.callback(pc);
-					if (PAINT_EXECUTED_INSTRUCTIONS)
-						set_item_color(pc, COLOR_EXECUTED_INSTRUCTION);
+					if (cmdOptions.paintExecutedInstructions)
+						set_item_color(pc, cmdOptions.color_executed_instruction);
 					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
@@ -282,7 +282,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_process_exit:
 		{
-			if (DEBUG)
+			if (cmdOptions.showDebugInfo)
 				msg("[!] Process_exiting...\n");
 			/*if (ENABLE_TRACING_WHEN_TAINTING)
 			{
@@ -330,7 +330,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					if (action_list[i].view_type[j] == view_type)
 					{
 						//We only attach to the popup if the action makes sense with the current configuration
-						if (MODE == TAINT && action_list[i].taint || MODE == SYMBOLIC && action_list[i].symbolic)
+						if (cmdOptions.use_tainting_engine && action_list[i].taint || cmdOptions.use_symbolic_engine && action_list[i].symbolic)
 						{
 							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, NULL, SETMENU_FIRST);
 							
