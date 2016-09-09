@@ -94,8 +94,10 @@ void Snapshot::takeSnapshot() {
 	{
 		triton::arch::Register *reg = *it;
 		uint64 ival;
-		get_reg_val(reg->getName().c_str(), &ival);
-		this->IDAContext[reg->getName()] = ival;
+		if (get_reg_val(reg->getName().c_str(), &ival)){
+			msg("getting register %s with value %lld\n", reg->getName().c_str(), ival);
+			this->IDAContext[reg->getName()] = ival;
+		}
 	}
 }
 
@@ -103,11 +105,12 @@ void Snapshot::takeSnapshot() {
 /* Restore the snapshot. */
 void Snapshot::restoreSnapshot() {
 
-	if (this->mustBeRestore == false)
-		return;
+	/*if (this->mustBeRestore == false)
+		return;*/
+	
 	/* 1 - Restore all memory modification. */
 	for (auto i = this->memory.begin(); i != this->memory.end(); ++i){
-		*(reinterpret_cast<char*>(i->first)) = i->second;
+		put_many_bytes(i->first, &i->second, 1);
 	}
 	this->memory.clear();
 
@@ -157,7 +160,15 @@ void Snapshot::restoreSnapshot() {
 	Suposedly XIP should be set at the same time and execution redirected*/
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
 	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
-		set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>());
+		if (set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
+		{
+			msg("OK restoring register %s\n", iterator->first.c_str());
+		}
+		else
+		{
+			msg("ERROR restoring register %s\n", iterator->first.c_str());
+
+		}
 	}
 }
 
