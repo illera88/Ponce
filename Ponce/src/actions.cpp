@@ -7,6 +7,7 @@
 #include "globals.hpp"
 #include "utils.hpp"
 #include "callbacks.hpp"
+#include "formChoser.hpp"
 
 //Triton
 #include "api.hpp"
@@ -626,6 +627,29 @@ static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
 	"Ctrl-S", 
 	NULL, 
 	15);
+
+struct ah_show_config_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		prompt_conf_window();
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static ah_show_config_t ah_show_config;
+
+action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
+	"Ponce:show_config", // The action name. This acts like an ID and must be unique
+	"Show config", //The action text.
+	&ah_show_config, //The action handler.
+	"Ctrl-O", //Optional: the action shortcut
+	"Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
+	201); //Optional: the action icon (shows when in menus/toolbars)
 
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
