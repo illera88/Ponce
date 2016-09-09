@@ -317,10 +317,10 @@ bool load_options(struct cmdOptionStruct *cmdOptions)
 	auto begin = config_file.tellg();
 	config_file.seekg(0, std::ios::end);
 	auto end = config_file.tellg();
-	msg("size: %d\n", end - begin);
+	config_file.seekg(0, std::ios::beg);
 	if ((end - begin) != sizeof(struct cmdOptionStruct))
 		return false;
-	config_file.read((char *)cmdOptions, sizeof(cmdOptions));
+	config_file.read((char *)cmdOptions, sizeof(struct cmdOptionStruct));
 	config_file.close();
 	return true;
 }
@@ -336,7 +336,6 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 		msg("Error opening config file %s\n", "Ponce.cfg");
 		return false;
 	}
-	msg("Writting: %d bytes\n", sizeof(struct cmdOptionStruct));
 	config_file.write((char *)cmdOptions, sizeof(struct cmdOptionStruct));
 	config_file.close();
 	return true;

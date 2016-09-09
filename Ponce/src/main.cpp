@@ -50,7 +50,8 @@ void idaapi run(int)
 		prompt_conf_window();
 	}
 
-	if (!hooked){
+	if (!hooked)
+	{
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
 		if (ask_for_a_snapshot() != -1)
 		{
