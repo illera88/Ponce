@@ -75,8 +75,16 @@ void tritonize(ea_t pc, thid_t threadID)
 		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
 		{
 			//Possible point of failure since memory_access can be more than one byte i guess
-			triton::arch::MemoryAccess memory_access = it->first;			
-			snapshot.addModification(memory_access.getAddress(), memory_access.getConcreteValue().convert_to<char>());
+			triton::arch::MemoryAccess memory_access = it->first;
+			auto addr = memory_access.getAddress();
+			for (int i = 0; i < memory_access.getSize(); i++){
+				triton::uint128 value = 0;
+				//This is the way to force IDA to read the value from the debugger
+				//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+				invalidate_dbgmem_contents(addr+i, sizeof(value)); //ToDo: Do I have to call this for every byte in memory I want to read?
+				get_many_bytes(addr+i, &value, 1);
+				snapshot.addModification(addr + i, value.convert_to<char>());
+			}
 		}
 	}
 
