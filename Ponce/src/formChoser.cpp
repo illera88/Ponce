@@ -11,6 +11,7 @@
 //Ponce
 #include "formChoser.hpp"
 #include "globals.hpp"
+#include "utils.hpp"
 
 
 //--------------------------------------------------------------------------
@@ -160,7 +161,7 @@ void prompt_conf_window(void){
 		cmdOptions.addCommentsSymbolicExpresions = chkgroup4 & 4 ? 1 : 0;
 		cmdOptions.paintExecutedInstructions = chkgroup4 & 8 ? 1 : 0;
 
-
+		save_options(&cmdOptions);
 		if (cmdOptions.showDebugInfo){
 			msg("\n"
 				"limitInstructionsBeforeAskingUser: %lld\n"

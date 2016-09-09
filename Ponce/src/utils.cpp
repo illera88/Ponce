@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <string>
+#include <iostream>
+#include <fstream>
+
 //Triton
 #include <api.hpp>
 
@@ -298,4 +301,43 @@ std::string notification_code_to_string(int notification_code)
 		default:
 			return std::string("Not defined");
 	}
+}
+
+/*This function loads the options from the config file.
+It returns true if it reads the config false, if there is any error.*/
+bool load_options(struct cmdOptionStruct *cmdOptions)
+{
+	std::ifstream config_file;
+	config_file.open("Ponce.cfg", std::ios::in | std::ios::binary);
+	if (!config_file.is_open())
+	{
+		msg("Config file %s not found\n", "Ponce.cfg");
+		return false;
+	}
+	auto begin = config_file.tellg();
+	config_file.seekg(0, std::ios::end);
+	auto end = config_file.tellg();
+	msg("size: %d\n", end - begin);
+	if ((end - begin) != sizeof(struct cmdOptionStruct))
+		return false;
+	config_file.read((char *)cmdOptions, sizeof(cmdOptions));
+	config_file.close();
+	return true;
+}
+
+/*This function loads the options from the config file.
+It returns true if it reads the config false, if there is any error.*/
+bool save_options(struct cmdOptionStruct *cmdOptions)
+{
+	std::ofstream config_file;
+	config_file.open("Ponce.cfg", std::ios::out | std::ios::binary);
+	if (!config_file.is_open())
+	{
+		msg("Error opening config file %s\n", "Ponce.cfg");
+		return false;
+	}
+	msg("Writting: %d bytes\n", sizeof(struct cmdOptionStruct));
+	config_file.write((char *)cmdOptions, sizeof(struct cmdOptionStruct));
+	config_file.close();
+	return true;
 }

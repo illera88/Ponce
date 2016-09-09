@@ -45,7 +45,10 @@ void triton_init()
 void idaapi run(int)
 {
 	/*We shouldn't prompt for it if the user has a saved configuration*/
-	prompt_conf_window();
+	if (!load_options(&cmdOptions))
+	{
+		prompt_conf_window();
+	}
 
 	if (!hooked){
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
