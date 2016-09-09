@@ -184,10 +184,11 @@ void Snapshot::disableSnapshot(void) {
 void Snapshot::resetEngine(void) {
 	this->memory.clear();
 
-	delete this->snapshotSymEngine;
+	//ToDo: We should delete this when this issue is fixed: https://github.com/JonathanSalwan/Triton/issues/385
+	//delete this->snapshotSymEngine;
 	this->snapshotSymEngine = nullptr;
 
-	delete this->snapshotTaintEngine;
+	//delete this->snapshotTaintEngine;
 	this->snapshotTaintEngine = nullptr;
 
 	this->snapshotTaken = false;
