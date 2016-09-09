@@ -42,12 +42,17 @@ Snapshot::Snapshot() {
 	this->snapshotSymEngine = nullptr;
 	this->mustBeRestore = false;
 	this->IDAContext;
+	this->snapshotTaken = false;
 }
 
 
 Snapshot::~Snapshot() {
 }
 
+/* Check if the snapshot has been taken */
+bool Snapshot::exists(void) {
+	return this->snapshotTaken;
+}
 
 /* Add the modification byte. */
 void Snapshot::addModification(triton::__uint mem, char byte) {
@@ -57,7 +62,9 @@ void Snapshot::addModification(triton::__uint mem, char byte) {
 
 
 /* Enable the snapshot engine. */
-void Snapshot::takeSnapshot(void *drcontext, unsigned char *pc) {
+void Snapshot::takeSnapshot() {
+	this->snapshotTaken = true;
+
 	/* 1 - Unlock the engine */
 	this->locked = false;
 
@@ -94,7 +101,7 @@ void Snapshot::takeSnapshot(void *drcontext, unsigned char *pc) {
 
 
 /* Restore the snapshot. */
-void Snapshot::restoreSnapshot(void *drcontext) {
+void Snapshot::restoreSnapshot() {
 
 	if (this->mustBeRestore == false)
 		return;
@@ -171,6 +178,8 @@ void Snapshot::resetEngine(void) {
 
 	delete this->snapshotTaintEngine;
 	this->snapshotTaintEngine = nullptr;
+
+	this->snapshotTaken = false;
 }
 
 

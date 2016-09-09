@@ -69,6 +69,17 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
+	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
+	if (snapshot.exists()){
+		auto store_access_list = tritonInst->getStoreAccess();
+		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		{
+			//Possible point of failure since memory_access can be more than one byte i guess
+			triton::arch::MemoryAccess memory_access = it->first;			
+			snapshot.addModification(memory_access.getAddress(), memory_access.getConcreteValue().convert_to<char>());
+		}
+	}
+
 	if (cmdOptions.addCommentsControlledOperands)
 		get_controlled_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
 

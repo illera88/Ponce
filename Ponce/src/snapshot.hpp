@@ -31,6 +31,9 @@ private:
 	//! Status of the snapshot engine.
 	bool locked;
 
+	//! Status of the snapshot engine.
+	bool snapshotTaken;
+
 	//! Flag which defines if we must restore the snapshot.
 	bool mustBeRestore;
 
@@ -81,13 +84,16 @@ public:
 	void resetEngine(void);
 
 	//! Restores a snapshot.
-	void restoreSnapshot(void *drcontext);
+	void restoreSnapshot();
 
 	//! Sets the restore flag.
 	void setRestore(bool flag);
 
 	//! Takes a snapshot.
-	void takeSnapshot(void *drcontext, unsigned char *pc);
+	void takeSnapshot();
+
+	//! Tells if a snapshot has been taken
+	bool exists(void);
 };
 
 #endif /* PINTOOL_SNAPSHOT_H */

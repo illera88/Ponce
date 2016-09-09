@@ -598,33 +598,81 @@ struct createSnapshot_ah_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		msg("Menu item clicked. Current selection:");
-		for (int i = 0, n = ctx->chooser_selection.size(); i < n; ++i)
-			msg(" %d", ctx->chooser_selection[i]);
-		msg("\n");
+		snapshot.takeSnapshot();
 		return 1;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
-		bool ok = ctx->form_type == BWN_CHOOSER;
-		if (ok)
-		{
-			char name[MAXSTR];
-			ok = get_tform_title(ctx->form, name, sizeof(name))
-				&& strneq(name, "Form with choosers", qstrlen("Form with choosers"));
-		}
-		return ok ? AST_ENABLE_FOR_FORM : AST_DISABLE_FOR_FORM;
+		//Only if process is being debugged and there is not previous snaphot
+		if (get_process_state() != DSTATE_NOTASK && !snapshot.exists())
+			return AST_ENABLE;
+		else
+			return AST_DISABLE;
 	}
 };
 static createSnapshot_ah_t createSnapshot_ah;
 
 static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
-	"Snapshot",
+	"Create Snapshot",
 	"Create Snapshot", 
 	&createSnapshot_ah,
 	"Ctrl-S", 
 	NULL, 
+	15);
+
+struct restoreSnapshot_ah_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		snapshot.restoreSnapshot();
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		//Only if process is being debugged and there is an existent shapshot
+		if (get_process_state() != DSTATE_NOTASK && snapshot.exists())
+			return AST_ENABLE;
+		else
+			return AST_DISABLE;
+	}
+};
+static restoreSnapshot_ah_t restoreSnapshot_ah;
+
+static const action_desc_t action_IDA_restoreSnapshot = ACTION_DESC_LITERAL(
+	"Restore Snapshot",
+	"Restore Snapshot",
+	&restoreSnapshot_ah,
+	"Ctrl-S",
+	NULL,
+	15);
+
+struct deleteSnapshot_ah_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		snapshot.resetEngine();
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		//Only if process is being debugged and there is an existent shapshot
+		if (snapshot.exists())
+			return AST_ENABLE;
+		else
+			return AST_DISABLE;
+	}
+};
+static deleteSnapshot_ah_t deleteSnapshot_ah;
+
+static const action_desc_t action_IDA_deleteSnapshot = ACTION_DESC_LITERAL(
+	"Delete Snapshot",
+	"Delete Snapshot",
+	&deleteSnapshot_ah,
+	"Ctrl-D",
+	NULL,
 	15);
 
 /*This list defined all the actions for the plugin*/
@@ -632,10 +680,15 @@ struct action action_list[] =
 {
 	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false, "Taint/"},
 	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false, "Taint/" },
+
 	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true, "Symbolic/"},
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true, "Symbolic/" },
+
 	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "SMT/" },
 	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
+
 	{ &action_IDA_createSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/"},
+	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
+	{ &action_IDA_deleteSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ NULL, NULL, NULL }
 };

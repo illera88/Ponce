@@ -1,6 +1,7 @@
 #pragma once
 //Ponce
 #include "trigger.hpp"
+#include "snapshot.hpp"
 //IDA
 #include <kernwin.hpp>
 //Triton
@@ -78,6 +79,7 @@ extern bool hooked;
 extern bool is_something_tainted_or_symbolize;
 extern unsigned int tainted_functions_index;
 extern Trigger runtimeTrigger;
+extern Snapshot snapshot;
 extern triton::arch::Instruction* last_triton_instruction;
 extern bool automatically_continue_after_step;
 //We could use this if we want to keep all the instructions in memory

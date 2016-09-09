@@ -31,3 +31,6 @@ bool automatically_continue_after_step = false;
 //std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
 //This variable stores all the path constraints executed before reach the current instruction
 std::vector<PathConstraint> myPathConstraints;
+
+//Snapshot object
+Snapshot snapshot = Snapshot();
