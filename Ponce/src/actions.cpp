@@ -630,12 +630,12 @@ static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false},
-	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true},
-	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false},
-	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true},
-	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true},
-	{ &action_IDA_negate, { BWN_DISASM, NULL }},
-	{&action_IDA_createSnapshot, { BWN_DISASM, NULL } },
+	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false, "Taint/"},
+	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false, "Taint/" },
+	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true, "Symbolic/"},
+	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true, "Symbolic/" },
+	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "SMT/" },
+	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
+	{ &action_IDA_createSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/"},
 	{ NULL, NULL, NULL }
 };

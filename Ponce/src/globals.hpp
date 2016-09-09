@@ -63,8 +63,9 @@
 struct action{
 	const action_desc_t* action_decs;
 	int view_type[44]; // This are the posible views
-	bool taint;
-	bool symbolic;
+	bool enable_taint;
+	bool enable_symbolic;
+	char* menu_path; // this is where the item will be conteined in
 };
 
 //All the global variables:
