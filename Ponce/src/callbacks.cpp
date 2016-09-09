@@ -321,8 +321,9 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
 			int view_type= get_tform_type(form);
 
-			
-			/*Iterate over all the actions*/
+			attach_action_to_popup(form, popup_handle, "");
+
+			/*Iterate over all the actions*/			
 			for (int i = 0;; i++)
 			{
 				if (action_list[i].action_decs == NULL)
@@ -337,16 +338,18 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					if (action_list[i].view_type[j] == view_type)
 					{
 						//We only attach to the popup if the action makes sense with the current configuration
-						if (cmdOptions.use_tainting_engine && action_list[i].taint || cmdOptions.use_symbolic_engine && action_list[i].symbolic)
+						if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic)
 						{
-							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, NULL, SETMENU_FIRST);
 							
+
+							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_APP);
 						}
 						//To disable an action
 						//enable_menu_item(action_list[i].action_decs->name, false);
 					}
 				}	
 			}
+			attach_action_to_popup(form, popup_handle, "");
 		}
 		case dbg_process_exit:{
 			unhook_from_notification_point(HT_DBG, ui_callback, NULL);

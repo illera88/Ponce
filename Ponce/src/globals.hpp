@@ -63,8 +63,9 @@
 struct action{
 	const action_desc_t* action_decs;
 	int view_type[44]; // This are the posible views
-	bool taint;
-	bool symbolic;
+	bool enable_taint;
+	bool enable_symbolic;
+	char* menu_path; // this is where the item will be conteined in
 };
 
 //All the global variables:
@@ -85,7 +86,6 @@ extern bool automatically_continue_after_step;
 //User options
 struct cmdOptionStruct{
 	uint64 limitInstructionsTracingMode = 1000;
-	uint64 limitInstructionsBeforeAskingUser = 2000;
 	uint64 limitTime = 100; //seconds
 
 	//all this variables should be false and initialized in prompt_conf_window in utils.cpp

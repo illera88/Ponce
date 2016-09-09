@@ -112,7 +112,6 @@ void prompt_conf_window(void){
 	}
 	if (AskUsingForm_c(form,
 		modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
-		&cmdOptions.limitInstructionsBeforeAskingUser,
 		&cmdOptions.limitTime,
 		&cmdOptions.limitInstructionsTracingMode,
 		&symbolic_or_taint_engine,
@@ -164,7 +163,6 @@ void prompt_conf_window(void){
 		save_options(&cmdOptions);
 		if (cmdOptions.showDebugInfo){
 			msg("\n"
-				"limitInstructionsBeforeAskingUser: %lld\n"
 				"limitTime: %lld\n"
 				"limitInstructionsTracingMode: %lld\n"
 				"use_symbolic_engine: %s\n"
@@ -186,7 +184,6 @@ void prompt_conf_window(void){
 				"color_tainted: %x\n"
 				"color_tainted_condition: %x\n"
 				"color_tainted_execution: %x\n",
-				cmdOptions.limitInstructionsBeforeAskingUser,
 				cmdOptions.limitTime,
 				cmdOptions.limitInstructionsTracingMode,
 				cmdOptions.use_symbolic_engine ? "symbolic engine enabled" : "tainting engine enabled",
