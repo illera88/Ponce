@@ -463,9 +463,69 @@ struct ah_negateInjectRestore_t : public action_handler_t
 				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
+
+			auto input_ptr = solve_formula(pc, NULL);
+			if (input_ptr != NULL)
+			{
+				//We need to modify the last path constrain
+				auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
+				myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
+				myPathConstraints[myPathConstraints.size() - 1].takenAddr = temp;
+				//We need to modify some of the symbolized flag to negate the condition
+				if (last_triton_instruction->getAddress() == pc)
+				{
+					auto regs = last_triton_instruction->getReadRegisters();
+					for (auto it = regs.begin(); it != regs.end(); it++)
+					{
+						auto reg = it->first;
+						//If the register is a flag and it is symbolized, we have a candidate to negate
+						if (reg.isFlag() && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized())
+						{
+							uint64 val;
+							auto old_value = get_reg_val(reg.getName().c_str(), &val);
+							//Negating flag
+							val = !val;
+							set_reg_val(reg.getName().c_str(), val);
+							break;
+						}
+					}
+				}
+				// We set the results obtained from solve_formula
+				set_SMT_results(input_ptr);
+
+				//delete it after setting the proper results
+				delete input_ptr;
+
+				//Restore the snapshot
+				snapshot.restoreSnapshot();
+			}
 		}
+		return 1;
 	}
-}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
+	{
+		//Only if process is being debugged
+		if (get_process_state() != DSTATE_NOTASK && snapshot.exists())
+		{
+			//Only enabled with symbolize conditions
+			//If we are in runtime and it is the last instruction we can test if it is symbolize
+			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+				return AST_ENABLE;
+		}
+		return AST_DISABLE;
+	}
+};
+static ah_negateInjectRestore_t ah_negateInjectRestore;
+
+static const action_desc_t action_IDA_negateInjectRestore = ACTION_DESC_LITERAL(
+	"Negate Inject Restore", // The action name. This acts like an ID and must be unique
+	"Negate Inject Restore", //The action text.
+	&ah_negateInjectRestore, //The action handler.
+	"Ctrl + N", //Optional: the action shortcut
+	"this is a tool tip", //Optional: the action tooltip (available in menus/toolbar)
+	164); //Optional: the action icon (shows when in menus/toolbars)
+
 struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
@@ -612,6 +672,7 @@ struct action action_list[] =
 
 	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "SMT/" },
 	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
+	{ &action_IDA_negateInjectRestore, { BWN_DISASM, NULL }, true, true, "SMT/" },
 
 	{ &action_IDA_createSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/"},
 	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },

@@ -525,11 +525,11 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 		set_reg_val("CF", cf);
 		break;
 	}
-/*	ToDo: Check this one
-	case triton::arch::x86::ID_INS_JCXZ:
-	{
+	/*	ToDo: Check this one
+		case triton::arch::x86::ID_INS_JCXZ:
+		{
 		break;
-	}*/
+		}*/
 	case triton::arch::x86::ID_INS_JE:
 	{
 		uint64 zf;
@@ -540,7 +540,7 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 	}
 	/*case triton::arch::x86::ID_INS_JECXZ:
 	{
-		break;
+	break;
 	}*/
 	case triton::arch::x86::ID_INS_JG:
 	{
@@ -612,5 +612,6 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 	case triton::arch::x86::ID_INS_JS:
 	{
 		break;
+	}
 	}
 }
