@@ -7,7 +7,6 @@
 //Triton
 #include <api.hpp>
 
-
 #if defined(__i386) || defined(_M_IX86)
 //#define X86_32 It is already defined in the preprocessor options
 #define TRITON_X86_REG_XSP triton::arch::x86::x86_reg_esp
@@ -34,17 +33,33 @@
 #endif
 
 //All the options:
+//#define COLOR_TAINTED 0x99FFCE
+//#define COLOR_TAINTED_CONDITION 0x00b377
+//#define COLOR_EXECUTED_INSTRUCTION 0xe6e6e6
 #define SNAPSHOT_DESCRIPTION "Before use the script"
-
-
+//#define DEBUG true
+//#define EXTRADEBUG true
 //It enables the instruction tracing the first time a register/memory is tainted
-// ToDo: We should move this two to the config window
 #define ENABLE_STEP_INTO_WHEN_TAINTING true
+//#define PAINT_EXECUTED_INSTRUCTIONS true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
 //The two different modes, only one can be activated at a time
+//#define TAINT 0
+//#define SYMBOLIC 1
+//This is the current mode
+//#define MODE SYMBOLIC
+//#define TAINT_ARGV true
+//#define TAINT_ARGC true
+//#define SKIP_ARGV0 true
+//#define TAINT_END_OF_STRING false
 
+//#define ADD_COMMENTS_WITH_CONTROLLED_OPERAND true
+//#define RENAME_TAINTED_FUNCTIONS false
 #define RENAME_TAINTED_FUNCTIONS_PREFIX "T%03d_"
+//#define ADD_COMMENTS_WITH_SYMBOLIC_EXPRESSIONS false
+
+
 
 struct action{
 	const action_desc_t* action_decs;
@@ -126,7 +141,7 @@ extern std::vector<PathConstraint> myPathConstraints;
 class Input
 {
 public:
-	uint bound;
+	int bound;
 	std::vector <triton::arch::MemoryAccess> memOperand;
 	std::vector <triton::arch::Register> regOperand;
 
@@ -141,5 +156,3 @@ public:
 	{
 	}
 };
-
-//extern std::deque <Input*> inputs;

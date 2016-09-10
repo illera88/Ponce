@@ -105,7 +105,7 @@ void Snapshot::takeSnapshot() {
 
 /* Restore the snapshot. */
 void Snapshot::restoreSnapshot() {
-	
+
 	/* 1 - Restore all memory modification. */
 	for (auto i = this->memory.begin(); i != this->memory.end(); ++i){
 		put_many_bytes(i->first, &i->second, 1);
@@ -154,15 +154,19 @@ void Snapshot::restoreSnapshot() {
 
 	this->mustBeRestore = false;
 
-	/* 9 - Restore IDA registers context */
+	/* 9 - Restore IDA registers context 
+	Suposedly XIP should be set at the same time and execution redirected*/
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
-	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) 
-	{
+	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
 		if (set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
-			if (cmdOptions.showDebugInfo)
-				msg("OK restoring register %s\n", iterator->first.c_str());
+		{
+			msg("OK restoring register %s\n", iterator->first.c_str());
+		}
 		else
+		{
 			msg("ERROR restoring register %s\n", iterator->first.c_str());
+
+		}
 	}
 }
 
@@ -178,6 +182,7 @@ void Snapshot::disableSnapshot(void) {
 void Snapshot::resetEngine(void) {
 	this->memory.clear();
 
+	//ToDo: We should delete this when this issue is fixed: https://github.com/JonathanSalwan/Triton/issues/385
 	//delete this->snapshotSymEngine;
 	this->snapshotSymEngine = nullptr;
 

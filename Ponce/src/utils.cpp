@@ -5,6 +5,7 @@
 
 //Triton
 #include <api.hpp>
+#include "x86Specifications.hpp"
 
 //IDA
 #include <idp.hpp>
@@ -24,6 +25,7 @@ void start_tainting_or_symbolic_analysis()
 	{
 		runtimeTrigger.enable();
 		is_something_tainted_or_symbolize = true;
+		enable_step_trace(true);
 		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
 			automatically_continue_after_step = true;*/
 			//enable_insn_trace(true);
@@ -441,7 +443,174 @@ Input * solve_formula(ea_t pc, uint bound){
 
 			break;
 		}
-		
+
 	}
 	return NULL;
+}
+
+
+
+/*This function identify the type of condition jmp and negate the flags to negate the jmp.
+Probably it is possible to do this with the solver, adding more variable to the formula to 
+identify the flag of the conditions and get the values. But for now we are doing it in this way.*/
+void negate_flag_condition(triton::arch::Instruction *triton_instruction)
+{
+	switch (triton_instruction->getType())
+	{
+	case triton::arch::x86::ID_INS_JA:
+	{
+		uint64 cf;
+		get_reg_val("CF", &cf);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (cf == 0 && zf == 0)
+		{
+			cf = 1;
+			zf = 1;
+		}
+		else
+		{
+			cf = 0;
+			zf = 0;
+		}
+		set_reg_val("ZF", zf);
+		set_reg_val("CF", cf);
+		break;
+	}
+	case triton::arch::x86::ID_INS_JAE:
+	{
+		uint64 cf;
+		get_reg_val("CF", &cf);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (cf == 0 || zf == 0)
+		{
+			cf = 1;
+			zf = 1;
+		}
+		else
+		{
+			cf = 0;
+			zf = 0;
+		}
+		set_reg_val("ZF", zf);
+		set_reg_val("CF", cf);
+		break;
+	}
+	case triton::arch::x86::ID_INS_JB:
+	{
+		uint64 cf;
+		get_reg_val("CF", &cf);
+		cf = !cf;
+		set_reg_val("CF", cf);
+		break;
+	}
+	case triton::arch::x86::ID_INS_JBE:
+	{
+		uint64 cf;
+		get_reg_val("CF", &cf);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (cf == 1 || zf == 1)
+		{
+			cf = 0;
+			zf = 0;
+		}
+		else
+		{
+			cf = 1;
+			zf = 1;
+		}
+		set_reg_val("ZF", zf);
+		set_reg_val("CF", cf);
+		break;
+	}
+/*	ToDo: Check this one
+	case triton::arch::x86::ID_INS_JCXZ:
+	{
+		break;
+	}*/
+	case triton::arch::x86::ID_INS_JE:
+	{
+		uint64 zf;
+		auto old_value = get_reg_val("ZF", &zf);
+		zf = !zf;
+		set_reg_val("ZF", zf);
+		break;
+	}
+	/*case triton::arch::x86::ID_INS_JECXZ:
+	{
+		break;
+	}*/
+	case triton::arch::x86::ID_INS_JG:
+	{
+		uint64 sf;
+		get_reg_val("SF", &sf);
+		uint64 of;
+		get_reg_val("OF", &of);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (sf == of && zf == 0)
+		{
+			sf = !of;
+			zf = 1;
+		}
+		else
+		{
+			sf = of;
+			zf = 0;
+		}
+		set_reg_val("SF", sf);
+		set_reg_val("OF", of);
+		set_reg_val("ZF", zf);
+		break;
+	}
+	case triton::arch::x86::ID_INS_JGE:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JL:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JLE:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JNE:
+	{
+		uint64 val;
+		auto old_value = get_reg_val("ZF", &val);
+		val = !val;
+		set_reg_val("ZF", val);
+		break;
+	}
+	case triton::arch::x86::ID_INS_JNO:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JNP:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JNS:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JO:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JP:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JRCXZ:
+	{
+		break;
+	}
+	case triton::arch::x86::ID_INS_JS:
+	{
+		break;
+	}
 }

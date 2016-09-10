@@ -77,13 +77,13 @@ void tritonize(ea_t pc, thid_t threadID)
 			//Possible point of failure since memory_access can be more than one byte i guess
 			triton::arch::MemoryAccess memory_access = it->first;
 			auto addr = memory_access.getAddress();
+			//This is the way to force IDA to read the value from the debugger
+			//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+			invalidate_dbgmem_contents((ea_t)addr, memory_access.getSize()); //ToDo: Do I have to call this for every byte in memory I want to read?
 			for (unsigned int i = 0; i < memory_access.getSize(); i++){
 				triton::uint128 value = 0;
-				//This is the way to force IDA to read the value from the debugger
-				//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-				invalidate_dbgmem_contents((ea_t)(addr+i), sizeof(value)); //ToDo: Do I have to call this for every byte in memory I want to read?
-				get_many_bytes((ea_t)(addr + i), &value, 1);
-				snapshot.addModification((ea_t)(addr + i), value.convert_to<char>());
+				get_many_bytes((ea_t)addr+i, &value, 1);
+				snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
 			}
 		}
 	}
@@ -160,7 +160,7 @@ void triton_restart_engines()
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 {
-	//msg("Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
+	msg("Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
 	switch (notification_code)
 	{
 		case dbg_process_start:
@@ -203,7 +203,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			}*/
 			//Continue stepping
 			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
-			if (automatically_continue_after_step)
+			/*if (automatically_continue_after_step)
 			{
 				//This is the wow64 switching, we need to skip it
 				if (last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
@@ -221,12 +221,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					msg("dbg_step request_step_over();\n");
 					request_step_over();
 				}*/
-			}
+			//}
 			break;
 		}
 		case dbg_trace:
 		{
-			break;
+			
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
 			//msg("dbg_trace\n");
@@ -235,7 +235,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 
-			//msg("[%d] tracing over: "HEX_FORMAT"\n", g_nb_insn, pc);
+			msg("Tracing over: "HEX_FORMAT"\n", pc);
 			if (cmdOptions.paintExecutedInstructions)
 				set_item_color(pc, cmdOptions.color_executed_instruction);
 			tritonize(pc, tid);
@@ -243,13 +243,26 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			current_trace_counter++;
 			total_number_traced_ins++;
 
+			//This is the wow64 switching, we need to skip it
+			if (last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
+			{
+				msg("wow64 switching! requesting disable();\n");
+				//And now we need to stop the tracing, do step over and reenable the tracing...
+				//disable_step_trace();
+				suspend_process();
+				request_step_over();
+				request_continue_process();
+				run_requests();
+				break;
+			}
+
 			if (cmdOptions.limitInstructionsTracingMode && current_trace_counter == cmdOptions.limitInstructionsTracingMode)
 			{
 				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
-					disable_step_trace();
+					enable_step_trace(false);
 					suspend_process();
 					msg("[!] Process suspended (Traced %d instructions)\n", total_number_traced_ins);
 				}
@@ -288,22 +301,20 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
 						//msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
-						if (ENABLE_STEP_INTO_WHEN_TAINTING)// && automatically_continue_after_step)
-						{
-							automatically_continue_after_step = true;
-							msg("after bp request_step_into\n");
-							request_step_into();
-							run_requests();
-						}
-						else
-							continue_process();
+						automatically_continue_after_step = true;
+						enable_step_trace(true);
+						//We dont want to skip library funcions or debug segments
+						set_step_trace_options(0);
+						//continue_process();
+						step_over();
 					}
 					break;
 				}
 			}
-			//If it is a user-defined bp we disable the automatic stepping
+			//If it is a user break point we enable again the step tracing if it was enabled previously...
+			//The idea is if the user uses Execute native til next bp, and IDA reachs the next bp we reenable the tracing
 			if (user_bp)
-				automatically_continue_after_step = false;
+				enable_step_trace(runtimeTrigger.getState());
 			break;
 		}
 		case dbg_process_exit:
