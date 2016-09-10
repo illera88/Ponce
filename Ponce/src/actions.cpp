@@ -549,7 +549,7 @@ static ah_create_snapshot_t ah_create_snapshot;
 
 static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
 	"Ponce:create_snapshot",
-	"Create Snapshot", 
+	"Create Execution Snapshot", 
 	&ah_create_snapshot,
 	"Ctrl+Shift+C", 
 	NULL, 
@@ -577,7 +577,7 @@ static ah_restore_snapshot_t ah_restore_snapshot;
 
 static const action_desc_t action_IDA_restoreSnapshot = ACTION_DESC_LITERAL(
 	"Ponce:restore_snapshot",
-	"Restore Snapshot",
+	"Restore Execution Snapshot",
 	&ah_restore_snapshot,
 	"Ctrl+Shift+R",
 	NULL,
@@ -605,7 +605,7 @@ static ah_delete_snapshot_t ah_delete_snapshot;
 
 static const action_desc_t action_IDA_deleteSnapshot = ACTION_DESC_LITERAL(
 	"Ponce:delete_snapshot",
-	"Delete Snapshot",
+	"Delete Execution Snapshot",
 	&ah_delete_snapshot,
 	"Ctrl+Shift+D",
 	NULL,

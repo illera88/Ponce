@@ -625,7 +625,7 @@ bool ask_for_execute_native()
 		return true;
 	//If so we should say to the user that he cannot execute native code and expect the snapshot to work
 
-	int answer = askyn_c(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modification and the snapshot won't work. Do you still want to do it? (Y/n):");
+	int answer = askyn_c(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications and the execution snapshot won't work. Do you still want to do it? (Y/n):");
 	if (answer == 1) //Yes
 		return true;
 	else // No or Cancel
