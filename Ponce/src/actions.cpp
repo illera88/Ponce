@@ -399,10 +399,11 @@ struct ah_negate_t : public action_handler_t
 				auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
 				myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
 				myPathConstraints[myPathConstraints.size() - 1].takenAddr = temp;
-				//We need to modify some of the symbolized flag to negate the condition
+				//We need to modify the condition flags to negate the condition
 				if (last_triton_instruction->getAddress() == pc)
 				{
-					auto regs = last_triton_instruction->getReadRegisters();
+					negate_flag_condition(last_triton_instruction);
+					/*auto regs = last_triton_instruction->getReadRegisters();
 					for (auto it = regs.begin(); it != regs.end(); it++)
 					{
 						auto reg = it->first;
@@ -416,8 +417,7 @@ struct ah_negate_t : public action_handler_t
 							set_reg_val(reg.getName().c_str(), val);
 							break;
 						}
-					}
-
+					}*/
 				}
 				// We set the results obtained from solve_formula
 				set_SMT_results(input_ptr);

@@ -531,6 +531,7 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 		break;
 		}*/
 	case triton::arch::x86::ID_INS_JE:
+	case triton::arch::x86::ID_INS_JNE:
 	{
 		uint64 zf;
 		auto old_value = get_reg_val("ZF", &zf);
@@ -538,10 +539,8 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 		set_reg_val("ZF", zf);
 		break;
 	}
-	/*case triton::arch::x86::ID_INS_JECXZ:
-	{
-	break;
-	}*/
+	//case triton::arch::x86::ID_INS_JRCXZ:
+	//case triton::arch::x86::ID_INS_JECXZ:
 	case triton::arch::x86::ID_INS_JG:
 	{
 		uint64 sf;
@@ -567,50 +566,93 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 	}
 	case triton::arch::x86::ID_INS_JGE:
 	{
+		uint64 sf;
+		get_reg_val("SF", &sf);
+		uint64 of;
+		get_reg_val("OF", &of);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (sf == of || zf == 1)
+		{
+			sf = !of;
+			zf = 0;
+		}
+		else
+		{
+			sf = of;
+			zf = 1;
+		}
+		set_reg_val("SF", sf);
+		set_reg_val("OF", of);
+		set_reg_val("ZF", zf);
 		break;
 	}
 	case triton::arch::x86::ID_INS_JL:
 	{
+		uint64 sf;
+		get_reg_val("SF", &sf);
+		uint64 of;
+		get_reg_val("OF", &of);
+		if (sf == of)
+		{
+			sf = !of;
+		}
+		else
+		{
+			sf = of;
+		}
+		set_reg_val("SF", sf);
+		set_reg_val("OF", of);
 		break;
 	}
 	case triton::arch::x86::ID_INS_JLE:
 	{
-		break;
-	}
-	case triton::arch::x86::ID_INS_JNE:
-	{
-		uint64 val;
-		auto old_value = get_reg_val("ZF", &val);
-		val = !val;
-		set_reg_val("ZF", val);
+		uint64 sf;
+		get_reg_val("SF", &sf);
+		uint64 of;
+		get_reg_val("OF", &of);
+		uint64 zf;
+		get_reg_val("ZF", &zf);
+		if (sf != of || zf == 1)
+		{
+			sf = of;
+			zf = 0;
+		}
+		else
+		{
+			sf = !of;
+			zf = 1;
+		}
+		set_reg_val("SF", sf);
+		set_reg_val("OF", of);
+		set_reg_val("ZF", zf);
 		break;
 	}
 	case triton::arch::x86::ID_INS_JNO:
+	case triton::arch::x86::ID_INS_JO:
 	{
+		uint64 of;
+		get_reg_val("OF", &of);
+		of = !of;
+		set_reg_val("OF", of);
 		break;
 	}
 	case triton::arch::x86::ID_INS_JNP:
+	case triton::arch::x86::ID_INS_JP:
 	{
+		uint64 pf;
+		get_reg_val("PF", &pf);
+		pf = !pf;
+		set_reg_val("PF", pf);
 		break;
 	}
 	case triton::arch::x86::ID_INS_JNS:
-	{
-		break;
-	}
-	case triton::arch::x86::ID_INS_JO:
-	{
-		break;
-	}
-	case triton::arch::x86::ID_INS_JP:
-	{
-		break;
-	}
-	case triton::arch::x86::ID_INS_JRCXZ:
-	{
-		break;
-	}
 	case triton::arch::x86::ID_INS_JS:
 	{
+		uint64 sf;
+		get_reg_val("SF", &sf);
+		sf = !sf;
+		set_reg_val("SF", sf);
 		break;
 	}
 	}

@@ -22,4 +22,5 @@ std::string notification_code_to_string(int notification_code);
 bool load_options(struct cmdOptionStruct *cmdOptions);
 bool save_options(struct cmdOptionStruct *cmdOptions);
 Input* solve_formula(ea_t pc, uint bound);
+void negate_flag_condition(triton::arch::Instruction *triton_instruction);
 bool ask_for_execute_native();
