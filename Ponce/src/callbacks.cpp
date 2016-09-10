@@ -123,6 +123,9 @@ void tritonize(ea_t pc, thid_t threadID)
 		else
 			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, myPathConstraints.size()));
 	}
+
+	if (cmdOptions.paintExecutedInstructions)
+		set_item_color(pc, cmdOptions.color_executed_instruction);
 	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
 	//instructions_executed_map[pc].push_back(tritonInst);
 }
@@ -174,6 +177,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_into:
 		case dbg_step_over:
 		{
+			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
+			if (!runtimeTrigger.getState())
+				break;
 			//msg("dbg_step_?\n");
 			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
 			/*if (ENABLE_TRACING_WHEN_TAINTING)
@@ -190,8 +196,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			{
 				if (cmdOptions.showExtraDebugInfo)
 					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
-				if (cmdOptions.paintExecutedInstructions)
-					set_item_color(pc, cmdOptions.color_executed_instruction);
 				tritonize(pc, tid);
 			}
 			/*else
@@ -226,7 +230,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_trace:
 		{
-			
+			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
+			if (!runtimeTrigger.getState())
+				break;
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
 			//msg("dbg_trace\n");
@@ -235,9 +241,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 
-			msg("Tracing over: "HEX_FORMAT"\n", pc);
-			if (cmdOptions.paintExecutedInstructions)
-				set_item_color(pc, cmdOptions.color_executed_instruction);
+			//msg("Tracing over: "HEX_FORMAT"\n", pc);
 			tritonize(pc, tid);
 
 			current_trace_counter++;
@@ -275,6 +279,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
+			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
+			if (!runtimeTrigger.getState())
+				break;
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
@@ -290,8 +297,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				if (pc == bpa.address)
 				{
 					bpa.callback(pc);
-					if (cmdOptions.paintExecutedInstructions)
-						set_item_color(pc, cmdOptions.color_executed_instruction);
 					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
@@ -305,8 +310,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						enable_step_trace(true);
 						//We dont want to skip library funcions or debug segments
 						set_step_trace_options(0);
-						//continue_process();
-						step_over();
+						continue_process();
+						//step_over();
 					}
 					break;
 				}
@@ -370,12 +375,8 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						//We only attach to the popup if the action makes sense with the current configuration
 						if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic)
 						{
-							
-
 							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_APP);
 						}
-						//To disable an action
-						//enable_menu_item(action_list[i].action_decs->name, false);
 					}
 				}	
 			}

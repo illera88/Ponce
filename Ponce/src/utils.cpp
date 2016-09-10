@@ -615,3 +615,19 @@ void negate_flag_condition(triton::arch::Instruction *triton_instruction)
 	}
 	}
 }
+
+/*Ask to the user if he really want to execute native code even if he has a snapshot.
+Returns true if the user say yes.*/
+bool ask_for_execute_native()
+{
+	//Is there any snapshot?
+	if (!snapshot.exists())
+		return true;
+	//If so we should say to the user that he cannot execute native code and expect the snapshot to work
+
+	int answer = askyn_c(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modification and the snapshot won't work. Do you still want to do it? (Y/n):");
+	if (answer == 1) //Yes
+		return true;
+	else // No or Cancel
+		return false;
+}

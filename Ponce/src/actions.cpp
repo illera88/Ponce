@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "callbacks.hpp"
 #include "formChoser.hpp"
+#include "actions.hpp"
 
 //Triton
 #include "api.hpp"
@@ -633,16 +634,17 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
 	"Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
 	186); //Optional: the action icon (shows when in menus/toolbars)
 
-
-
 struct ah_execute_native_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		//Disabling step tracing...
-		enable_step_trace(false);
-		//And continue! (F9)
-		continue_process();
+		if (ask_for_execute_native())
+		{
+			//Disabling step tracing...
+			enable_step_trace(false);
+			//And continue! (F9)
+			continue_process();
+		}
 		return 1;
 	}
 
@@ -661,9 +663,61 @@ action_desc_t action_IDA_execute_native = ACTION_DESC_LITERAL(
 	"Execute native without tracing every instruction until next breakpoint", //Optional: the action tooltip (available in menus/toolbar)
 	186); //Optional: the action icon (shows when in menus/toolbars)
 
+struct ah_enable_disable_tracing_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		if (runtimeTrigger.getState())
+		{
+			if (ask_for_execute_native())
+			{
+				//Disabling step tracing...
+				disable_step_trace();
+				runtimeTrigger.disable();
+				if (cmdOptions.showDebugInfo)
+					msg("Disabling step tracing\n");
+			}
+		}
+		else
+		{
+			//Enabling step tracing...
+			enable_step_trace(true);
+			//Enabling the trigger
+			runtimeTrigger.enable();
+			//And analyzing current instruction
+			reanalize_current_instruction();
+			if (cmdOptions.showDebugInfo)
+				msg("Enabling step tracing\n");
+		}
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		//We are using this event to change the text of the action
+		if (runtimeTrigger.getState())
+			update_action_label(ctx->action, "Disable ponce tracing");
+		else
+			update_action_label(ctx->action, "Enable ponce tracing");
+		
+		return AST_ENABLE;
+	}
+};
+static ah_enable_disable_tracing_t ah_enable_disable_tracing;
+
+//We need to define this struct before the action handler because we are using it inside the handler
+action_desc_t action_IDA_enable_disable_tracing = ACTION_DESC_LITERAL(
+	"Ponce:enable_disable_tracing",
+	"Enable/Disable ponce tracing", //The action text.
+	&ah_enable_disable_tracing, //The action handler.
+	"Ctrl+Shift+E", //Optional: the action shortcut
+	"Enable or Disable the ponce tracing", //Optional: the action tooltip (available in menus/toolbar)
+	188); //Optional: the action icon (shows when in menus/toolbars)
+
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
+	{ &action_IDA_enable_disable_tracing, { BWN_DISASM, NULL }, true, true, "" },
 	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false, "Taint/"},
 	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false, "Taint/" },
 
