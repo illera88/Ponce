@@ -379,7 +379,7 @@ static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_negate_t : public action_handler_t
+struct ah_negate_and_inject_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
@@ -442,17 +442,17 @@ struct ah_negate_t : public action_handler_t
 		return AST_DISABLE;
 	}
 };
-static ah_negate_t ah_negate;
+static ah_negate_and_inject_t ah_negate_and_inject;
 
 static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
-	"Ponce:negate", // The action name. This acts like an ID and must be unique
-	"Negate condition", //The action text.
-	&ah_negate, //The action handler.
+	"Ponce:negate_and_inject", // The action name. This acts like an ID and must be unique
+	"Negate & Inject", //The action text.
+	&ah_negate_and_inject, //The action handler.
 	"Ctrl+Shift+N", //Optional: the action shortcut
-	"Negate the current condition", //Optional: the action tooltip (available in menus/toolbar)
+	"Negate the current condition and inject the solution into memory", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_negateInjectRestore_t : public action_handler_t
+struct ah_negate_inject_and_restore_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
@@ -517,14 +517,14 @@ struct ah_negateInjectRestore_t : public action_handler_t
 		return AST_DISABLE;
 	}
 };
-static ah_negateInjectRestore_t ah_negateInjectRestore;
+static ah_negate_inject_and_restore_t ah_negate_inject_and_restore;
 
 static const action_desc_t action_IDA_negateInjectRestore = ACTION_DESC_LITERAL(
-	"Negate Inject Restore", // The action name. This acts like an ID and must be unique
-	"Negate Inject Restore", //The action text.
-	&ah_negateInjectRestore, //The action handler.
-	"Ctrl + N", //Optional: the action shortcut
-	"this is a tool tip", //Optional: the action tooltip (available in menus/toolbar)
+	"Ponce:negate_inject_restore", // The action name. This acts like an ID and must be unique
+	"Negate, Inject & Restore snapshot", //The action text.
+	&ah_negate_inject_and_restore, //The action handler.
+	"Ctrl+Shift+I", //Optional: the action shortcut
+	"Negates a condition, inject the solution and restore the snapshot", //Optional: the action tooltip (available in menus/toolbar)
 	164); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_create_snapshot_t : public action_handler_t
