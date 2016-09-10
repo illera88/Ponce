@@ -65,10 +65,10 @@ struct ah_taint_register_t : public action_handler_t
 static ah_taint_register_t ah_taint_register;
 
 static const action_desc_t action_IDA_taint_register = ACTION_DESC_LITERAL(
-	"ah_taint_register", // The action name. This acts like an ID and must be unique
+	"Ponce:taint_register", // The action name. This acts like an ID and must be unique
 	"Taint Register", //The action text.
 	&ah_taint_register, //The action handler.
-	"Ctrl + R", //Optional: the action shortcut
+	"Ctrl+Shift+R", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	199); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -127,10 +127,10 @@ struct ah_symbolize_register_t : public action_handler_t
 static ah_symbolize_register_t ah_symbolize_register;
 
 static const action_desc_t action_IDA_symbolize_register = ACTION_DESC_LITERAL(
-	"ah_symbolize_register", // The action name. This acts like an ID and must be unique
+	"Ponce:symbolize_register", // The action name. This acts like an ID and must be unique
 	"Symbolize Register", //The action text.
 	&ah_symbolize_register, //The action handler.
-	"Ctrl + R", //Optional: the action shortcut
+	"Ctrl+Shift+R", //Optional: the action shortcut
 	"Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	199); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -226,10 +226,10 @@ struct ah_taint_memory_t : public action_handler_t
 static ah_taint_memory_t ah_taint_memory;
 
 static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
-	"ah_taint_memory", // The action name. This acts like an ID and must be unique
+	"Ponce:taint_memory", // The action name. This acts like an ID and must be unique
 	"Taint Memory", //The action text.
 	&ah_taint_memory, //The action handler.
-	"Ctrl + M", //Optional: the action shortcut
+	"Ctrl+Shift+M", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	200); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -325,10 +325,10 @@ struct ah_symbolize_memory_t : public action_handler_t
 static ah_symbolize_memory_t ah_symbolize_memory;
 
 static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
-	"ah_symbolize_memory", // The action name. This acts like an ID and must be unique
+	"Ponce:symbolize_memory", // The action name. This acts like an ID and must be unique
 	"Symbolize Memory", //The action text.
 	&ah_symbolize_memory, //The action handler.
-	"Ctrl + S", //Optional: the action shortcut
+	"Ctrl+Shift+M", //Optional: the action shortcut
 	"Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	200); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -440,10 +440,10 @@ struct ah_solve_t : public action_handler_t
 static ah_solve_t ah_solve;
 
 static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
-	"ah_solve", // The action name. This acts like an ID and must be unique
+	"Ponce:solve", // The action name. This acts like an ID and must be unique
 	"Solve formula", //The action text.
 	&ah_solve, //The action handler.
-	"Ctrl + S", //Optional: the action shortcut
+	"Ctrl+Shift+S", //Optional: the action shortcut
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -587,15 +587,15 @@ struct ah_negate_t : public action_handler_t
 static ah_negate_t ah_negate;
 
 static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
-	"ah_negate", // The action name. This acts like an ID and must be unique
+	"Ponce:negate", // The action name. This acts like an ID and must be unique
 	"Negate condition", //The action text.
 	&ah_negate, //The action handler.
-	"Ctrl + N", //Optional: the action shortcut
+	"Ctrl+Shift+N", //Optional: the action shortcut
 	"Negate the current condition", //Optional: the action tooltip (available in menus/toolbar)
 	201); //Optional: the action icon (shows when in menus/toolbars)
 
 
-struct createSnapshot_ah_t : public action_handler_t
+struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
@@ -613,17 +613,17 @@ struct createSnapshot_ah_t : public action_handler_t
 			return AST_DISABLE;
 	}
 };
-static createSnapshot_ah_t createSnapshot_ah;
+static ah_create_snapshot_t ah_create_snapshot;
 
 static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
-	"Create Snapshot",
+	"Ponce:create_snapshot",
 	"Create Snapshot", 
-	&createSnapshot_ah,
-	"Ctrl-S", 
+	&ah_create_snapshot,
+	"Ctrl+Shift+C", 
 	NULL, 
 	15);
 
-struct restoreSnapshot_ah_t : public action_handler_t
+struct ah_restore_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
@@ -641,17 +641,17 @@ struct restoreSnapshot_ah_t : public action_handler_t
 			return AST_DISABLE;
 	}
 };
-static restoreSnapshot_ah_t restoreSnapshot_ah;
+static ah_restore_snapshot_t ah_restore_snapshot;
 
 static const action_desc_t action_IDA_restoreSnapshot = ACTION_DESC_LITERAL(
+	"Ponce:restore_snapshot",
 	"Restore Snapshot",
-	"Restore Snapshot",
-	&restoreSnapshot_ah,
-	"Ctrl-S",
+	&ah_restore_snapshot,
+	"Ctrl+Shift+R",
 	NULL,
 	15);
 
-struct deleteSnapshot_ah_t : public action_handler_t
+struct ah_delete_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
@@ -669,13 +669,13 @@ struct deleteSnapshot_ah_t : public action_handler_t
 			return AST_DISABLE;
 	}
 };
-static deleteSnapshot_ah_t deleteSnapshot_ah;
+static ah_delete_snapshot_t ah_delete_snapshot;
 
 static const action_desc_t action_IDA_deleteSnapshot = ACTION_DESC_LITERAL(
+	"Ponce:delete_snapshot",
 	"Delete Snapshot",
-	"Delete Snapshot",
-	&deleteSnapshot_ah,
-	"Ctrl-D",
+	&ah_delete_snapshot,
+	"Ctrl+Shift+D",
 	NULL,
 	15);
 
@@ -698,8 +698,36 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
 	"Ponce:show_config", // The action name. This acts like an ID and must be unique
 	"Show config", //The action text.
 	&ah_show_config, //The action handler.
-	"Ctrl-O", //Optional: the action shortcut
+	"Ctrl+Shift+P", //Optional: the action shortcut
 	"Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
+	186); //Optional: the action icon (shows when in menus/toolbars)
+
+
+
+struct ah_execute_native_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		//Disabling step tracing...
+		enable_step_trace(false);
+		//And continue! (F9)
+		continue_process();
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static ah_execute_native_t ah_execute_native;
+
+action_desc_t action_IDA_execute_native = ACTION_DESC_LITERAL(
+	"Ponce:execute_native", // The action name. This acts like an ID and must be unique
+	"Execute native", //The action text.
+	&ah_execute_native, //The action handler.
+	"Ctrl+Shift+F9", //Optional: the action shortcut
+	"Execute native without tracing every instruction until next breakpoint", //Optional: the action tooltip (available in menus/toolbar)
 	186); //Optional: the action icon (shows when in menus/toolbars)
 
 /*This list defined all the actions for the plugin*/
@@ -717,5 +745,6 @@ struct action action_list[] =
 	{ &action_IDA_createSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/"},
 	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ &action_IDA_deleteSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
+	{ &action_IDA_execute_native, { BWN_DISASM, NULL }, true, true, "" },
 	{ NULL, NULL, NULL }
 };

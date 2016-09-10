@@ -24,6 +24,7 @@ void start_tainting_or_symbolic_analysis()
 	{
 		runtimeTrigger.enable();
 		is_something_tainted_or_symbolize = true;
+		enable_step_trace(true);
 		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
 			automatically_continue_after_step = true;*/
 			//enable_insn_trace(true);

@@ -39,8 +39,6 @@
 #define SNAPSHOT_DESCRIPTION "Before use the script"
 //#define DEBUG true
 //#define EXTRADEBUG true
-//It enables the instruction tracing the first time a register/memory is tainted
-#define ENABLE_STEP_INTO_WHEN_TAINTING true
 //#define PAINT_EXECUTED_INSTRUCTIONS true
 //It runs the plugin when it is initiallized
 #define AUTO_RUN true
