@@ -98,6 +98,9 @@ void tritonize(ea_t pc, thid_t threadID)
 	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
 		op->setTrust(true);
 
+	if (cmdOptions.paintExecutedInstructions)
+		set_item_color(pc, cmdOptions.color_executed_instruction);
+
 	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
 	if (tritonInst->isTainted() || tritonInst->isSymbolized())
 	{
@@ -123,9 +126,6 @@ void tritonize(ea_t pc, thid_t threadID)
 		else
 			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, myPathConstraints.size()));
 	}
-
-	if (cmdOptions.paintExecutedInstructions)
-		set_item_color(pc, cmdOptions.color_executed_instruction);
 	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
 	//instructions_executed_map[pc].push_back(tritonInst);
 }
@@ -279,19 +279,17 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
-			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
-			if (!runtimeTrigger.getState())
-				break;
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
 			//msg("dbg_bpt at "HEX_FORMAT"\n", pc);
 			//This variable defines if a breakpoint is a user-defined breakpoint or not
 			bool user_bp = true;
-			//msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
+			msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
 			{
+				msg("breakpoint pending found\n");
 				breakpoint_pending_action bpa = *it;
 				//If we find a pendign action we execute the callback
 				if (pc == bpa.address)
@@ -318,7 +316,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//If it is a user break point we enable again the step tracing if it was enabled previously...
 			//The idea is if the user uses Execute native til next bp, and IDA reachs the next bp we reenable the tracing
 			if (user_bp)
-				enable_step_trace(runtimeTrigger.getState());
+			{
+				//If the trigger is disabled then the user is manually stepping with the ponce tracing disabled
+				if (runtimeTrigger.getState())
+					enable_step_trace(runtimeTrigger.getState());
+			}
 			break;
 		}
 		case dbg_process_exit:

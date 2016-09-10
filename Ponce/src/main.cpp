@@ -31,6 +31,11 @@ void triton_init()
 	triton::api.addCallback(needConcreteMemoryValue);
 	// Register access callback
 	triton::api.addCallback(needConcreteRegisterValue);
+	// This optimization is veeery good for the size of the formulas
+	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
+	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
+	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
+	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
 }
 
 //--------------------------------------------------------------------------
