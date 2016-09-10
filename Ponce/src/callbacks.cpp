@@ -305,8 +305,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						enable_step_trace(true);
 						//We dont want to skip library funcions or debug segments
 						set_step_trace_options(0);
-						//continue_process();
-						step_over();
+						continue_process();
 					}
 					break;
 				}
