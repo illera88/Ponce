@@ -3,6 +3,8 @@
 //Triton
 #include <api.hpp>
 
+#include "globals.hpp"
+
 void start_tainting_or_symbolic_analysis();
 triton::arch::Register *str_to_register(std::string register_name);
 void taint_all_memory(triton::__uint address, triton::__uint size);
@@ -19,3 +21,4 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 std::string notification_code_to_string(int notification_code);
 bool load_options(struct cmdOptionStruct *cmdOptions);
 bool save_options(struct cmdOptionStruct *cmdOptions);
+Input* solve_formula(ea_t pc, uint bound);

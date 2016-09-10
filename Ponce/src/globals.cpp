@@ -6,6 +6,7 @@
 //Triton
 #include "api.hpp"
 
+
 //This variable defines if there is a limit for the number of instructions traced by the plugin
 //bool limit_traced_instructions = true;
 //This variable stores the number of instructions executed during the tracing
@@ -31,6 +32,9 @@ bool automatically_continue_after_step = false;
 //std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
 //This variable stores all the path constraints executed before reach the current instruction
 std::vector<PathConstraint> myPathConstraints;
+
+//Options
+struct cmdOptionStruct cmdOptions;
 
 //Snapshot object
 Snapshot snapshot = Snapshot();

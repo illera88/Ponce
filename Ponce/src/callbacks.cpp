@@ -77,13 +77,13 @@ void tritonize(ea_t pc, thid_t threadID)
 			//Possible point of failure since memory_access can be more than one byte i guess
 			triton::arch::MemoryAccess memory_access = it->first;
 			auto addr = memory_access.getAddress();
-			for (int i = 0; i < memory_access.getSize(); i++){
+			for (unsigned int i = 0; i < memory_access.getSize(); i++){
 				triton::uint128 value = 0;
 				//This is the way to force IDA to read the value from the debugger
 				//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-				invalidate_dbgmem_contents(addr+i, sizeof(value)); //ToDo: Do I have to call this for every byte in memory I want to read?
-				get_many_bytes(addr+i, &value, 1);
-				snapshot.addModification(addr + i, value.convert_to<char>());
+				invalidate_dbgmem_contents((ea_t)(addr+i), sizeof(value)); //ToDo: Do I have to call this for every byte in memory I want to read?
+				get_many_bytes((ea_t)(addr + i), &value, 1);
+				snapshot.addModification((ea_t)(addr + i), value.convert_to<char>());
 			}
 		}
 	}
@@ -119,9 +119,9 @@ void tritonize(ea_t pc, thid_t threadID)
 			msg("[+] Branch symbolized detected at "HEX_FORMAT": "HEX_FORMAT" or "HEX_FORMAT", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 		triton::__uint ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
-			myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1));
+			myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, myPathConstraints.size()));
 		else
-			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2));
+			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, myPathConstraints.size()));
 	}
 	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
 	//instructions_executed_map[pc].push_back(tritonInst);
@@ -378,3 +378,19 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 	return 0;
 }
 
+/*We set the memory to the results we got and do the analysis from there*/
+void set_SMT_results(Input *input_ptr){
+	if (cmdOptions.showDebugInfo)
+		msg("\ncallback_set_SMT_results \n");
+
+	/*To set the memory types*/
+	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
+		put_many_bytes((ea_t)it->getAddress(), &it->getConcreteValue(), it->getSize());	
+		
+	/*To set the register types*/
+	for (auto it = input_ptr->regOperand.begin(); it != input_ptr->regOperand.end(); it++)
+		set_reg_val(it->getName().c_str(), it->getConcreteValue().convert_to<uint64>());
+		
+	if (cmdOptions.showDebugInfo)
+		msg("[+] Memory set with the SMT results\n");
+}

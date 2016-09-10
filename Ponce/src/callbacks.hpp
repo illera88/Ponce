@@ -3,6 +3,8 @@
 #include <idp.hpp>
 #include <list>
 
+#include "globals.hpp"
+
 //This struct is used to define a pending action when a breakpoint is triggered
 typedef struct
 {
@@ -20,3 +22,4 @@ int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list 
 int idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
 void tritonize(va_list va);
 void reanalize_current_instruction();
+void set_SMT_results(Input* input_ptr);

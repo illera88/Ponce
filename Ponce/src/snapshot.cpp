@@ -8,6 +8,7 @@
 #include <iostream>
 #include "snapshot.hpp"
 
+#include "globals.hpp"
 #include "dbg.hpp"
 
 /*! \page Snapshot_page Snapshot
@@ -104,9 +105,6 @@ void Snapshot::takeSnapshot() {
 
 /* Restore the snapshot. */
 void Snapshot::restoreSnapshot() {
-
-	/*if (this->mustBeRestore == false)
-		return;*/
 	
 	/* 1 - Restore all memory modification. */
 	for (auto i = this->memory.begin(); i != this->memory.end(); ++i){
@@ -156,19 +154,15 @@ void Snapshot::restoreSnapshot() {
 
 	this->mustBeRestore = false;
 
-	/* 9 - Restore IDA registers context 
-	Suposedly XIP should be set at the same time and execution redirected*/
+	/* 9 - Restore IDA registers context */
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
-	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
+	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) 
+	{
 		if (set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
-		{
-			msg("OK restoring register %s\n", iterator->first.c_str());
-		}
+			if (cmdOptions.showDebugInfo)
+				msg("OK restoring register %s\n", iterator->first.c_str());
 		else
-		{
 			msg("ERROR restoring register %s\n", iterator->first.c_str());
-
-		}
 	}
 }
 
@@ -184,10 +178,10 @@ void Snapshot::disableSnapshot(void) {
 void Snapshot::resetEngine(void) {
 	this->memory.clear();
 
-	delete this->snapshotSymEngine;
+	//delete this->snapshotSymEngine;
 	this->snapshotSymEngine = nullptr;
 
-	delete this->snapshotTaintEngine;
+	//delete this->snapshotTaintEngine;
 	this->snapshotTaintEngine = nullptr;
 
 	this->snapshotTaken = false;
