@@ -538,6 +538,7 @@ struct ah_negate_t : public action_handler_t
 								set_reg_val(r.getName().c_str(), (uint64)secondValue);
 							}
 						}
+						
 						//We need to modify the last path constrain
 						auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
 						myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
