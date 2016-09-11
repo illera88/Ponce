@@ -23,15 +23,15 @@ std::list<breakpoint_pending_action> breakpoint_pending_actions;
 void tritonize(ea_t pc, thid_t threadID)
 {
 	/*Check tha the runtime Trigger is on just in case*/
-	if (!runtimeTrigger.getState())
+	if (!ponce_runtime_status.runtimeTrigger.getState())
 		return;
 
 	//We delete the last_instruction
 	//Maybe in the future we need to keep the in instruction memory to negate the condition at any moment
-	if (last_triton_instruction != NULL)
-		delete last_triton_instruction;
+	if (ponce_runtime_status.last_triton_instruction != NULL)
+		delete ponce_runtime_status.last_triton_instruction;
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
-	last_triton_instruction = tritonInst;
+	ponce_runtime_status.last_triton_instruction = tritonInst;
 	//ea_t pc = va_arg(va, ea_t);
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!decode_insn(pc))
@@ -123,9 +123,9 @@ void tritonize(ea_t pc, thid_t threadID)
 			msg("[+] Branch symbolized detected at "HEX_FORMAT": "HEX_FORMAT" or "HEX_FORMAT", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 		triton::__uint ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
-			myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, myPathConstraints.size()));
+			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
 		else
-			myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, myPathConstraints.size()));
+			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));
 	}
 	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
 	//instructions_executed_map[pc].push_back(tritonInst);
@@ -152,14 +152,14 @@ void triton_restart_engines()
 	triton::api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
 	triton::api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
 	//triton::api.getSymbolicEngine()->enable(true);
-	runtimeTrigger.disable();
-	is_something_tainted_or_symbolize = false;
-	tainted_functions_index = 0;
+	ponce_runtime_status.runtimeTrigger.disable();
+	ponce_runtime_status.is_something_tainted_or_symbolize = false;
+	ponce_runtime_status.tainted_functions_index = 0;
 	//Reset instruction counter
-	total_number_traced_ins = current_trace_counter = 0;
+	ponce_runtime_status.total_number_traced_ins = ponce_runtime_status.current_trace_counter = 0;
 	breakpoint_pending_actions.clear();
 	set_automatic_taint_n_simbolic();
-	myPathConstraints.clear();
+	ponce_runtime_status.myPathConstraints.clear();
 }
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
@@ -179,7 +179,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_over:
 		{
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
-			if (!runtimeTrigger.getState())
+			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
 			//msg("dbg_step_?\n");
 			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
@@ -197,7 +197,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
 			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
-			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() != pc)
+			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
 			{
 				if (cmdOptions.showExtraDebugInfo)
 					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
@@ -236,7 +236,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_trace:
 		{
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
-			if (!runtimeTrigger.getState())
+			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
 			// A step occured (one instruction was executed). This event
 			// notification is only generated if step tracing is enabled.
@@ -279,7 +279,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 						//Disabling step tracing...
 						disable_step_trace();
-						runtimeTrigger.disable();
+						ponce_runtime_status.runtimeTrigger.disable();
 						need_to_break = true;
 						break;
 					}
@@ -292,11 +292,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//msg("Tracing over: "HEX_FORMAT"\n", pc);
 			tritonize(pc, tid);
 
-			current_trace_counter++;
-			total_number_traced_ins++;
+			ponce_runtime_status.current_trace_counter++;
+			ponce_runtime_status.total_number_traced_ins++;
 
 			//This is the wow64 switching, we need to skip it
-			if (last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
+			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
 			{
 				msg("wow64 switching! requesting disable();\n");
 				//And now we need to stop the tracing, do step over and reenable the tracing...
@@ -308,19 +308,19 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				break;
 			}
 
-			if (cmdOptions.limitInstructionsTracingMode && current_trace_counter == cmdOptions.limitInstructionsTracingMode)
+			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter == cmdOptions.limitInstructionsTracingMode)
 			{
-				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
+				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", ponce_runtime_status.total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
 					enable_step_trace(false);
 					suspend_process();
-					msg("[!] Process suspended (Traced %d instructions)\n", total_number_traced_ins);
+					msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
 				}
 				else
 				{
-					current_trace_counter = 0;
+					ponce_runtime_status.current_trace_counter = 0;
 				}
 			}
 			break;
@@ -351,8 +351,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						user_bp = false;
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
-						//msg("after bp automatically_continue_after_step: %d\n", automatically_continue_after_step);
-						automatically_continue_after_step = true;
 						enable_step_trace(true);
 						//We dont want to skip library funcions or debug segments
 						set_step_trace_options(0);
@@ -369,8 +367,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (user_bp)
 			{
 				//If the trigger is disabled then the user is manually stepping with the ponce tracing disabled
-				if (runtimeTrigger.getState())
-					enable_step_trace(runtimeTrigger.getState());
+				if (ponce_runtime_status.runtimeTrigger.getState())
+					enable_step_trace(ponce_runtime_status.runtimeTrigger.getState());
 			}
 			break;
 		}
@@ -387,7 +385,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//msg("In dbg_process_exit, reseting everything\n");
 			//Do we want to unhook this event?
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
-			runtimeTrigger.disable();
+			ponce_runtime_status.runtimeTrigger.disable();
 			break;
 		}
 	}

@@ -69,19 +69,50 @@ struct action{
 	char* menu_path; // this is where the item will be conteined in
 };
 
+struct PathConstraint{
+	triton::__uint conditionRipId;
+	triton::__uint conditionAddr;
+	triton::__uint takenAddr;
+	triton::__uint notTakenAddr;
+	uint bound;
+
+	PathConstraint(triton::__uint conditionRipId, triton::__uint conditionAddr, triton::__uint takenAddr, triton::__uint notTakenAddr, uint bound)
+	{
+		this->conditionRipId = conditionRipId;
+		this->conditionAddr = conditionAddr;
+		this->takenAddr = takenAddr;
+		this->notTakenAddr = notTakenAddr;
+		this->bound = bound;
+	}
+};
+
+//This struct stores all the global variables used for the current state of the Ponce plugin during execution
+//The idea is restore this sctruct when we restore the snapshot
+struct runtime_status_t
+{
+	//This variable stores the number of instructions executed during the tracing
+	unsigned int total_number_traced_ins;
+	//This variable is used to count how many instructions were executed after the user was asked
+	unsigned int current_trace_counter;
+	//Is it something tainted or symbolize?
+	bool is_something_tainted_or_symbolize;
+	//This index is used when we are renaming the tainted funcitons, to know the index
+	unsigned int tainted_functions_index;
+	//Trigger to enable/disable triton
+	Trigger runtimeTrigger;
+	//This is the last instruction executed by triton, we need to reference to reanalize if the user taint a register
+	triton::arch::Instruction* last_triton_instruction;
+	//This variable stores all the path constraints executed before reach the current instruction
+	std::vector<PathConstraint> myPathConstraints;
+};
+
+extern struct runtime_status_t ponce_runtime_status;
+
 //All the global variables:
 extern struct action action_list[];
-extern bool limit_traced_instructions;
-extern unsigned int total_number_traced_ins;
-extern unsigned int current_trace_counter;
-extern unsigned int max_traced_instructions;
 extern bool hooked;
-extern bool is_something_tainted_or_symbolize;
-extern unsigned int tainted_functions_index;
-extern Trigger runtimeTrigger;
 extern Snapshot snapshot;
-extern triton::arch::Instruction* last_triton_instruction;
-extern bool automatically_continue_after_step;
+
 //We could use this if we want to keep all the instructions in memory
 //extern std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
 
@@ -119,24 +150,6 @@ struct cmdOptionStruct{
 	bool paintExecutedInstructions= false;
 };
 extern struct cmdOptionStruct cmdOptions;
-
-struct PathConstraint{
-	triton::__uint conditionRipId;
-	triton::__uint conditionAddr;
-	triton::__uint takenAddr;
-	triton::__uint notTakenAddr;
-	uint bound;
-
-	PathConstraint(triton::__uint conditionRipId, triton::__uint conditionAddr, triton::__uint takenAddr, triton::__uint notTakenAddr, uint bound)
-	{
-		this->conditionRipId = conditionRipId;
-		this->conditionAddr = conditionAddr;
-		this->takenAddr = takenAddr;
-		this->notTakenAddr = notTakenAddr;
-		this->bound = bound;
-	}
-};
-extern std::vector<PathConstraint> myPathConstraints;
 
 class Input
 {

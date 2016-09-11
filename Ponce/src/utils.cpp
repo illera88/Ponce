@@ -21,10 +21,10 @@
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
 void start_tainting_or_symbolic_analysis()
 {
-	if (!is_something_tainted_or_symbolize)
+	if (!ponce_runtime_status.is_something_tainted_or_symbolize)
 	{
-		runtimeTrigger.enable();
-		is_something_tainted_or_symbolize = true;
+		ponce_runtime_status.runtimeTrigger.enable();
+		ponce_runtime_status.is_something_tainted_or_symbolize = true;
 		enable_step_trace(true);
 		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
 			automatically_continue_after_step = true;*/
@@ -233,12 +233,12 @@ void rename_tainted_function(ea_t address)
 		{
 			char new_func_name[MAXSTR];
 			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
-			sprintf_s(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", tainted_functions_index, func_name);
+			sprintf_s(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name);
 			//We need the start of the function we can have that info with our function find_function
 			set_name(find_function(func_name), new_func_name);
 			if (cmdOptions.showDebugInfo)
 				msg("[+] Renaming function %s -> %s\n", func_name, new_func_name);
-			tainted_functions_index += 1;
+			ponce_runtime_status.tainted_functions_index += 1;
 		}
 	}
 }
@@ -346,9 +346,9 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 
 /*returns true if a formula was solved*/
 Input * solve_formula(ea_t pc, uint bound){
-	for (unsigned int i = myPathConstraints.size() - 1; i >= 0; i--)
+	for (unsigned int i = ponce_runtime_status.myPathConstraints.size() - 1; i >= 0; i--)
 	{
-		auto path_constraint = myPathConstraints[i];
+		auto path_constraint = ponce_runtime_status.myPathConstraints[i];
 		if (path_constraint.conditionAddr == pc)
 		{
 			std::vector <triton::ast::AbstractNode *> expr;
@@ -358,17 +358,17 @@ Input * solve_formula(ea_t pc, uint bound){
 			{
 				if (cmdOptions.showExtraDebugInfo)
 					msg("Keeping condition %d\n", j);
-				triton::__uint ripId = myPathConstraints[j].conditionRipId;
+				triton::__uint ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 				auto symExpr = triton::api.getFullAstFromId(ripId);
-				triton::__uint takenAddr = myPathConstraints[j].takenAddr;
+				triton::__uint takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 				expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 			}
 			if (cmdOptions.showExtraDebugInfo)
 				msg("Inverting condition %d\n", i);
 			//And now we negate the selected condition
-			triton::__uint ripId = myPathConstraints[i].conditionRipId;
+			triton::__uint ripId = ponce_runtime_status.myPathConstraints[i].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
-			triton::__uint notTakenAddr = myPathConstraints[i].notTakenAddr;
+			triton::__uint notTakenAddr = ponce_runtime_status.myPathConstraints[i].notTakenAddr;
 			if (cmdOptions.showExtraDebugInfo)
 				msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
@@ -722,5 +722,5 @@ qstring get_callee(ea_t address){
 
 //We use this function to enable the trigger after a blacklisted function
 void enableTrigger(ea_t main_address){
-	runtimeTrigger.enable();
+	ponce_runtime_status.runtimeTrigger.enable();
 }

@@ -19,6 +19,8 @@
 #include <x8664Cpu.hpp>
 #include <x86Cpu.hpp>
 
+// Ponce
+//#include "globals.hpp"
 
 //! \class Snapshot
 //! \brief the snapshot class.
@@ -59,7 +61,9 @@ private:
 
 	//! Snapshot of Pin context.
 	std::map<std::string, triton::uint512> IDAContext;
-	//dr_mcontext_t pinCtx;
+	
+	//! Snapshot of the ponce plugin status
+	//struct runtime_status_t saved_ponce_runtime_status;
 
 public:
 	//! Constructor.

@@ -32,7 +32,7 @@ struct ah_taint_register_t : public action_handler_t
 				start_tainting_or_symbolic_analysis();
 				//If the register tainted is a source for the instruction then we need to reanalize the instruction
 				//So the self instruction will be tainted
-				auto read_registers = last_triton_instruction->getReadRegisters();
+				auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
 				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
 				{
 					auto reg = it->first;
@@ -94,7 +94,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				start_tainting_or_symbolic_analysis();
 				//If the register symbolize is a source for the instruction then we need to reanalize the instruction
 				//So the self instruction will be tainted
-				auto read_registers = last_triton_instruction->getReadRegisters();
+				auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
 				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
 				{
 					auto reg = it->first;
@@ -358,12 +358,12 @@ struct ah_solve_t : public action_handler_t
 	{
 		//Only enabled with symbolize conditions
 		//If we are in runtime and it is the last instruction we can test if it is symbolize
-		if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+		if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
 			return AST_ENABLE;
 		//If we are in offline mode we can check if the condition is in the path constrains
-		for (unsigned int i = 0; i < myPathConstraints.size(); i++)
+		for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 		{
-			if (myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
+			if (ponce_runtime_status.myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
 				return AST_ENABLE;
 		}
 		return AST_DISABLE;
@@ -396,13 +396,13 @@ struct ah_negate_and_inject_t : public action_handler_t
 			if (input_ptr != NULL)
 			{
 				//We need to modify the last path constrain
-				auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
-				myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
-				myPathConstraints[myPathConstraints.size() - 1].takenAddr = temp;
+				auto temp = ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].notTakenAddr;
+				ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].notTakenAddr = ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].takenAddr;
+				ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].takenAddr = temp;
 				//We need to modify the condition flags to negate the condition
-				if (last_triton_instruction->getAddress() == pc)
+				if (ponce_runtime_status.last_triton_instruction->getAddress() == pc)
 				{
-					negate_flag_condition(last_triton_instruction);
+					negate_flag_condition(ponce_runtime_status.last_triton_instruction);
 					/*auto regs = last_triton_instruction->getReadRegisters();
 					for (auto it = regs.begin(); it != regs.end(); it++)
 					{
@@ -436,7 +436,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 		{
 			//Only enabled with symbolize conditions
 			//If we are in runtime and it is the last instruction we can test if it is symbolize
-			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
 				return AST_ENABLE;
 		}
 		return AST_DISABLE;
@@ -468,29 +468,6 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 			auto input_ptr = solve_formula(pc, NULL);
 			if (input_ptr != NULL)
 			{
-				//We need to modify the last path constrain
-				auto temp = myPathConstraints[myPathConstraints.size() - 1].notTakenAddr;
-				myPathConstraints[myPathConstraints.size() - 1].notTakenAddr = myPathConstraints[myPathConstraints.size() - 1].takenAddr;
-				myPathConstraints[myPathConstraints.size() - 1].takenAddr = temp;
-				//We need to modify some of the symbolized flag to negate the condition
-				if (last_triton_instruction->getAddress() == pc)
-				{
-					auto regs = last_triton_instruction->getReadRegisters();
-					for (auto it = regs.begin(); it != regs.end(); it++)
-					{
-						auto reg = it->first;
-						//If the register is a flag and it is symbolized, we have a candidate to negate
-						if (reg.isFlag() && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized())
-						{
-							uint64 val;
-							auto old_value = get_reg_val(reg.getName().c_str(), &val);
-							//Negating flag
-							val = !val;
-							set_reg_val(reg.getName().c_str(), val);
-							break;
-						}
-					}
-				}
 				// We set the results obtained from solve_formula
 				set_SMT_results(input_ptr);
 
@@ -511,7 +488,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 		{
 			//Only enabled with symbolize conditions
 			//If we are in runtime and it is the last instruction we can test if it is symbolize
-			if (last_triton_instruction != NULL && last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && last_triton_instruction->isBranch() && last_triton_instruction->isSymbolized())
+			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
 				return AST_ENABLE;
 		}
 		return AST_DISABLE;
@@ -667,13 +644,13 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		if (runtimeTrigger.getState())
+		if (ponce_runtime_status.runtimeTrigger.getState())
 		{
 			if (ask_for_execute_native())
 			{
 				//Disabling step tracing...
 				disable_step_trace();
-				runtimeTrigger.disable();
+				ponce_runtime_status.runtimeTrigger.disable();
 				if (cmdOptions.showDebugInfo)
 					msg("Disabling step tracing\n");
 			}
@@ -683,7 +660,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 			//Enabling step tracing...
 			enable_step_trace(true);
 			//Enabling the trigger
-			runtimeTrigger.enable();
+			ponce_runtime_status.runtimeTrigger.enable();
 			//And analyzing current instruction
 			reanalize_current_instruction();
 			if (cmdOptions.showDebugInfo)
@@ -695,7 +672,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
 		//We are using this event to change the text of the action
-		if (runtimeTrigger.getState())
+		if (ponce_runtime_status.runtimeTrigger.getState())
 			update_action_label(ctx->action, "Disable ponce tracing");
 		else
 			update_action_label(ctx->action, "Enable ponce tracing");
