@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include "tainting_n_symbolic.hpp"
 #include "blacklisted.hpp"
+#include "actions.hpp"
 
 //IDA
 #include <ida.hpp>
@@ -400,12 +401,13 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 	{
 		// called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
-		case ui_populating_tform_popup:
+		case ui_finish_populating_tform_popup:
 		{
 			TForm *form = va_arg(va, TForm *);
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
 			int view_type= get_tform_type(form);
 
+			//Adding a separator
 			attach_action_to_popup(form, popup_handle, "");
 
 			/*Iterate over all the actions*/			
@@ -430,9 +432,29 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					}
 				}	
 			}
+			//Adding submenus for solve with all the conditions
+			/*if (view_type == BWN_DISASM)
+			{
+				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
+				{
+					//We should filter here for the pc
+					char name[256];
+					sprintf_s(name, "Ponce:solve_formula_sub_%d", i);
+					action_IDA_solve_formula_sub.name = name;
+					char label[256];
+					sprintf_s(label, "%d. "HEX_FORMAT" -> %s ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+					action_IDA_solve_formula_sub.label = label;
+					bool success = register_action(action_IDA_solve_formula_sub);
+					msg("registered submenu for solver, result: %d\n", success);
+					success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
+					msg("Added submenu for solver, result: %d\n", success);
+				}
+			}*/
+			//Adding a separator
 			attach_action_to_popup(form, popup_handle, "");
 		}
-		case dbg_process_exit:{
+		case dbg_process_exit:
+		{
 			unhook_from_notification_point(HT_DBG, ui_callback, NULL);
 			break;
 		}

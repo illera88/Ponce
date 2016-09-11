@@ -357,16 +357,17 @@ struct ah_solve_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		//Only enabled with symbolize conditions
-		//If we are in runtime and it is the last instruction we can test if it is symbolize
-		if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
-			return AST_ENABLE;
-		//If we are in offline mode we can check if the condition is in the path constrains
+		//if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
+		//	return AST_ENABLE;
+		//If the condition is in the path constrains
+		bool condition_found = false;
 		for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 		{
 			if (ponce_runtime_status.myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
-				return AST_ENABLE;
+				condition_found = true;
+			//attach_action_to_popup(action_update_ctx_t->form, action_update_ctx_t->, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_APP);
 		}
-		return AST_DISABLE;
+		return condition_found ? AST_ENABLE: AST_DISABLE;
 	}
 };
 static ah_solve_t ah_solve;
@@ -691,6 +692,32 @@ action_desc_t action_IDA_enable_disable_tracing = ACTION_DESC_LITERAL(
 	"Enable or Disable the ponce tracing", //Optional: the action tooltip (available in menus/toolbar)
 	188); //Optional: the action icon (shows when in menus/toolbars)
 
+
+struct ah_solve_formula_sub_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		msg("Solving formula xxx\n");
+		return 1;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		msg("Calling update submenu ea:"HEX_FORMAT"\n", ctx->cur_ea);
+		return AST_ENABLE;
+	}
+};
+ah_solve_formula_sub_t ah_solve_formula_sub;
+
+action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
+	"Ponce:solve_formula_sub", // The action name. This acts like an ID and must be unique
+	"1. 0x4012234 Not taken", //The action text.
+	&ah_solve_formula_sub, //The action handler.
+	"", //Optional: the action shortcut
+	"", //Optional: the action tooltip (available in menus/toolbar)
+	186); //Optional: the action icon (shows when in menus/toolbars)
+
+
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
@@ -701,7 +728,7 @@ struct action action_list[] =
 	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true, "Symbolic/"},
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true, "Symbolic/" },
 
-	{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "SMT/" },
+	//{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "aaa bbbb/" },
 	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
 	{ &action_IDA_negateInjectRestore, { BWN_DISASM, NULL }, true, true, "SMT/" },
 
@@ -709,5 +736,7 @@ struct action action_list[] =
 	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ &action_IDA_deleteSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ &action_IDA_execute_native, { BWN_DISASM, NULL }, true, true, "" },
+	//This is a special action, we added here so it is register, but we will add it manually as a submenu of the solver
+	//{ &action_IDA_solve_formula_sub, { NULL }, false, false, "" },
 	{ NULL, NULL, NULL }
 };

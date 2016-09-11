@@ -49,10 +49,8 @@ void idaapi run(int)
 
 	if (!hooked)
 	{
-		if (register_action(action_IDA_show_config))
-			msg("action registered\n");
-		if (attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP))
-			msg("menu attached\n");
+		register_action(action_IDA_show_config);
+		attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP);
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
 		if (ask_for_a_snapshot() != -1)
 		{
@@ -68,7 +66,7 @@ void idaapi run(int)
 			}
 		
 			triton_init();
-			msg("Plugin running\n");
+			msg("[+] Ponce plugin running!\n");
 			hooked = true;
 		}
 	}
