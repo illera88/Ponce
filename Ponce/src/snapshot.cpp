@@ -102,7 +102,7 @@ void Snapshot::takeSnapshot() {
 	}
 
 	//We also saved the ponce status
-	//this->saved_ponce_runtime_status = ponce_runtime_status;
+	this->saved_ponce_runtime_status = ponce_runtime_status;
 }
 
 
@@ -173,7 +173,7 @@ void Snapshot::restoreSnapshot() {
 	}
 
 	/* 10 - Restore the Ponce status */
-	//ponce_runtime_status = this->saved_ponce_runtime_status;
+	ponce_runtime_status = this->saved_ponce_runtime_status;
 }
 
 

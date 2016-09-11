@@ -11,12 +11,12 @@ bool hooked = false;
 
 //This struct stores all the global variables used for the current state of the Ponce plugin during execution
 //The idea is restore this sctruct when we restore the snapshot
-struct runtime_status_t ponce_runtime_status;
+runtime_status_t ponce_runtime_status;
 
 //Options
 struct cmdOptionStruct cmdOptions;
 
-//Snapshot object
+//Snapshot object, defined in the snapshot.cpp
 Snapshot snapshot = Snapshot();
 
 //This map stores all the executed instructions, the key is the address, and the value is a list of TritonInstructions. 

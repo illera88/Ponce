@@ -28,6 +28,7 @@
     <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\globals.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\runtime_status.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\snapshot.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\tainting_n_symbolic.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\trigger.hpp" />

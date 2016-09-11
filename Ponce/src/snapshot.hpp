@@ -20,7 +20,7 @@
 #include <x86Cpu.hpp>
 
 // Ponce
-//#include "globals.hpp"
+#include "runtime_status.hpp"
 
 //! \class Snapshot
 //! \brief the snapshot class.
@@ -63,7 +63,7 @@ private:
 	std::map<std::string, triton::uint512> IDAContext;
 	
 	//! Snapshot of the ponce plugin status
-	//struct runtime_status_t saved_ponce_runtime_status;
+	struct runtime_status_t saved_ponce_runtime_status;
 
 public:
 	//! Constructor.
