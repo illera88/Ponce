@@ -193,36 +193,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (!decode_insn(pc))
 				warning("[!] Some error decoding instruction at %p", pc);
 			
-			// We do this to blacklist API that does not change the tainted input
-			if (cmd.itype == NN_call){
-				bool need_to_break = false;
-				qstring callee = get_callee(pc); 
-				for (auto i = 0; i < sizeof(black_func); i++){
-					if (strcmp(callee.c_str(), black_func[i]) == 0){
-						//We are in a call to a blacklisted function.
-						/*We should set a BP in the next instruction right after the
-						blacklisted callback to enable tracing again*/	
-						ea_t next_ea = next_head(pc, BADADDR);
-						add_bpt(next_ea, 1, BPT_EXEC);
-
-						breakpoint_pending_action bpa;
-						bpa.address = next_ea;
-						bpa.ignore_breakpoint = false;
-						bpa.removeMe = true; // we remove this structure from breakpoint_pending_actions after it gets reached
-						bpa.callback = enableTrigger; // We will enable back the trigger when this bp get's reached
-						//We add the action to the list
-						breakpoint_pending_actions.push_back(bpa);
-
-						//Disabling step tracing...
-						disable_step_trace();
-						runtimeTrigger.disable();
-						need_to_break = true;
-						break;
-					}
-				}
-				if (need_to_break)
-					break;
-			}
 			//msg("dbg_step_? at "HEX_FORMAT"\n", pc);
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
@@ -276,6 +246,49 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 
+			//Sometimes the cmd structure doesn't correspond with the traced instruction
+			//With this we are filling cmd with the instruction at the address specified
+			ua_ana0(pc);
+			//msg("cmd.ea: "HEX_FORMAT"\n", cmd.ea);
+			// We do this to blacklist API that does not change the tainted input
+			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
+			{
+				bool need_to_break = false;
+				qstring callee = get_callee(pc);
+				unsigned int number_items = sizeof(black_func) / sizeof(char *);
+				for (unsigned int i = 0; i < number_items; i++)
+				{
+					//warning("%s<->%s\n", callee.c_str(), black_func[i]);
+					if (strcmp(callee.c_str(), black_func[i]) == 0)
+					{
+						//warning("call blacklisted");
+						//We are in a call to a blacklisted function.
+						/*We should set a BP in the next instruction right after the
+						blacklisted callback to enable tracing again*/
+						ea_t next_ea = next_head(pc, BADADDR);
+						//warning("Set bp here "HEX_FORMAT"\n", next_ea);
+						add_bpt(next_ea, 1, BPT_EXEC);
+
+						breakpoint_pending_action bpa;
+						bpa.address = next_ea;
+						bpa.ignore_breakpoint = false;
+						bpa.remove_after_found = true; // we remove this structure from breakpoint_pending_actions after it gets reached
+						bpa.callback = enableTrigger; // We will enable back the trigger when this bp get's reached
+						//We add the action to the list
+						breakpoint_pending_actions.push_back(bpa);
+
+						//Disabling step tracing...
+						disable_step_trace();
+						runtimeTrigger.disable();
+						need_to_break = true;
+						break;
+					}
+				}
+				//We don't want to tritonize this call
+				if (need_to_break)
+					break;
+			}
+
 			//msg("Tracing over: "HEX_FORMAT"\n", pc);
 			tritonize(pc, tid);
 
@@ -324,11 +337,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
 			{
-				msg("breakpoint pending found\n");
 				breakpoint_pending_action bpa = *it;
 				//If we find a pendign action we execute the callback
 				if (pc == bpa.address)
-				{								
+				{
+					msg("breakpoint pending found\n");
 					bpa.callback(pc);
 					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
@@ -345,7 +358,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						set_step_trace_options(0);
 						continue_process();
 
-						if (bpa.removeMe)
+						if (bpa.remove_after_found)
 							breakpoint_pending_actions.erase(it);
 					}
 					break;

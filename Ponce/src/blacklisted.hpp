@@ -1,28 +1,29 @@
 #pragma once
 
-char* black_func[] = { "printf", 
+char* black_func[] = { 
+"printf", 
 "puts", 
 "putc",
 "sleep",
 "recv",
 "recvfrom",
 "send",
-"closesocket"
-"exit"
+"closesocket",
+"exit",
 "abort",
 "malloc",
 "calloc",
 "realloc",
 "free",
 "calloc_crt",
-"realloc_crt"
+"realloc_crt",
 
 //Windows
 "Sleep",
 "HeapAlloc",
 "HeapFree",
 "HeapRealloc",
-"CreateThread"
+"CreateThread",
 "NtTerminateProcess",
 "ExitThread",
 "TerminateThread",
@@ -34,5 +35,5 @@ char* black_func[] = { "printf",
 "WSAGetLastError",
 "WaitForSingleObject",
 "CloseHandle",
-"Sleep"
+"Sleep",
 };

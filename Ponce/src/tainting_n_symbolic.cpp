@@ -108,7 +108,7 @@ void set_automatic_taint_n_simbolic()
 		breakpoint_pending_action bpa;
 		bpa.address = main_function;
 		bpa.ignore_breakpoint = bp_exists;
-		bpa.removeMe = false;
+		bpa.remove_after_found = false;
 		bpa.callback = taint_or_symbolize_main_callback;
 		//We add the action to the list
 		breakpoint_pending_actions.push_back(bpa);
