@@ -718,3 +718,9 @@ qstring get_callee(ea_t address){
 	}
 	return name;	
 }
+
+
+//We use this function to enable the trigger after a blacklisted function
+void enableTrigger(ea_t main_address){
+	runtimeTrigger.enable();
+}

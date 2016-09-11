@@ -195,21 +195,33 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call){
+				bool need_to_break = false;
 				qstring callee = get_callee(pc); 
 				for (auto i = 0; i < sizeof(black_func); i++){
 					if (strcmp(callee.c_str(), black_func[i]) == 0){
 						//We are in a call to a blacklisted function.
 						/*We should set a BP in the next instruction right after the
-						blacklisted callback to enable tracing again*/						
-						add_bpt(next_head(pc, BADADDR), 1, BPT_EXEC);
+						blacklisted callback to enable tracing again*/	
+						ea_t next_ea = next_head(pc, BADADDR);
+						add_bpt(next_ea, 1, BPT_EXEC);
+
+						breakpoint_pending_action bpa;
+						bpa.address = next_ea;
+						bpa.ignore_breakpoint = false;
+						bpa.removeMe = true; // we remove this structure from breakpoint_pending_actions after it gets reached
+						bpa.callback = enableTrigger; // We will enable back the trigger when this bp get's reached
+						//We add the action to the list
+						breakpoint_pending_actions.push_back(bpa);
 
 						//Disabling step tracing...
 						disable_step_trace();
 						runtimeTrigger.disable();
-						
-
+						need_to_break = true;
+						break;
 					}
 				}
+				if (need_to_break)
+					break;
 			}
 			//msg("dbg_step_? at "HEX_FORMAT"\n", pc);
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
@@ -316,13 +328,13 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				breakpoint_pending_action bpa = *it;
 				//If we find a pendign action we execute the callback
 				if (pc == bpa.address)
-				{
+				{								
 					bpa.callback(pc);
 					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
 					{
-						//If it a breakpoint the plugin set not a user-defined bp
+						//If it's a breakpoint the plugin set not a user-defined bp
 						user_bp = false;
 						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
 						del_bpt(pc);
@@ -332,6 +344,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						//We dont want to skip library funcions or debug segments
 						set_step_trace_options(0);
 						continue_process();
+
+						if (bpa.removeMe)
+							breakpoint_pending_actions.erase(it);
 					}
 					break;
 				}

@@ -25,3 +25,4 @@ Input* solve_formula(ea_t pc, uint bound);
 void negate_flag_condition(triton::arch::Instruction *triton_instruction);
 bool ask_for_execute_native();
 qstring get_callee(ea_t address);
+void enableTrigger(ea_t main_address);
