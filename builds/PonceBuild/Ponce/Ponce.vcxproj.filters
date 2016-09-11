@@ -45,6 +45,9 @@
     <ClInclude Include="..\..\..\Ponce\src\snapshot.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Ponce\src\blacklisted.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Ponce\src\actions.cpp">

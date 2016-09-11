@@ -5,6 +5,7 @@
 #include "context.hpp"
 #include "utils.hpp"
 #include "tainting_n_symbolic.hpp"
+#include "blacklisted.hpp"
 
 //IDA
 #include <ida.hpp>
@@ -188,6 +189,28 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
+
+			if (!decode_insn(pc))
+				warning("[!] Some error decoding instruction at %p", pc);
+			
+			// We do this to blacklist API that does not change the tainted input
+			if (cmd.itype == NN_call){
+				qstring callee = get_callee(pc); 
+				for (auto i = 0; i < sizeof(black_func); i++){
+					if (strcmp(callee.c_str(), black_func[i]) == 0){
+						//We are in a call to a blacklisted function.
+						/*We should set a BP in the next instruction right after the
+						blacklisted callback to enable tracing again*/						
+						add_bpt(next_head(pc, BADADDR), 1, BPT_EXEC);
+
+						//Disabling step tracing...
+						disable_step_trace();
+						runtimeTrigger.disable();
+						
+
+					}
+				}
+			}
 			//msg("dbg_step_? at "HEX_FORMAT"\n", pc);
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 

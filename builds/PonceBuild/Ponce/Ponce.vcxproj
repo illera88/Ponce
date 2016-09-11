@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Ponce\src\actions.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\blacklisted.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\callbacks.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp" />

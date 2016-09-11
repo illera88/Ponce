@@ -673,3 +673,48 @@ bool ask_for_execute_native()
 	else // No or Cancel
 		return false;
 }
+
+
+/*This function deletes the prefixes and sufixes that IDA adds*/
+qstring clean_function_name(qstring name){
+	if (name.substr(0,4) == "imp_")
+		return clean_function_name(name.substr(4));
+	else if (name.substr(0,3)== "cs:" || name.substr(0,3) == "ds:")
+		return clean_function_name(name.substr(3));
+	else if (name.substr(0, 2) == "j_")
+		return clean_function_name(name.substr(2));
+	else if (name.substr(0, 1) == "_" || name.substr(0, 1) == "@" || name.substr(0, 1) == "?")
+		return clean_function_name(name.substr(1));
+	else if (name.find('@',0) != -1)
+		return clean_function_name(name.substr(0, name.find('@', 0)));
+	else if (name.at(name.length() - 2) == '_' && isdigit(name.at(name.length() - 1))) //name_1
+		return clean_function_name(name.substr(0, name.length()- 2));
+	return name;
+}
+
+qstring get_callee(ea_t address){
+	qstring name;
+	char buf[100] = {0};
+	static const char * nname = "$ vmm functions";
+	netnode n(nname);
+	auto fun = n.altval(address) - 1;
+
+	if (fun == -1){
+		if (isCode(get_flags_novalue(address)))
+			ua_outop2(address, buf, sizeof(buf), 0);
+		tag_remove(buf, buf, sizeof(buf));		
+		name = clean_function_name(buf);
+	}
+	else{
+		name = qstrdup(get_name(-1, address, buf, sizeof(buf)));
+		if (name.empty())
+		{
+			if (isCode(get_flags_novalue(address)))
+				ua_outop2(address, buf, sizeof(buf), 0);
+			tag_remove(buf, buf, sizeof(buf));
+
+			name = clean_function_name(buf);
+		}
+	}
+	return name;	
+}
