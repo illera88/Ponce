@@ -678,6 +678,9 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		else
 			update_action_label(ctx->action, "Enable ponce tracing");
 		
+		//So...we use this update event to update the ea, and then in the 
+		//ui_finish_populating_tform_popup to add the sunmenus for solve
+		popup_menu_ea = ctx->cur_ea;
 		return AST_ENABLE;
 	}
 };
@@ -703,7 +706,6 @@ struct ah_solve_formula_sub_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
-		msg("Calling update submenu ea:"HEX_FORMAT"\n", ctx->cur_ea);
 		return AST_ENABLE;
 	}
 };

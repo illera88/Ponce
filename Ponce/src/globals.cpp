@@ -22,3 +22,5 @@ Snapshot snapshot = Snapshot();
 //This map stores all the executed instructions, the key is the address, and the value is a list of TritonInstructions. 
 //One instruction could be executed more than one time
 //std::map<triton::__uint, std::list<triton::arch::Instruction *>> instructions_executed_map;
+
+ea_t popup_menu_ea;

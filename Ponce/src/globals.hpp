@@ -132,3 +132,6 @@ public:
 	{
 	}
 };
+
+//This variable stores the ea where the popup menu is being displayed, this is use to add the submenus for Solve condition
+extern ea_t popup_menu_ea;

@@ -401,7 +401,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 	{
 		// called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
-		case ui_finish_populating_tform_popup:
+		case ui_populating_tform_popup:
 		{
 			TForm *form = va_arg(va, TForm *);
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
@@ -432,26 +432,42 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					}
 				}	
 			}
+			//Adding a separator
+			attach_action_to_popup(form, popup_handle, "");
+			break;
+		}
+		case ui_finish_populating_tform_popup:
+		{
+			TForm *form = va_arg(va, TForm *);
+			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
+			int view_type = get_tform_type(form);
+			//We get the ea form a global variable that is set in the update event
+			//This is not very elegant but I don't know how to do it from here
+			ea_t cur_ea = popup_menu_ea;
+			//msg("Finishing populating: "HEX_FORMAT"\n", popup_menu_ea);
 			//Adding submenus for solve with all the conditions
-			/*if (view_type == BWN_DISASM)
+			if (view_type == BWN_DISASM)
 			{
 				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 				{
-					//We should filter here for the pc
-					char name[256];
-					sprintf_s(name, "Ponce:solve_formula_sub_%d", i);
-					action_IDA_solve_formula_sub.name = name;
-					char label[256];
-					sprintf_s(label, "%d. "HEX_FORMAT" -> %s ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
-					action_IDA_solve_formula_sub.label = label;
-					bool success = register_action(action_IDA_solve_formula_sub);
-					msg("registered submenu for solver, result: %d\n", success);
-					success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
-					msg("Added submenu for solver, result: %d\n", success);
+					if (cur_ea == ponce_runtime_status.myPathConstraints[i].conditionAddr)
+					{
+						//We should filter here for the pc
+						char name[256];
+						sprintf_s(name, "Ponce:solve_formula_sub_%d", i);
+						action_IDA_solve_formula_sub.name = name;
+						char label[256];
+						sprintf_s(label, "%d. "HEX_FORMAT" -> "HEX_FORMAT"", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						action_IDA_solve_formula_sub.label = label;
+						msg("name: %s label: %s\n", name, label);
+						bool success = register_action(action_IDA_solve_formula_sub);
+						//msg("registered submenu for solver, result: %d\n", success);
+						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
+						//msg("Added submenu for solver, result: %d\n", success);
+					}
 				}
-			}*/
-			//Adding a separator
-			attach_action_to_popup(form, popup_handle, "");
+			}
+			break;
 		}
 		case dbg_process_exit:
 		{
