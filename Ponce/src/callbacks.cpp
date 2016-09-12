@@ -450,7 +450,8 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					if (cur_ea == ponce_runtime_status.myPathConstraints[i].conditionAddr)
 					{
 						char name[256];
-						sprintf_s(name, "Ponce:solve_formula_sub_%d", i);
+						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
+						sprintf_s(name, "%d_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
 						sprintf_s(label, "%d. "HEX_FORMAT" -> "HEX_FORMAT"", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);

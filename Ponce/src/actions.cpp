@@ -45,7 +45,7 @@ struct ah_taint_register_t : public action_handler_t
 				}
 			}
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx)
@@ -107,7 +107,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				}
 			}
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -203,7 +203,7 @@ struct ah_taint_memory_t : public action_handler_t
 
 		//is_something_tainted = true;
 		//runtimeTrigger.enable();
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -302,7 +302,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//is_something_tainted = true;
 		//runtimeTrigger.enable();
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -347,11 +347,19 @@ struct ah_solve_t : public action_handler_t
 				msg("[+] Solving condition at "HEX_FORMAT"\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse	
-			auto input_ptr = solve_formula(pc, NULL);
-			if (input_ptr != NULL)
-				delete input_ptr;
+			for (unsigned int i = ponce_runtime_status.myPathConstraints.size() - 1; i >= 0; i--)
+			{
+				auto path_constraint = ponce_runtime_status.myPathConstraints[i];
+				if (path_constraint.conditionAddr == pc)
+				{
+					auto input_ptr = solve_formula(pc, i);
+					if (input_ptr != NULL)
+						delete input_ptr;
+					break;
+				}
+			}
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -427,7 +435,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 				delete input_ptr;
 			}
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -479,7 +487,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 				snapshot.restoreSnapshot();
 			}
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
@@ -511,7 +519,7 @@ struct ah_create_snapshot_t : public action_handler_t
 	{
 		snapshot.takeSnapshot();
 		msg("Snapshot Taken\n");
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -539,7 +547,7 @@ struct ah_restore_snapshot_t : public action_handler_t
 	{
 		snapshot.restoreSnapshot();
 		msg("Snapshot restored\n");
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -567,7 +575,7 @@ struct ah_delete_snapshot_t : public action_handler_t
 	{
 		snapshot.resetEngine();
 		msg("Snapshot removed\n");
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -594,7 +602,7 @@ struct ah_show_config_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
 		prompt_conf_window();
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -623,7 +631,7 @@ struct ah_execute_native_t : public action_handler_t
 			//And continue! (F9)
 			continue_process();
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -667,7 +675,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 			if (cmdOptions.showDebugInfo)
 				msg("Enabling step tracing\n");
 		}
-		return 1;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
@@ -700,8 +708,13 @@ struct ah_solve_formula_sub_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		msg("Solving formula xxx\n");
-		return 1;
+		//We extract the solved index from the action name
+		unsigned int condition_index = atoi(ctx->action);
+		msg("Solving condition at %d\n", condition_index);
+		auto input_ptr = solve_formula(ctx->cur_ea, condition_index);
+		if (input_ptr != NULL)
+			delete input_ptr;
+		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)

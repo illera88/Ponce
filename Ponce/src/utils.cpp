@@ -344,106 +344,105 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 }
 
 
-/*returns true if a formula was solved*/
-Input * solve_formula(ea_t pc, uint bound){
-	for (unsigned int i = ponce_runtime_status.myPathConstraints.size() - 1; i >= 0; i--)
+/*Solve a formula and returns the solution as an input.
+The bound is an index in the myPathConstrains vector*/
+Input * solve_formula(ea_t pc, uint bound)
+{
+	auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
+	if (path_constraint.conditionAddr == pc)
 	{
-		auto path_constraint = ponce_runtime_status.myPathConstraints[i];
-		if (path_constraint.conditionAddr == pc)
+		std::vector <triton::ast::AbstractNode *> expr;
+		//First we add to the expresion all the previous path constrains
+		unsigned int j;
+		for (j = 0; j < bound; j++)
 		{
-			std::vector <triton::ast::AbstractNode *> expr;
-			//First we add to the expresion all the previous path constrains
-			unsigned int j;
-			for (j = 0; j < i; j++)
-			{
-				if (cmdOptions.showExtraDebugInfo)
-					msg("Keeping condition %d\n", j);
-				triton::__uint ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
-				auto symExpr = triton::api.getFullAstFromId(ripId);
-				triton::__uint takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
-				expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
-			}
 			if (cmdOptions.showExtraDebugInfo)
-				msg("Inverting condition %d\n", i);
-			//And now we negate the selected condition
-			triton::__uint ripId = ponce_runtime_status.myPathConstraints[i].conditionRipId;
+				msg("Keeping condition %d\n", j);
+			triton::__uint ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
-			triton::__uint notTakenAddr = ponce_runtime_status.myPathConstraints[i].notTakenAddr;
-			if (cmdOptions.showExtraDebugInfo)
-				msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
-			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
+			triton::__uint takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
+		}
+		if (cmdOptions.showExtraDebugInfo)
+			msg("Inverting condition %d\n", bound);
+		//And now we negate the selected condition
+		triton::__uint ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
+		auto symExpr = triton::api.getFullAstFromId(ripId);
+		triton::__uint notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
+		if (cmdOptions.showExtraDebugInfo)
+			msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
+		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
-			//Time to solve
-			auto final_expr = triton::ast::compound(expr);
+		//Time to solve
+		auto final_expr = triton::ast::compound(expr);
 
-			if (cmdOptions.showDebugInfo)
-				msg("[+] Solving formula...\n");
+		if (cmdOptions.showDebugInfo)
+			msg("[+] Solving formula...\n");
 
-			if (cmdOptions.showExtraDebugInfo){
-				std::stringstream ss;
-				/*Create the full formula*/
-				ss << "(set-logic QF_AUFBV)\n";
-				/* Then, delcare all symbolic variables */
-				ss << triton::api.getVariablesDeclaration();
-				/* And concat the user expression */
-				ss << "\n\n";
-				ss << final_expr;
-				ss << "\n(check-sat)";
-				ss << "\n(get-model)";
-				msg("Formula: %s\n", ss.str().c_str());
-			}
-
-			auto model = triton::api.getModel(final_expr);
-
-			if (model.size() > 0)
-			{
-				Input *newinput = new Input();
-				//Clone object 
-				newinput->bound = path_constraint.bound;
-
-				msg("Solution found! Values:\n");
-				for (auto it = model.begin(); it != model.end(); it++)
-				{
-					auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
-					std::string  symbVarComment = symbVar->getComment();
-					triton::engines::symbolic::symkind_e symbVarKind = symbVar->getKind();
-					triton::uint512 secondValue = it->second.getValue();
-					if (symbVarKind == triton::engines::symbolic::symkind_e::MEM){
-						msg("memory %x \n", symbVar->getKindValue());
-						newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
-						msg("newinput->memOperand size %d\n", newinput->memOperand.size());
-					}
-					else if (symbVarKind == triton::engines::symbolic::symkind_e::REG){
-						warning("register");
-						newinput->regOperand.push_back(triton::arch::Register((triton::__uint)symbVar->getKindValue(), secondValue));
-					}
-					//We represent the number different 
-					switch (symbVar->getSize())
-					{
-					case 8:
-						msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>());
-						break;
-					case 16:
-						msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
-						break;
-					case 32:
-						msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint>());
-						break;
-					case 64:
-						msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
-						break;
-					default:
-						msg("Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
-					}
-				}
-				return newinput;
-			}
-			else
-				msg("No solution found :(\n");
-
-			break;
+		if (cmdOptions.showExtraDebugInfo)
+		{
+			std::stringstream ss;
+			/*Create the full formula*/
+			ss << "(set-logic QF_AUFBV)\n";
+			/* Then, delcare all symbolic variables */
+			ss << triton::api.getVariablesDeclaration();
+			/* And concat the user expression */
+			ss << "\n\n";
+			ss << final_expr;
+			ss << "\n(check-sat)";
+			ss << "\n(get-model)";
+			msg("Formula: %s\n", ss.str().c_str());
 		}
 
+		auto model = triton::api.getModel(final_expr);
+
+		if (model.size() > 0)
+		{
+			Input *newinput = new Input();
+			//Clone object 
+			newinput->bound = path_constraint.bound;
+
+			msg("Solution found! Values:\n");
+			for (auto it = model.begin(); it != model.end(); it++)
+			{
+				auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
+				std::string  symbVarComment = symbVar->getComment();
+				triton::engines::symbolic::symkind_e symbVarKind = symbVar->getKind();
+				triton::uint512 secondValue = it->second.getValue();
+				if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
+				{
+					msg("memory %x \n", symbVar->getKindValue());
+					newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
+					msg("newinput->memOperand size %d\n", newinput->memOperand.size());
+				}
+				else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
+				{
+					warning("register");
+					newinput->regOperand.push_back(triton::arch::Register((triton::__uint)symbVar->getKindValue(), secondValue));
+				}
+				//We represent the number different 
+				switch (symbVar->getSize())
+				{
+				case 8:
+					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>());
+					break;
+				case 16:
+					msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
+					break;
+				case 32:
+					msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint>());
+					break;
+				case 64:
+					msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
+					break;
+				default:
+					msg("Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
+				}
+			}
+			return newinput;
+		}
+		else
+			msg("No solution found :(\n");
 	}
 	return NULL;
 }
