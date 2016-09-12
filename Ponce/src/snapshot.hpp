@@ -28,7 +28,7 @@ class Snapshot {
 
 private:
 	//! I/O memory monitoring for snapshot.
-	std::map<triton::__uint, char> memory;
+	std::map<ea_t, char> memory;
 
 	//! Status of the snapshot engine.
 	bool locked;
@@ -79,7 +79,7 @@ public:
 	bool mustBeRestored(void);
 
 	//! Adds a memory modifiction.
-	void addModification(triton::__uint address, char byte);
+	void addModification(ea_t address, char byte);
 
 	//! Disables the snapshot engine.
 	void disableSnapshot(void);

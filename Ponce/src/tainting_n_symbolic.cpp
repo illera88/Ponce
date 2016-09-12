@@ -16,26 +16,26 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	invalidate_dbgmem_config();
 
 	//Iterate through argc, argv[argc] and taint every byte and argc
-	triton::__uint argc = get_args(0, true);
-	triton::__uint argv = get_args(1, true);
-	//msg("argc: %d argv: "HEX_FORMAT"\n", argc, argv);
+	ea_t argc = get_args(0, true);
+	ea_t argv = get_args(1, true);
+	//msg("argc: %d argv: " HEX_FORMAT "\n", argc, argv);
 	if (cmdOptions.taintArgc)
 	{
 		//First we taint the argc
-#ifdef X86_32
+#if !defined(__EA64__)
 		//In x86 we taint the memory of the first arg, argc
-		msg("%s argc at memory: "HEX_FORMAT"\n", cmdOptions.use_tainting_engine? "Tainting": "Symbolizing", get_args_pointer(0, true));
+		msg("%s argc at memory: " HEX_FORMAT "\n", cmdOptions.use_tainting_engine? "Tainting": "Symbolizing", get_args_pointer(0, true));
 		if (cmdOptions.use_tainting_engine)
 			triton::api.taintMemory(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
 		else
 			triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc), "argc");
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
-#elif 
+#else
 		//Inx64 we taint the register rcx
 		auto reg = str_to_register("RCX");
-		reg.setConcreteValue(argc);
-		triton::api.taintRegister(reg);
+		reg->setConcreteValue(argc);
+		triton::api.taintRegister(*reg);
 #endif
 		start_tainting_or_symbolic_analysis();
 	}
@@ -44,10 +44,10 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	//user controls and sometimes is used to do somechecks
 	for (unsigned int i = cmdOptions.taintArgv0 ? 0 : 1; i < argc; i++)
 	{
-		triton::__uint current_argv = read_uint_from_ida(argv + i * REG_SIZE);
+		ea_t current_argv = read_uint_from_ida(argv + i * REG_SIZE);
 		if (current_argv == 0xffffffff)
 		{
-			msg("[!] Error reading mem~ "HEX_FORMAT"\n", argv + i * REG_SIZE);
+			msg("[!] Error reading mem~ " HEX_FORMAT "\n", argv + i * REG_SIZE);
 			break;
 		}
 		//We iterate through all the bytes of the current argument
@@ -99,7 +99,7 @@ void set_automatic_taint_n_simbolic()
 			}
 		}
 		if (cmdOptions.showDebugInfo)
-			msg("[+] main function found at "HEX_FORMAT"\n", main_function);
+			msg("[+] main function found at " HEX_FORMAT "\n", main_function);
 		//Then we should check if there is already a breakpoint
 		bpt_t breakpoint;
 		bool bp_exists = get_bpt(main_function, &breakpoint);

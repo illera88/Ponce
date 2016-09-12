@@ -56,7 +56,7 @@ bool Snapshot::exists(void) {
 }
 
 /* Add the modification byte. */
-void Snapshot::addModification(triton::__uint mem, char byte) {
+void Snapshot::addModification(ea_t mem, char byte) {
 	if (this->locked == false && this->memory.find(mem) == this->memory.end())
 		this->memory[mem] = byte;
 }
@@ -118,8 +118,8 @@ void Snapshot::restoreSnapshot() {
 	/* 2 - Delete unused expressions */
 	auto currentExpressions = triton::api.getSymbolicExpressions();
 	auto snapshotExpressions = this->snapshotSymEngine->getSymbolicExpressions();
-	triton::__uint currentSize = currentExpressions.size();
-	triton::__uint snapshotSize = snapshotExpressions.size();
+	ea_t currentSize = currentExpressions.size();
+	ea_t snapshotSize = snapshotExpressions.size();
 	for (auto i = currentExpressions.begin(); i != currentExpressions.end(); ++i) {
 		if (snapshotExpressions.find(i->first) == snapshotExpressions.end())
 			delete currentExpressions[i->first];
