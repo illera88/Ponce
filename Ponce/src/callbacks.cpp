@@ -254,7 +254,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
 			{
-				bool need_to_break = false;
 				qstring callee = get_callee(pc);
 				unsigned int number_items = sizeof(black_func) / sizeof(char *);
 				for (unsigned int i = 0; i < number_items; i++)
@@ -280,16 +279,13 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 						//Disabling step tracing...
 						disable_step_trace();
+						//We want to tritonize the call, so the memory write for the ret address in the stack will be restore by the snapshot
+						tritonize(pc, tid);
 						ponce_runtime_status.runtimeTrigger.disable();
-						need_to_break = true;
-						break;
+						return 0;
 					}
 				}
-				//We don't want to tritonize this call
-				if (need_to_break)
-					break;
 			}
-
 			//msg("Tracing over: "HEX_FORMAT"\n", pc);
 			tritonize(pc, tid);
 
@@ -309,7 +305,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				break;
 			}
 
-			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter == cmdOptions.limitInstructionsTracingMode)
+			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
 			{
 				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", ponce_runtime_status.total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
 				if (answer == 0 || answer == -1) //No or Cancel
@@ -445,14 +441,14 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			//This is not very elegant but I don't know how to do it from here
 			ea_t cur_ea = popup_menu_ea;
 			//msg("Finishing populating: "HEX_FORMAT"\n", popup_menu_ea);
-			//Adding submenus for solve with all the conditions
+			//Adding submenus for solve with all the conditions executed in the same address
 			if (view_type == BWN_DISASM)
 			{
 				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 				{
+					//We should filter here for the ea
 					if (cur_ea == ponce_runtime_status.myPathConstraints[i].conditionAddr)
 					{
-						//We should filter here for the pc
 						char name[256];
 						sprintf_s(name, "Ponce:solve_formula_sub_%d", i);
 						action_IDA_solve_formula_sub.name = name;
@@ -461,9 +457,15 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						action_IDA_solve_formula_sub.label = label;
 						msg("name: %s label: %s\n", name, label);
 						bool success = register_action(action_IDA_solve_formula_sub);
-						//msg("registered submenu for solver, result: %d\n", success);
+						//If the submenu is already registered, we should unregister it and re-register it
+						if (!success)
+						{
+							unregister_action(action_IDA_solve_formula_sub.name);
+							success = register_action(action_IDA_solve_formula_sub);
+						}
+						msg("registered submenu for solver, result: %d\n", success);
 						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
-						//msg("Added submenu for solver, result: %d\n", success);
+						msg("Added submenu for solver, result: %d\n", success);
 					}
 				}
 			}
