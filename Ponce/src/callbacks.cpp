@@ -292,7 +292,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ponce_runtime_status.current_trace_counter++;
 			ponce_runtime_status.total_number_traced_ins++;
 
-			//This is the wow64 switching, we need to skip it
+			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
 			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
 			{
 				msg("wow64 switching! requesting disable();\n");
@@ -469,6 +469,28 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						msg("Added submenu for solver, result: %d\n", success);
 					}
 				}
+
+				//Test code to see all the available icons!
+				/*for (int i = 0; i < 30; i++)
+				{
+					for (int j = 0; j < 10; j++)
+					{
+						int icon_number = i * 10 + j;
+						char name[256];
+						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
+						sprintf_s(name, "Ponce:icon_%d", icon_number);
+						action_IDA_solve_formula_sub.icon = icon_number;
+						action_IDA_solve_formula_sub.name = name;
+						action_IDA_solve_formula_sub.label = name;
+						bool success = register_action(action_IDA_solve_formula_sub);
+						msg("registered submenu for solver, result: %d\n", success);
+						char path[256];
+						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
+						sprintf_s(path, "Icons_%d/", i);
+						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, path, SETMENU_APP);
+						msg("attached submenu for solver, result: %d\n", success);
+					}
+				}*/
 			}
 			break;
 		}

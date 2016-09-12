@@ -72,7 +72,7 @@ static const action_desc_t action_IDA_taint_register = ACTION_DESC_LITERAL(
 	&ah_taint_register, //The action handler.
 	"Ctrl+Shift+R", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
-	199); //Optional: the action icon (shows when in menus/toolbars)
+	50); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_symbolize_register_t : public action_handler_t
 {
@@ -134,7 +134,7 @@ static const action_desc_t action_IDA_symbolize_register = ACTION_DESC_LITERAL(
 	&ah_symbolize_register, //The action handler.
 	"Ctrl+Shift+R", //Optional: the action shortcut
 	"Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
-	199); //Optional: the action icon (shows when in menus/toolbars)
+	50); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_taint_memory_t : public action_handler_t
 {
@@ -233,7 +233,7 @@ static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
 	&ah_taint_memory, //The action handler.
 	"Ctrl+Shift+M", //Optional: the action shortcut
 	"Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
-	200); //Optional: the action icon (shows when in menus/toolbars)
+	50); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_symbolize_memory_t : public action_handler_t
 {
@@ -332,7 +332,7 @@ static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
 	&ah_symbolize_memory, //The action handler.
 	"Ctrl+Shift+M", //Optional: the action shortcut
 	"Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
-	200); //Optional: the action icon (shows when in menus/toolbars)
+	50); //Optional: the action icon (shows when in menus/toolbars)
 
 
 struct ah_solve_t : public action_handler_t
@@ -386,7 +386,7 @@ static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
 	&ah_solve, //The action handler.
 	"Ctrl+Shift+S", //Optional: the action shortcut
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
-	201); //Optional: the action icon (shows when in menus/toolbars)
+	13); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_negate_and_inject_t : public action_handler_t
 {
@@ -459,7 +459,7 @@ static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
 	&ah_negate_and_inject, //The action handler.
 	"Ctrl+Shift+N", //Optional: the action shortcut
 	"Negate the current condition and inject the solution into memory", //Optional: the action tooltip (available in menus/toolbar)
-	201); //Optional: the action icon (shows when in menus/toolbars)
+	58); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_negate_inject_and_restore_t : public action_handler_t
 {
@@ -511,7 +511,7 @@ static const action_desc_t action_IDA_negateInjectRestore = ACTION_DESC_LITERAL(
 	&ah_negate_inject_and_restore, //The action handler.
 	"Ctrl+Shift+I", //Optional: the action shortcut
 	"Negates a condition, inject the solution and restore the snapshot", //Optional: the action tooltip (available in menus/toolbar)
-	164); //Optional: the action icon (shows when in menus/toolbars)
+	145); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_create_snapshot_t : public action_handler_t
 {
@@ -539,7 +539,7 @@ static const action_desc_t action_IDA_createSnapshot = ACTION_DESC_LITERAL(
 	&ah_create_snapshot,
 	"Ctrl+Shift+C", 
 	NULL, 
-	15);
+	129);
 
 struct ah_restore_snapshot_t : public action_handler_t
 {
@@ -567,7 +567,7 @@ static const action_desc_t action_IDA_restoreSnapshot = ACTION_DESC_LITERAL(
 	&ah_restore_snapshot,
 	"Ctrl+Shift+R",
 	NULL,
-	15);
+	128);
 
 struct ah_delete_snapshot_t : public action_handler_t
 {
@@ -595,7 +595,7 @@ static const action_desc_t action_IDA_deleteSnapshot = ACTION_DESC_LITERAL(
 	&ah_delete_snapshot,
 	"Ctrl+Shift+D",
 	NULL,
-	15);
+	130);
 
 struct ah_show_config_t : public action_handler_t
 {
@@ -618,7 +618,7 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
 	&ah_show_config, //The action handler.
 	"Ctrl+Shift+P", //Optional: the action shortcut
 	"Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
-	186); //Optional: the action icon (shows when in menus/toolbars)
+	156); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_execute_native_t : public action_handler_t
 {
@@ -647,7 +647,7 @@ action_desc_t action_IDA_execute_native = ACTION_DESC_LITERAL(
 	&ah_execute_native, //The action handler.
 	"Ctrl+Shift+F9", //Optional: the action shortcut
 	"Execute native without tracing every instruction until next breakpoint", //Optional: the action tooltip (available in menus/toolbar)
-	186); //Optional: the action icon (shows when in menus/toolbars)
+	113); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_enable_disable_tracing_t : public action_handler_t
 {
@@ -682,9 +682,15 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 	{
 		//We are using this event to change the text of the action
 		if (ponce_runtime_status.runtimeTrigger.getState())
+		{
 			update_action_label(ctx->action, "Disable ponce tracing");
+			update_action_icon(ctx->action, 62);
+		}
 		else
+		{
 			update_action_label(ctx->action, "Enable ponce tracing");
+			update_action_icon(ctx->action, 61);
+		}
 		
 		//So...we use this update event to update the ea, and then in the 
 		//ui_finish_populating_tform_popup to add the sunmenus for solve
@@ -701,7 +707,7 @@ action_desc_t action_IDA_enable_disable_tracing = ACTION_DESC_LITERAL(
 	&ah_enable_disable_tracing, //The action handler.
 	"Ctrl+Shift+E", //Optional: the action shortcut
 	"Enable or Disable the ponce tracing", //Optional: the action tooltip (available in menus/toolbar)
-	188); //Optional: the action icon (shows when in menus/toolbars)
+	61); //Optional: the action icon (shows when in menus/toolbars)
 
 
 struct ah_solve_formula_sub_t : public action_handler_t
@@ -730,7 +736,7 @@ action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
 	&ah_solve_formula_sub, //The action handler.
 	"", //Optional: the action shortcut
 	"", //Optional: the action tooltip (available in menus/toolbar)
-	186); //Optional: the action icon (shows when in menus/toolbars)
+	13); //Optional: the action icon (shows when in menus/toolbars)
 
 
 /*This list defined all the actions for the plugin*/
