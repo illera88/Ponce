@@ -26,9 +26,6 @@ void start_tainting_or_symbolic_analysis()
 		ponce_runtime_status.runtimeTrigger.enable();
 		ponce_runtime_status.is_something_tainted_or_symbolize = true;
 		enable_step_trace(true);
-		/*if (ENABLE_STEP_INTO_WHEN_TAINTING)
-			automatically_continue_after_step = true;*/
-			//enable_insn_trace(true);
 	}
 }
 
@@ -157,10 +154,7 @@ triton::__uint get_args_pointer(int argument_number, bool skip_ret)
 	regval_t esp_value;
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val("esp", &esp_value);
-	//msg("argument_number: %d\n", argument_number);
-	//msg("esp: "HEX_FORMAT"\n", (unsigned int)esp_value.ival);
 	triton::__uint arg = (triton::__uint)esp_value.ival + (argument_number + skip_ret_index) * 4;
-	//msg("arg: "HEX_FORMAT"\n", arg);
 	return arg;
 #elif X86_64
 	//Not converted to IDA we should use get_reg_val
@@ -199,7 +193,6 @@ triton::__uint get_args_pointer(int argument_number, bool skip_ret)
 //Use templates??
 char read_char_from_ida(ea_t address)
 {
-	//msg("read_char_from_ida: "HEX_FORMAT"\n", address);
 	char value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
@@ -211,7 +204,6 @@ char read_char_from_ida(ea_t address)
 
 triton::__uint read_uint_from_ida(ea_t address)
 {
-	//msg("read_uint_from_ida: "HEX_FORMAT"\n", address);
 	triton::__uint value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c

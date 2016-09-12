@@ -16,7 +16,7 @@
 //Triton
 #include <api.hpp>
 
-/*This function is called once in the ide plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
+/*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
 void triton_init()
 {
 	//We need to set the architecture for Triton
@@ -24,7 +24,8 @@ void triton_init()
 		triton::api.setArchitecture(triton::arch::ARCH_X86);
 	else if (inf.is_64bit())
 		triton::api.setArchitecture(triton::arch::ARCH_X86_64);
-	else{
+	else
+	{
 		error("The architecture does not seem to be 32 or 64 bits. Exiting...");
 	}
 	// Memory access callback
@@ -49,6 +50,7 @@ void idaapi run(int)
 
 	if (!hooked)
 	{
+		//Registering action for the Ponce config
 		register_action(action_IDA_show_config);
 		attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP);
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
@@ -87,6 +89,7 @@ int idaapi init(void)
 			return PLUGIN_SKIP;
 		}	
 	}
+	//We want to autorun the plugin when IDA starts?
 	if (AUTO_RUN)
 		run(0);
 	return PLUGIN_KEEP;
@@ -113,8 +116,8 @@ plugin_t PLUGIN =
 	init,                 // initialize
 	term,                 // terminate. this pointer may be NULL.
 	run,                  // invoke plugin
-	"Instruction tracer sample", // long comment about the plugin
+	"Ponce, a concolic execution plugin for IDA", // long comment about the plugin
 	"", // multiline help about the plugin
 	"Ponce", // the preferred short name of the plugin
-	"Alt-Z" // the preferred hotkey to run the plugin
+	"Ctrl+Shift+Z" // the preferred hotkey to run the plugin
 };

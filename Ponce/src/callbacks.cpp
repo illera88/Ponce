@@ -28,19 +28,16 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 
 	//We delete the last_instruction
-	//Maybe in the future we need to keep the in instruction memory to negate the condition at any moment
 	if (ponce_runtime_status.last_triton_instruction != NULL)
 		delete ponce_runtime_status.last_triton_instruction;
+
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
 	ponce_runtime_status.last_triton_instruction = tritonInst;
-	//ea_t pc = va_arg(va, ea_t);
+
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!decode_insn(pc))
 		warning("[!] Some error decoding instruction at %p", pc);	
 	
-	//thid_t threadID = va_arg(va, thid_t);
-	/*char buf[50];
-	ua_mnem(pc, buf, sizeof(buf));*/
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, sizeof(opcodes));
 
@@ -64,34 +61,33 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Triton At "HEX_FORMAT": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
-	/*std::list<triton::arch::OperandWrapper> tainted_reg_operands;
-	if (ADD_COMMENTS_WITH_TAINTING_INFORMATION)
-		tainted_reg_operands = get_tainted_regs_operands(tritonInst);*/
-
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
 	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
-	if (snapshot.exists()){
+	if (snapshot.exists())
+	{
 		auto store_access_list = tritonInst->getStoreAccess();
 		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
 		{
-			//Possible point of failure since memory_access can be more than one byte i guess
 			triton::arch::MemoryAccess memory_access = it->first;
 			auto addr = memory_access.getAddress();
 			//This is the way to force IDA to read the value from the debugger
 			//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 			invalidate_dbgmem_contents((ea_t)addr, memory_access.getSize()); //ToDo: Do I have to call this for every byte in memory I want to read?
-			for (unsigned int i = 0; i < memory_access.getSize(); i++){
+			for (unsigned int i = 0; i < memory_access.getSize(); i++)
+			{
 				triton::uint128 value = 0;
+				//We get the memory readed
 				get_many_bytes((ea_t)addr+i, &value, 1);
+				//We add a meomory modification to the snapshot engine
 				snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
 			}
 		}
 	}
 
 	if (cmdOptions.addCommentsControlledOperands)
-		get_controlled_operands_and_add_comment(tritonInst, pc);// , tainted_reg_operands);
+		get_controlled_operands_and_add_comment(tritonInst, pc);
 
 	if (cmdOptions.addCommentsSymbolicExpresions)
 		add_symbolic_expressions(tritonInst, pc);
@@ -135,10 +131,10 @@ void tritonize(ea_t pc, thid_t threadID)
 /*This function is called when we taint a register that is used in the current instruction*/
 void reanalize_current_instruction()
 {
-	if (cmdOptions.showDebugInfo)
-		msg("Reanalizyng instruction at "HEX_FORMAT"\n");
 	uint64 eip;
 	get_reg_val("eip", &eip);
+	if (cmdOptions.showDebugInfo)
+		msg("[+] Reanalizyng instruction at "HEX_FORMAT"\n", eip);
 	tritonize((triton::__uint)eip, get_current_thread());
 }
 
@@ -165,7 +161,8 @@ void triton_restart_engines()
 
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 {
-	msg("Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
+	if (cmdOptions.showExtraDebugInfo)
+		msg("[+] Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
 	switch (notification_code)
 	{
 		case dbg_process_start:
@@ -182,10 +179,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
 			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
-			//msg("dbg_step_?\n");
-			//If tracing is enable for each one of this event is launched another dbg_trace. So we should ignore this one
-			/*if (ENABLE_TRACING_WHEN_TAINTING)
-				break;*/
 			//We want to enable the user to do step into/over, so he could choose whitch functions skip and with conditions negate
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
@@ -194,7 +187,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (!decode_insn(pc))
 				warning("[!] Some error decoding instruction at %p", pc);
 			
-			//msg("dbg_step_? at "HEX_FORMAT"\n", pc);
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
 			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
@@ -204,34 +196,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
 				tritonize(pc, tid);
 			}
-			/*else
-			{
-				if (last_triton_instruction == NULL)
-					msg("last_triton)isntructionn NULL\n");
-				else
-					msg("last_triton_instruction->getAddress(): "HEX_FORMAT"\n", last_triton_instruction->getAddress());
-			}*/
-			//Continue stepping
-			//msg("automatically_continue_after_step: %d\n", automatically_continue_after_step);
-			/*if (automatically_continue_after_step)
-			{
-				//This is the wow64 switching, we need to skip it
-				if (last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
-				{
-					msg("wow64 switching! request_step_over();\n");
-					request_step_over();
-				}
-				else// if (notification_code == dbg_step_into)
-				{
-					msg("dbg_step request_step_into();\n");
-					request_step_into();
-				}
-				/*else
-				{
-					msg("dbg_step request_step_over();\n");
-					request_step_over();
-				}*/
-			//}
 			break;
 		}
 		case dbg_trace:
@@ -239,10 +203,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
 			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
-			// A step occured (one instruction was executed). This event
-			// notification is only generated if step tracing is enabled.
-			//msg("dbg_trace\n");
-			//Create the triton instance for the Instruction
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
@@ -250,7 +210,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 			ua_ana0(pc);
-			//msg("cmd.ea: "HEX_FORMAT"\n", cmd.ea);
+
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
 			{
@@ -258,15 +218,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				unsigned int number_items = sizeof(black_func) / sizeof(char *);
 				for (unsigned int i = 0; i < number_items; i++)
 				{
-					//warning("%s<->%s\n", callee.c_str(), black_func[i]);
 					if (strcmp(callee.c_str(), black_func[i]) == 0)
 					{
-						//warning("call blacklisted");
 						//We are in a call to a blacklisted function.
 						/*We should set a BP in the next instruction right after the
 						blacklisted callback to enable tracing again*/
 						ea_t next_ea = next_head(pc, BADADDR);
-						//warning("Set bp here "HEX_FORMAT"\n", next_ea);
 						add_bpt(next_ea, 1, BPT_EXEC);
 
 						breakpoint_pending_action bpa;
@@ -286,7 +243,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					}
 				}
 			}
-			//msg("Tracing over: "HEX_FORMAT"\n", pc);
+			//If the instruciton is not a blacklisted call we analyze the instruction
 			tritonize(pc, tid);
 
 			ponce_runtime_status.current_trace_counter++;
@@ -295,7 +252,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
 			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
 			{
-				msg("wow64 switching! requesting disable();\n");
+				if (cmdOptions.showExtraDebugInfo)
+					msg("[+ ] Wow64 switching! Requesting a step_over\n");
 				//And now we need to stop the tracing, do step over and reenable the tracing...
 				//disable_step_trace();
 				suspend_process();
@@ -327,7 +285,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
-			//msg("dbg_bpt at "HEX_FORMAT"\n", pc);
 			//This variable defines if a breakpoint is a user-defined breakpoint or not
 			bool user_bp = true;
 			msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
@@ -338,7 +295,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				//If we find a pendign action we execute the callback
 				if (pc == bpa.address)
 				{
-					msg("breakpoint pending found\n");
 					bpa.callback(pc);
 					tritonize(pc, tid);
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
@@ -373,14 +329,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		{
 			if (cmdOptions.showDebugInfo)
 				msg("[!] Process_exiting...\n");
-			/*if (ENABLE_TRACING_WHEN_TAINTING)
-			{
-				if (DEBUG)
-					msg("[+] Clearing trace...\n");
-				clear_trace();
-			}*/
-			//msg("In dbg_process_exit, reseting everything\n");
-			//Do we want to unhook this event?
+			//Do we want to unhook this event? I don't think so we want to be hooked for future sessions
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
 			ponce_runtime_status.runtimeTrigger.disable();
 			break;
@@ -395,7 +344,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 {
 	switch (notification_code)
 	{
-		// called when IDA is preparing a context menu for a view
+		// Called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
 		case ui_populating_tform_popup:
 		{
@@ -428,22 +377,24 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					}
 				}	
 			}
+
 			//Adding a separator
 			attach_action_to_popup(form, popup_handle, "");
 			break;
 		}
 		case ui_finish_populating_tform_popup:
 		{
+			//This event is call after all the Ponce menus have been added and updated
+			//It is the perfect point to add the multiple condition solve submenus
 			TForm *form = va_arg(va, TForm *);
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
 			int view_type = get_tform_type(form);
 			//We get the ea form a global variable that is set in the update event
 			//This is not very elegant but I don't know how to do it from here
 			ea_t cur_ea = popup_menu_ea;
-			//msg("Finishing populating: "HEX_FORMAT"\n", popup_menu_ea);
-			//Adding submenus for solve with all the conditions executed in the same address
 			if (view_type == BWN_DISASM)
 			{
+				//Adding submenus for solve with all the conditions executed in the same address
 				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 				{
 					//We should filter here for the ea
@@ -456,7 +407,6 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						char label[256];
 						sprintf_s(label, "%d. "HEX_FORMAT" -> "HEX_FORMAT"", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
 						action_IDA_solve_formula_sub.label = label;
-						msg("name: %s label: %s\n", name, label);
 						bool success = register_action(action_IDA_solve_formula_sub);
 						//If the submenu is already registered, we should unregister it and re-register it
 						if (!success)
@@ -464,33 +414,9 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 							unregister_action(action_IDA_solve_formula_sub.name);
 							success = register_action(action_IDA_solve_formula_sub);
 						}
-						msg("registered submenu for solver, result: %d\n", success);
 						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
-						msg("Added submenu for solver, result: %d\n", success);
 					}
 				}
-
-				//Test code to see all the available icons!
-				/*for (int i = 0; i < 30; i++)
-				{
-					for (int j = 0; j < 10; j++)
-					{
-						int icon_number = i * 10 + j;
-						char name[256];
-						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						sprintf_s(name, "Ponce:icon_%d", icon_number);
-						action_IDA_solve_formula_sub.icon = icon_number;
-						action_IDA_solve_formula_sub.name = name;
-						action_IDA_solve_formula_sub.label = name;
-						bool success = register_action(action_IDA_solve_formula_sub);
-						msg("registered submenu for solver, result: %d\n", success);
-						char path[256];
-						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						sprintf_s(path, "Icons_%d/", i);
-						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, path, SETMENU_APP);
-						msg("attached submenu for solver, result: %d\n", success);
-					}
-				}*/
 			}
 			break;
 		}
@@ -505,9 +431,6 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 
 /*We set the memory to the results we got and do the analysis from there*/
 void set_SMT_results(Input *input_ptr){
-	if (cmdOptions.showDebugInfo)
-		msg("\ncallback_set_SMT_results \n");
-
 	/*To set the memory types*/
 	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
 		put_many_bytes((ea_t)it->getAddress(), &it->getConcreteValue(), it->getSize());	
@@ -517,5 +440,5 @@ void set_SMT_results(Input *input_ptr){
 		set_reg_val(it->getName().c_str(), it->getConcreteValue().convert_to<uint64>());
 		
 	if (cmdOptions.showDebugInfo)
-		msg("[+] Memory set with the SMT results\n");
+		msg("[+] Memory/Registers set with the SMT results\n");
 }

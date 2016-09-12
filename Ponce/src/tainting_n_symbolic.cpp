@@ -166,21 +166,3 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 		set_cmt(pc, comment.str().c_str(), false);
 	}
 }
-
-/*This function get the */
-//std::list<triton::arch::OperandWrapper> get_tainted_regs_operands(triton::arch::Instruction* tritonInst)
-//{
-//	std::list<triton::arch::OperandWrapper> tainted_reg_operands;
-//	for (auto it = tritonInst->operands.begin(); it != tritonInst->operands.end(); it++) 
-//	{
-//		auto op = *it;
-//		if (op.getType() == triton::arch::OP_REG)
-//		{
-//			msg("op reg: %s\n", op.reg.getName().c_str());
-//			if (triton::api.isTainted(*it))
-//				tainted_reg_operands.push_back(*it);
-//		}
-//	}
-//	return tainted_reg_operands;
-//}
-

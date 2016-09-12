@@ -26,9 +26,10 @@ struct ah_taint_register_t : public action_handler_t
 			triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
 			if (register_to_taint != NULL)
 			{
-				msg("[!] Tainted register %s\n", selected);
+				if (cmdOptions.showDebugInfo)
+					msg("[!] Tainting register %s\n", selected);
 				triton::api.taintRegister(*register_to_taint);
-				/*When the user taints something for the first time we should enable step_tracing*/
+				//When the user taints something for the first time we should enable step_tracing
 				start_tainting_or_symbolic_analysis();
 				//If the register tainted is a source for the instruction then we need to reanalize the instruction
 				//So the self instruction will be tainted
@@ -38,10 +39,7 @@ struct ah_taint_register_t : public action_handler_t
 					auto reg = it->first;
 					//msg("Register read: %s\n", reg.getName().c_str());
 					if (reg.getId() == register_to_taint->getId())
-					{
-						//msg("reanalyzing\n");
 						reanalize_current_instruction();
-					}
 				}
 			}
 		}
@@ -98,12 +96,8 @@ struct ah_symbolize_register_t : public action_handler_t
 				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
 				{
 					auto reg = it->first;
-					//msg("Register read: %s\n", reg.getName().c_str());
 					if (reg.getId() == register_to_symbolize->getId())
-					{
-						//msg("reanalyzing\n");
 						reanalize_current_instruction();
-					}
 				}
 			}
 		}
@@ -148,7 +142,6 @@ struct ah_taint_memory_t : public action_handler_t
 		{
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
 			{
-				//msg("from or to is NULL\n");
 				return 0;
 			}
 			//We get the selection bounds from the action activation context
@@ -158,10 +151,8 @@ struct ah_taint_memory_t : public action_handler_t
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
 		{
+			//We don't know how to do this :(
 			msg("[!] Disassembly windows no supported for memory tainting...yet\n");
-			/*int selected = read_selection(&selection_starts, &selection_ends);
-			msg("selectted : %d\n", selected);
-			if (!selected)*/
 			return 0;
 
 		}
@@ -177,32 +168,7 @@ struct ah_taint_memory_t : public action_handler_t
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now
-		//Todo: We could only do this if the instruction is affected by the memory modified
 		reanalize_current_instruction();
-//		ea_t saddr, eaddr;
-
-		// Get the address range selected, or return false if
-		// there was no selection
-		//ToDo: This function is working well with saddr, but not with eaddr. 
-		//If we are selecting 2 bytes in the hexview and the item has 8 bytes, the
-		//eaddrr always point to the end of the item (an instruction or variable)
-		//int selected = read_selection(&saddr, &eaddr);
-		//char selected2[20];
-
-		//if (get_highlighted_identifier(selected2, 20, 0))
-		//	msg("Selected_output_text %s\n", selected2);
-		//if (selected)
-		//	msg("Selected range: %a -> %a\n", saddr, eaddr);
-		//else
-		//	msg("No selection.\n");
-		
-
-
-		//msg("p0.x: %d ,p1.x: %d\n", p0.x, p1.x);
-		//msg("Type: %s\n", typeid(p0.at).name());
-
-		//is_something_tainted = true;
-		//runtimeTrigger.enable();
 		return 0;
 	}
 
@@ -246,10 +212,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		if (action_activation_ctx->form_type == BWN_DUMP)
 		{
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
-			{
-				//msg("from or to is NULL\n");
 				return 0;
-			}
 			//We get the selection bounds from the action activation context
 			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
 			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
@@ -258,11 +221,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		else if (action_activation_ctx->form_type == BWN_DISASM)
 		{
 			msg("[!] Disassembly windows no supported for memory tainting...yet\n");
-			/*int selected = read_selection(&selection_starts, &selection_ends);
-			msg("selectted : %d\n", selected);
-			if (!selected)*/
 			return 0;
-
 		}
 		else
 			return 0;
@@ -278,30 +237,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now
-		//Todo: We could only do this if the instruction is affected by the memory modified
 		reanalize_current_instruction();
-		//		ea_t saddr, eaddr;
-
-		// Get the address range selected, or return false if
-		// there was no selection
-		//ToDo: This function is working well with saddr, but not with eaddr. 
-		//If we are selecting 2 bytes in the hexview and the item has 8 bytes, the
-		//eaddrr always point to the end of the item (an instruction or variable)
-		//int selected = read_selection(&saddr, &eaddr);
-		//char selected2[20];
-
-		//if (get_highlighted_identifier(selected2, 20, 0))
-		//	msg("Selected_output_text %s\n", selected2);
-		//if (selected)
-		//	msg("Selected range: %a -> %a\n", saddr, eaddr);
-		//else
-		//	msg("No selection.\n");
-
-		//msg("p0.x: %d ,p1.x: %d\n", p0.x, p1.x);
-		//msg("Type: %s\n", typeid(p0.at).name());
-
-		//is_something_tainted = true;
-		//runtimeTrigger.enable();
 		return 0;
 	}
 
@@ -335,7 +271,7 @@ static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
 	50); //Optional: the action icon (shows when in menus/toolbars)
 
 
-struct ah_solve_t : public action_handler_t
+/*struct ah_solve_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
@@ -364,16 +300,12 @@ struct ah_solve_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-		//Only enabled with symbolize conditions
-		//if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
-		//	return AST_ENABLE;
-		//If the condition is in the path constrains
+		//Only enabled if the condition is in the path constrains
 		bool condition_found = false;
 		for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 		{
 			if (ponce_runtime_status.myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
 				condition_found = true;
-			//attach_action_to_popup(action_update_ctx_t->form, action_update_ctx_t->, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_APP);
 		}
 		return condition_found ? AST_ENABLE: AST_DISABLE;
 	}
@@ -387,6 +319,7 @@ static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
 	"Ctrl+Shift+S", //Optional: the action shortcut
 	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
 	13); //Optional: the action icon (shows when in menus/toolbars)
+	*/
 
 struct ah_negate_and_inject_t : public action_handler_t
 {
@@ -398,35 +331,19 @@ struct ah_negate_and_inject_t : public action_handler_t
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (cmdOptions.showDebugInfo)
 				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
-			//We need to get the instruction associated with this address, we look for the addres in the map
-			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
-
-			auto input_ptr = solve_formula(pc, NULL);
+			//We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
+			unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
+			auto input_ptr = solve_formula(pc, bound);
 			if (input_ptr != NULL)
 			{
 				//We need to modify the last path constrain
-				auto temp = ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].notTakenAddr;
-				ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].notTakenAddr = ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].takenAddr;
-				ponce_runtime_status.myPathConstraints[ponce_runtime_status.myPathConstraints.size() - 1].takenAddr = temp;
+				auto temp = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
+				ponce_runtime_status.myPathConstraints[bound].notTakenAddr = ponce_runtime_status.myPathConstraints[bound].takenAddr;
+				ponce_runtime_status.myPathConstraints[bound].takenAddr = temp;
 				//We need to modify the condition flags to negate the condition
 				if (ponce_runtime_status.last_triton_instruction->getAddress() == pc)
 				{
 					negate_flag_condition(ponce_runtime_status.last_triton_instruction);
-					/*auto regs = last_triton_instruction->getReadRegisters();
-					for (auto it = regs.begin(); it != regs.end(); it++)
-					{
-						auto reg = it->first;
-						//If the register is a flag and it is symbolized, we have a candidate to negate
-						if (reg.isFlag() && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized())
-						{
-							uint64 val;
-							auto old_value = get_reg_val(reg.getName().c_str(), &val);
-							//Negating flag
-							val = !val;
-							set_reg_val(reg.getName().c_str(), val);
-							break;
-						}
-					}*/
 				}
 				// We set the results obtained from solve_formula
 				set_SMT_results(input_ptr);
@@ -443,8 +360,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-			//Only enabled with symbolize conditions
-			//If we are in runtime and it is the last instruction we can test if it is symbolize
+			//If we are in runtime and it is the last instruction we test if it is symbolize
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
 				return AST_ENABLE;
 		}
@@ -474,7 +390,8 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 
-			auto input_ptr = solve_formula(pc, NULL);
+			unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
+			auto input_ptr = solve_formula(pc, bound);
 			if (input_ptr != NULL)
 			{
 				// We set the results obtained from solve_formula
@@ -495,8 +412,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK && snapshot.exists())
 		{
-			//Only enabled with symbolize conditions
-			//If we are in runtime and it is the last instruction we can test if it is symbolize
+			//If we are in runtime and it is the last instruction we test if it is symbolize
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
 				return AST_ENABLE;
 		}
@@ -574,13 +490,14 @@ struct ah_delete_snapshot_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
 		snapshot.resetEngine();
-		msg("Snapshot removed\n");
+		if (cmdOptions.showDebugInfo)
+			msg("[+] Snapshot removed\n");
 		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
-		//Only if process is being debugged and there is an existent shapshot
+		//Only if there is an existent shapshot
 		if (snapshot.exists())
 			return AST_ENABLE;
 		else
@@ -720,7 +637,8 @@ struct ah_solve_formula_sub_t : public action_handler_t
 	{
 		//We extract the solved index from the action name
 		unsigned int condition_index = atoi(ctx->action);
-		msg("Solving condition at %d\n", condition_index);
+		if (cmdOptions.showDebugInfo)
+			msg("[+] Solving condition at %d\n", condition_index);
 		auto input_ptr = solve_formula(ctx->cur_ea, condition_index);
 		if (input_ptr != NULL)
 			delete input_ptr;
@@ -736,10 +654,10 @@ ah_solve_formula_sub_t ah_solve_formula_sub;
 
 action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
 	"Ponce:solve_formula_sub", // The action name. This acts like an ID and must be unique
-	"1. 0x4012234 Not taken", //The action text.
+	"", //The action text.
 	&ah_solve_formula_sub, //The action handler.
 	"", //Optional: the action shortcut
-	"", //Optional: the action tooltip (available in menus/toolbar)
+	"The solves a specific conditions and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
 	13); //Optional: the action icon (shows when in menus/toolbars)
 
 
@@ -761,7 +679,5 @@ struct action action_list[] =
 	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ &action_IDA_deleteSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
 	{ &action_IDA_execute_native, { BWN_DISASM, NULL }, true, true, "" },
-	//This is a special action, we added here so it is register, but we will add it manually as a submenu of the solver
-	//{ &action_IDA_solve_formula_sub, { NULL }, false, false, "" },
 	{ NULL, NULL, NULL }
 };

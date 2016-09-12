@@ -54,7 +54,6 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 	else
 		syncReg = reg.getParent();
 
-	//value = triton::utils::fromBufferToUint<triton::uint512>(buffer);
 	syncReg.setConcreteValue(value);
 	triton::api.setConcreteRegisterValue(syncReg);
 	/* Returns the good casted value */
