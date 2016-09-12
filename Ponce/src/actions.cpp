@@ -565,7 +565,7 @@ static const action_desc_t action_IDA_restoreSnapshot = ACTION_DESC_LITERAL(
 	"Ponce:restore_snapshot",
 	"Restore Execution Snapshot",
 	&ah_restore_snapshot,
-	"Ctrl+Shift+R",
+	"Ctrl+Shift+S",
 	NULL,
 	128);
 
@@ -626,6 +626,8 @@ struct ah_execute_native_t : public action_handler_t
 	{
 		if (ask_for_execute_native())
 		{
+			//Deleting previous snapshot
+			snapshot.resetEngine();
 			//Disabling step tracing...
 			enable_step_trace(false);
 			//And continue! (F9)
@@ -657,6 +659,8 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		{
 			if (ask_for_execute_native())
 			{
+				//Deleting previous snapshot
+				snapshot.resetEngine();
 				//Disabling step tracing...
 				disable_step_trace();
 				ponce_runtime_status.runtimeTrigger.disable();
