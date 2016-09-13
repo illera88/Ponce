@@ -11,14 +11,38 @@
 #include "trigger.hpp"
 #include "context.hpp"
 #include "utils.hpp"
-#include "formChoser.hpp"
+#include "formConfiguration.hpp"
 
 //Triton
 #include <api.hpp>
 
+/*void memoryCaching(triton::arch::MemoryAccess& mem)
+{
+	msg("[+] We need memory! Address: %llX Size: %d\n", mem.getAddress(), mem.getSize());
+}*/
+
+void test()
+{
+/*	triton::api.setArchitecture(triton::arch::ARCH_X86_64);
+	triton::api.addCallback(memoryCaching);
+
+	auto inst1 = triton::arch::Instruction();
+	inst1.setOpcodes((triton::uint8 *)"\x48\xb8\x88\x77\x66\x55\x44\x33\x22\x11", 10);
+	inst1.setAddress(0x401000);
+	triton::api.processing(inst1);
+	msg("inst 1 parsed: %s\n", inst1.getDisassembly().c_str());
+	auto inst2 = triton::arch::Instruction();
+	inst2.setOpcodes((triton::uint8 *)"\x0f\xb6\x08", 3);
+	inst2.setAddress(0x40100a);
+	triton::api.processing(inst2);
+	msg("inst 2 parsed: %s\n", inst2.getDisassembly().c_str());
+	*/
+}
+
 /*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
 void triton_init()
 {
+	test();
 	//We need to set the architecture for Triton
 	triton::api.setArchitecture(TRITON_ARCH);
 	

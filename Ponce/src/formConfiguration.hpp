@@ -1,4 +1,3 @@
-
 #pragma once
 //IDA
 #include <ida.hpp>

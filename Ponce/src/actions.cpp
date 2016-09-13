@@ -8,7 +8,8 @@
 #include "globals.hpp"
 #include "utils.hpp"
 #include "callbacks.hpp"
-#include "formChoser.hpp"
+#include "formConfiguration.hpp"
+#include "formTaintSymbolizeInput.hpp"
 #include "actions.hpp"
 #include "taintWindow.hpp"
 
@@ -158,10 +159,14 @@ struct ah_taint_memory_t : public action_handler_t
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
 		{
-			//We don't know how to do this :(
-			msg("[!] Disassembly windows no supported for memory tainting...yet\n");
-			return 0;
-
+			//We don't know how to do this :( 
+			//msg("[!] Disassembly windows no supported for memory tainting...yet\n");
+			//So we ask to the user for the memory and the size
+			triton::arch::MemoryAccess *mem = prompt_window_taint_symbolize(0);
+			if (mem == NULL)
+				return 0;
+			selection_starts = mem->getAddress();
+			selection_ends = mem->getAddress() + mem->getSize();
 		}
 		else
 			return 0;
@@ -200,9 +205,13 @@ struct ah_taint_memory_t : public action_handler_t
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
 					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-					if (selection_ends - selection_starts > 0)
+					if (selection_ends - selection_starts >= 0)
 						return AST_ENABLE;
 				}
+			}
+			else
+			{
+				return AST_ENABLE;
 			}
 		}
 		return AST_DISABLE;
@@ -237,13 +246,17 @@ struct ah_symbolize_memory_t : public action_handler_t
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
 		{
-			msg("[!] Disassembly windows no supported for memory tainting...yet\n");
-			return 0;
+			//We ask to the user for the memory and the size
+			triton::arch::MemoryAccess *mem = prompt_window_taint_symbolize(0);
+			if (mem == NULL)
+				return 0;
+			selection_starts = mem->getAddress();
+			selection_ends = mem->getAddress() + mem->getSize() - 1;
 		}
 		else
 			return 0;
 
-		//The selection ends in the last item, we need to add 1 to calculate the length
+		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts + 1;
 		if (cmdOptions.showDebugInfo)
 			msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
@@ -254,10 +267,11 @@ struct ah_symbolize_memory_t : public action_handler_t
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now if the instruction was reading the memory that was just symbolized
-		auto store_access_list = ponce_runtime_status.last_triton_instruction->getStoreAccess();
-		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		auto load_access_list = ponce_runtime_status.last_triton_instruction->getLoadAccess();
+		for (auto it = load_access_list.begin(); it != load_access_list.end(); it++)
 		{
 			triton::arch::MemoryAccess memory_access = it->first;
+			msg("memory access: "HEX_FORMAT"\n", memory_access.getAddress());
 			//If the address is inside the range just symbolized, then reanalize
 			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
 			{
@@ -279,9 +293,13 @@ struct ah_symbolize_memory_t : public action_handler_t
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
 					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-					if (selection_ends - selection_starts > 0)
+					if (selection_ends - selection_starts >= 0)
 						return AST_ENABLE;
 				}
+			}
+			else
+			{
+				return AST_ENABLE;
 			}
 		}
 		return AST_DISABLE;

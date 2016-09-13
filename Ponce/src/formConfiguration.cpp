@@ -2,17 +2,15 @@
 *  This plugin demonstrates how to use choosers inside forms.
 *
 */
-
 #include <pro.h>
 #include <idp.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
 
 //Ponce
-#include "formChoser.hpp"
+#include "formConfiguration.hpp"
 #include "globals.hpp"
 #include "utils.hpp"
-
 
 //--------------------------------------------------------------------------
 //This function is not used since it only works when  we need to activate or deactivate other items in the form while using it
@@ -35,42 +33,6 @@ int idaapi modcb(int fid, form_actions_t &fa)
 		//	fa._set_field_value(24, 0);
 		//}
 		break;
-	//case 10:     // show debug info
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.showDebugInfo = isActivated ? 1 : 0;
-	//	break;
-	//case 11:     // manage symbolic indexing
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.manageSymbolicIndexing = isActivated ? 1 : 0;
-	//	break;
-	//case 12:     // enable tracing first time something is tainted
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.enableTracingAsTainted = isActivated ? 1 : 0;
-	//	break;
-	//case 17:     // Automatically rename the functions with tainted instructions/conditions
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.RenameFunctionNames = isActivated ? 1 : 0;
-	//	break;
-	//case 18:     // Configure automated tainting
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.automatedTainting = isActivated ? 1 : 0;
-	//	break;
-	//case 19:     // taint argv[0]
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.taintArgv0 = isActivated ? 1 : 0;
-	//	break;
-	//case 24:     // taint argc
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.taintArgc = isActivated ? 1 : 0;
-	//	break;
-	//case 25:     // taint recv
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.taintRecv = isActivated ? 1 : 0;
-	//	break;
-	//case 26:     // Taint fread
-	//	fa.get_checkbox_value(fid, &isActivated);
-	//	cmdOptions.taintFread = isActivated ? 1 : 0;
-	//	break;
 	default:
 		//msg("unknown id %d\n", fid);
 		break;
@@ -208,5 +170,4 @@ void prompt_conf_window(void){
 				);
 		}
 	}
-
 }

@@ -4,8 +4,7 @@
 **
 **  This program is under the terms of the LGPLv3 License.
 */
-#ifndef TRITON_PIN_TRIGGER_H
-#define TRITON_PIN_TRIGGER_H
+#pragma once
 
 //! \class Trigger Enable and disable the Pin's InsertCalls.
 class Trigger {
@@ -33,5 +32,3 @@ public:
 
 
 };
-
-#endif // TRITON_PIN_TRIGGER_H

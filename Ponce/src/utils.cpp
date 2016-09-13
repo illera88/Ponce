@@ -16,7 +16,6 @@
 //Ponce
 #include "utils.hpp"
 #include "globals.hpp"
-#include "formChoser.hpp"
 #include "context.hpp"
 
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
@@ -386,7 +385,7 @@ Input * solve_formula(ea_t pc, uint bound)
 		{
 			if (cmdOptions.showExtraDebugInfo)
 				msg("Keeping condition %d\n", j);
-			ea_t ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
+			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
@@ -394,7 +393,7 @@ Input * solve_formula(ea_t pc, uint bound)
 		if (cmdOptions.showExtraDebugInfo)
 			msg("Inverting condition %d\n", bound);
 		//And now we negate the selected condition
-		ea_t ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
+		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
 		auto symExpr = triton::api.getFullAstFromId(ripId);
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo)
@@ -446,7 +445,7 @@ Input * solve_formula(ea_t pc, uint bound)
 				else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
 				{
 					warning("register");
-					newinput->regOperand.push_back(triton::arch::Register((ea_t)symbVar->getKindValue(), secondValue));
+					newinput->regOperand.push_back(triton::arch::Register((triton::uint32)symbVar->getKindValue(), secondValue));
 				}
 				//We represent the number different 
 				switch (symbVar->getSize())
@@ -744,11 +743,26 @@ qstring get_callee(ea_t address){
 	return name;	
 }
 
+//Helper to concretize and untaint all registers
+void concretizeAndUntaintAllRegisters()
+{
+	triton::api.concretizeAllRegister();
+	//We untaint all the registers
+	auto regs = triton::api.getAllRegisters();
+	for (auto it = regs.begin(); it != regs.end(); it++)
+	{
+		auto reg = **it;
+		triton::api.untaintRegister(reg);
+	}
+}
 
-//We use this function to enable the trigger after a blacklisted function
-void enableTrigger(ea_t main_address)
+/* We use this function to enable the trigger after a blacklisted function.
+We are also concretizing all the registers. The idea is after call a external function
+you couldn't assume any register has been unchanged, so we concretize all of them.*/
+void enableTrigger_and_concretize_registers(ea_t main_address)
 {
 	ponce_runtime_status.runtimeTrigger.enable();
+	concretizeAndUntaintAllRegisters();
 }
 
 regval_t ida_get_reg_val_invalidate(char *reg_name)
