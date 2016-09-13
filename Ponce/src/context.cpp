@@ -72,7 +72,6 @@ triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(addr, size);
-	if (get_many_bytes(addr, &buffer, size))
-		msg("reading success\n");
+	get_many_bytes(addr, &buffer, size);
 	return triton::utils::fromBufferToUint<triton::uint128>(buffer);
 }

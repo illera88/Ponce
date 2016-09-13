@@ -11,7 +11,7 @@
 #include "trigger.hpp"
 #include "context.hpp"
 #include "utils.hpp"
-#include "formChoser.hpp"
+#include "formConfiguration.hpp"
 
 //Triton
 #include <api.hpp>

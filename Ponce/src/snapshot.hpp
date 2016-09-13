@@ -4,9 +4,7 @@
 **
 **  This program is under the terms of the LGPLv3 License.
 */
-
-#ifndef PINTOOL_SNAPSHOT_H
-#define PINTOOL_SNAPSHOT_H
+#pragma once
 
 //IDA
 #include <pro.h>
@@ -108,6 +106,4 @@ public:
 	//! Setter for the address where the snaphsot was taken
 	void setAddress(ea_t address);
 };
-
-#endif /* PINTOOL_SNAPSHOT_H */
 
