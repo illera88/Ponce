@@ -31,7 +31,7 @@
 #define ARCH arch::ARCH_X86_64
 #define strtol_m strtoll
 #define REG_SIZE 8
-#define HEX_FORMAT "%#llX"
+#define HEX_FORMAT "%#llx"
 #define CPUSIZE 64
 #endif
 

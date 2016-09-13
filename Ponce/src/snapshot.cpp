@@ -172,7 +172,6 @@ void Snapshot::restoreSnapshot() {
 		else
 		{
 			msg("ERROR restoring register %s\n", iterator->first.c_str());
-
 		}
 	}
 

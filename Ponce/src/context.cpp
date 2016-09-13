@@ -20,7 +20,7 @@
 void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
 	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %d\n", mem.getAddress(), mem.getSize());
+		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	msg("Reading memory value: "HEX_FORMAT"\n", memValue.convert_to<ea_t>());
 	mem.setConcreteValue(memValue);
@@ -41,7 +41,6 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 {
 	regval_t reg_value;
 	triton::uint512 value = 0;
-	//ea_t value;
 	//We need to invalidate the registers. If not IDA uses the last value when program was stopped
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val(reg.getName().c_str(), &reg_value);
@@ -60,6 +59,7 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 	/* Returns the good casted value */
 	return triton::api.getConcreteRegisterValue(reg, false);
 }
+
 
 triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
 {
