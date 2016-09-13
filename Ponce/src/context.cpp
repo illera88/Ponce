@@ -20,8 +20,9 @@
 void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
 	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
+		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %d\n", mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
+	msg("Reading memory value: "HEX_FORMAT"\n", memValue.convert_to<ea_t>());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
 }
@@ -31,7 +32,7 @@ void needConcreteRegisterValue(triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need a register! Register: %s Value: " HEX_FORMAT "\n", reg.getName().c_str(), (unsigned int)regValue);
+		msg("[+] We need a register! Register: %s Value: " HEX_FORMAT "\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
 }
@@ -39,12 +40,12 @@ void needConcreteRegisterValue(triton::arch::Register& reg)
 triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 {
 	regval_t reg_value;
-	triton::uint512 value;
+	triton::uint512 value = 0;
+	//ea_t value;
 	//We need to invalidate the registers. If not IDA uses the last value when program was stopped
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val(reg.getName().c_str(), &reg_value);
-	value = reg_value.ival; //TODO : reg_value->ival is ui64 won't work for xmm and larger registers
-
+	value = reg_value.ival;
 	/* Sync with the libTriton */
 	triton::arch::Register syncReg;
 	if (reg.getId() >= triton::arch::x86::ID_REG_AF && reg.getId() <= triton::arch::x86::ID_REG_ZF)
@@ -62,13 +63,16 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 
 triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
 {
-	if (size > 16){
-		//msg("[!]Error, size can't be larger than 16\n"); 
+	if (size > 16)
+	{
+		warning("[!]Error, size can't be larger than 16\n");
+		return -1;
 	}
-	triton::uint128 value = 0;
+	triton::uint8 buffer[16] = {0};
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(addr, sizeof(value));
-	get_many_bytes(addr, &value, size);
-	return value;
+	invalidate_dbgmem_contents(addr, size);
+	if (get_many_bytes(addr, &buffer, size))
+		msg("reading success\n");
+	return triton::utils::fromBufferToUint<triton::uint128>(buffer);
 }

@@ -118,7 +118,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
 		if (cmdOptions.showDebugInfo)
 			msg("[+] Branch symbolized detected at " HEX_FORMAT ": " HEX_FORMAT " or " HEX_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
-		ea_t ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
+		triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
 		else
@@ -233,7 +233,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						breakpoint_pending_action bpa;
 						bpa.address = next_ea;
 						bpa.ignore_breakpoint = false;
-						bpa.callback = enableTrigger; // We will enable back the trigger when this bp get's reached
+						bpa.callback = enableTrigger_and_concretize_registers; // We will enable back the trigger when this bp get's reached
 						
 						//We add the action to the list
 						breakpoint_pending_actions.push_back(bpa);

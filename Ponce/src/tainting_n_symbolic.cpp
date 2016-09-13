@@ -19,7 +19,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	//Iterate through argc, argv[argc] and taint every byte and argc
 	ea_t argc = get_args(0, true);
 	ea_t argv = get_args(1, true);
-	//msg("argc: %d argv: " HEX_FORMAT "\n", argc, argv);
+	//msg("argc: %d argv: " HEX_FORMAT "\n", (unsigned int)argc, argv);
 	if (cmdOptions.taintArgc)
 	{
 		//First we taint the argc
@@ -37,6 +37,8 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		auto reg = str_to_register("RCX");
 		reg->setConcreteValue(argc);
 		triton::api.taintRegister(*reg);
+		if (cmdOptions.showDebugInfo)
+			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #endif
 		start_tainting_or_symbolic_analysis();
 	}
@@ -48,7 +50,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		ea_t current_argv = read_uint_from_ida(argv + i * REG_SIZE);
 		if (current_argv == 0xffffffff)
 		{
-			msg("[!] Error reading mem~ " HEX_FORMAT "\n", argv + i * REG_SIZE);
+			msg("[!] Error reading mem: " HEX_FORMAT "\n", argv + i * REG_SIZE);
 			break;
 		}
 		//We iterate through all the bytes of the current argument
@@ -67,7 +69,9 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			{
 				char comment[256];
 				sprintf_s(comment, 256, "argv[%d][%d]", i, j);
+				//msg("Converting memory to symbolic "HEX_FORMAT"\n", current_argv + j);
 				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, 1, current_char), comment);
+
 			}
 			j++;
 		} while (current_char != '\0');

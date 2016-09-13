@@ -253,10 +253,11 @@ struct ah_symbolize_memory_t : public action_handler_t
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now if the instruction was reading the memory that was just symbolized
-		auto store_access_list = ponce_runtime_status.last_triton_instruction->getStoreAccess();
-		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		auto load_access_list = ponce_runtime_status.last_triton_instruction->getLoadAccess();
+		for (auto it = load_access_list.begin(); it != load_access_list.end(); it++)
 		{
 			triton::arch::MemoryAccess memory_access = it->first;
+			msg("memory access: "HEX_FORMAT"\n", memory_access.getAddress());
 			//If the address is inside the range just symbolized, then reanalize
 			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
 			{

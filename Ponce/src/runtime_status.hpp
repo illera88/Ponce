@@ -7,13 +7,13 @@
 #include <pro.h> 
 
 typedef struct PathConstraint{
-	ea_t conditionRipId;
+	triton::usize conditionRipId;
 	ea_t conditionAddr;
 	ea_t takenAddr;
 	ea_t notTakenAddr;
 	unsigned int bound;
 
-	PathConstraint(ea_t conditionRipId, ea_t conditionAddr, ea_t takenAddr, ea_t notTakenAddr, unsigned int bound)
+	PathConstraint(triton::usize conditionRipId, ea_t conditionAddr, ea_t takenAddr, ea_t notTakenAddr, unsigned int bound)
 	{
 		this->conditionRipId = conditionRipId;
 		this->conditionAddr = conditionAddr;

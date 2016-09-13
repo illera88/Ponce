@@ -68,13 +68,13 @@ entrylist_t * fill_entryList(){
 	entrylist_t *li = new entrylist_t;
 
 	if (cmdOptions.use_tainting_engine){
-		auto taintedMemoryList = triton::api.getTaintEngine()->getTaintedMemory();
+/*		auto taintedMemoryList = triton::api.getTaintEngine()->getTaintedMemory();
 		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
 			item_t list_entry;
 			list_entry.address = *iterator;
 			list_entry.isTainted = true;
 			list_entry.value = triton::api.getConcreteMemoryValue(*iterator);
-		}
+		}*/
 	}
 	else if (cmdOptions.use_symbolic_engine){
 		auto symMemMap = triton::api.getSymbolicMemory();
