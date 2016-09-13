@@ -20,8 +20,8 @@
 void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
 	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need memory! Address: "HEX_FORMAT" Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
-	auto memValue = getCurrentMemoryValue((triton::__uint)mem.getAddress(), mem.getSize());
+		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %d\n", (unsigned int)mem.getAddress(), mem.getSize());
+	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
 }
@@ -31,7 +31,7 @@ void needConcreteRegisterValue(triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need a register! Register: %s Value: "HEX_FORMAT"\n", reg.getName().c_str(), (unsigned int)regValue);
+		msg("[+] We need a register! Register: %s Value: " HEX_FORMAT "\n", reg.getName().c_str(), (unsigned int)regValue);
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
 }
@@ -60,7 +60,7 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 	return triton::api.getConcreteRegisterValue(reg, false);
 }
 
-triton::uint128 getCurrentMemoryValue(triton::__uint addr, triton::uint32 size) 
+triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
 {
 	if (size > 16){
 		//msg("[!]Error, size can't be larger than 16\n"); 

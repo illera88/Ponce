@@ -52,14 +52,14 @@ void tritonize(ea_t pc, thid_t threadID)
 		triton::api.disassembly(*tritonInst);
 	}
 	catch (...){
-		msg("[!] Dissasembling error at "HEX_FORMAT" Opcodes:",pc);
+		msg("[!] Dissasembling error at " HEX_FORMAT " Opcodes:",pc);
 		for (auto i = 0; i < cmd.size; i++)
 			msg("%2x ", *(unsigned char*)(opcodes + i));
 		msg("\n");
 		return;
 	}
 	if (cmdOptions.showDebugInfo)
-		msg("[+] Triton At "HEX_FORMAT": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+		msg("[+] Triton At " HEX_FORMAT ": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
@@ -103,7 +103,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (tritonInst->isTainted() || tritonInst->isSymbolized())
 	{
 		if (cmdOptions.showDebugInfo)
-			msg("[!] Instruction %s at "HEX_FORMAT"\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
+			msg("[!] Instruction %s at " HEX_FORMAT "\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
 		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
 		if (tritonInst->isBranch()) // Check if it is a conditional jump
@@ -114,11 +114,11 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	if (tritonInst->isBranch() && tritonInst->isSymbolized())
 	{
-		triton::__uint addr1 = (triton::__uint)tritonInst->getNextAddress();
-		triton::__uint addr2 = (triton::__uint)tritonInst->operands[0].getImmediate().getValue();
+		ea_t addr1 = (ea_t)tritonInst->getNextAddress();
+		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
 		if (cmdOptions.showDebugInfo)
-			msg("[+] Branch symbolized detected at "HEX_FORMAT": "HEX_FORMAT" or "HEX_FORMAT", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
-		triton::__uint ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
+			msg("[+] Branch symbolized detected at " HEX_FORMAT ": " HEX_FORMAT " or " HEX_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+		ea_t ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
 		else
@@ -134,8 +134,8 @@ void reanalize_current_instruction()
 	uint64 eip;
 	get_reg_val("eip", &eip);
 	if (cmdOptions.showDebugInfo)
-		msg("[+] Reanalizyng instruction at "HEX_FORMAT"\n", eip);
-	tritonize((triton::__uint)eip, get_current_thread());
+		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", eip);
+	tritonize((ea_t)eip, get_current_thread());
 }
 
 /*This functions is called every time a new debugger session starts*/
@@ -193,7 +193,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
 			{
 				if (cmdOptions.showExtraDebugInfo)
-					msg("[+] Stepping %s: "HEX_FORMAT" (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+					msg("[+] Stepping %s: " HEX_FORMAT " (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
 				tritonize(pc, tid);
 			}
 			break;
@@ -296,7 +296,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			int *warn = va_arg(va, int *);
 			//This variable defines if a breakpoint is a user-defined breakpoint or not
 			bool user_bp = true;
-			msg("Breakpoint reached! At "HEX_FORMAT"\n", pc);
+			msg("Breakpoint reached! At " HEX_FORMAT "\n", pc);
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
 			{
@@ -419,7 +419,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						sprintf_s(name, "%d_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
-						sprintf_s(label, "%d. "HEX_FORMAT" -> "HEX_FORMAT"", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						sprintf_s(label, "%d. " HEX_FORMAT " -> " HEX_FORMAT "", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
 						action_IDA_solve_formula_sub.label = label;
 						bool success = register_action(action_IDA_solve_formula_sub);
 						//If the submenu is already registered, we should unregister it and re-register it

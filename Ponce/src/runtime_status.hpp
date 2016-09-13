@@ -3,15 +3,17 @@
 #include "trigger.hpp"
 //Triton
 #include <api.hpp>
+//IDA
+#include <pro.h> 
 
 typedef struct PathConstraint{
-	triton::__uint conditionRipId;
-	triton::__uint conditionAddr;
-	triton::__uint takenAddr;
-	triton::__uint notTakenAddr;
+	ea_t conditionRipId;
+	ea_t conditionAddr;
+	ea_t takenAddr;
+	ea_t notTakenAddr;
 	unsigned int bound;
 
-	PathConstraint(triton::__uint conditionRipId, triton::__uint conditionAddr, triton::__uint takenAddr, triton::__uint notTakenAddr, unsigned int bound)
+	PathConstraint(ea_t conditionRipId, ea_t conditionAddr, ea_t takenAddr, ea_t notTakenAddr, unsigned int bound)
 	{
 		this->conditionRipId = conditionRipId;
 		this->conditionAddr = conditionAddr;

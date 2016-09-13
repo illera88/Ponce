@@ -17,6 +17,7 @@
 #include "utils.hpp"
 #include "globals.hpp"
 #include "formChoser.hpp"
+#include "context.hpp"
 
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
 void start_tainting_or_symbolic_analysis()
@@ -44,7 +45,7 @@ triton::arch::Register *str_to_register(std::string register_name)
 }
 
 /*We need this helper because triton doesn't allow to taint memory regions unalinged, so we taint every byte*/
-void taint_all_memory(triton::__uint address, triton::__uint size)
+void taint_all_memory(ea_t address, ea_t size)
 {
 	for (unsigned int i = 0; i < size; i++)
 	{
@@ -53,7 +54,7 @@ void taint_all_memory(triton::__uint address, triton::__uint size)
 }
 
 /*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(triton::__uint address, triton::__uint size, char *comment)
+void symbolize_all_memory(ea_t address, ea_t size, char *comment)
 {
 	for (unsigned int i = 0; i < size; i++)
 	{
@@ -136,55 +137,55 @@ ea_t find_function(char *function_name)
 }
 
 //This function return the real value of the argument.
-triton::__uint get_args(int argument_number, bool skip_ret)
+ea_t get_args(int argument_number, bool skip_ret)
 {
-	triton::__uint memprogram = get_args_pointer(argument_number, skip_ret);
+	ea_t memprogram = get_args_pointer(argument_number, skip_ret);
 	//We first get the pointer and then we dereference it
-	triton::__uint value = 0;
+	ea_t value = 0;
 	value = read_uint_from_ida(memprogram);
 	return value;
 }
 
 // Return the argument at the "argument_number" position. It is independant of the architecture and the OS.
 // We suppossed the function is using the default call convention, stdcall or cdelc in x86, no fastcall and fastcall in x64
-triton::__uint get_args_pointer(int argument_number, bool skip_ret)
+ea_t get_args_pointer(int argument_number, bool skip_ret)
 {
 	int skip_ret_index = skip_ret ? 1 : 0;
-#ifdef X86_32
+#if !defined(__EA64__)
 	regval_t esp_value;
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val("esp", &esp_value);
-	triton::__uint arg = (triton::__uint)esp_value.ival + (argument_number + skip_ret_index) * 4;
+	ea_t arg = (ea_t)esp_value.ival + (argument_number + skip_ret_index) * 4;
 	return arg;
-#elif X86_64
+#else
 	//Not converted to IDA we should use get_reg_val
-#ifdef _WIN32 // note the underscore: without it, it's not msdn official!
+#ifdef __NT__ // note the underscore: without it, it's not msdn official!
 	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
 	switch (argument_number)
 	{
-	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<__uint>();
-	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<__uint>();
-	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<__uint>();
-	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<__uint>();
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
 	default:
-		__uint esp = (__uint)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<__uint>();
-		__uint arg = esp + (argument_number - 4 + skip_ret_index) * 8;
-		return *(__uint*)arg;
+		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
+		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
+		return *(ea_t*)arg;
 	}
-#elif __unix__
+#elif __LINUX__ || __MAC__ // IDA macros https://www.hex-rays.com/products/ida/support/sdkdoc/pro_8h.html
 	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
 	switch (argument_number)
 	{
-	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<__uint>();
-	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<__uint>();
-	case 2: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<__uint>();
-	case 3: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<__uint>();
-	case 4: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<__uint>();
-	case 5: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<__uint>();
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<ea_t>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<ea_t>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
+	case 4: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
+	case 5: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
 	default:
-		__uint esp = (__uint)getCurrentRegisterValue(TRITON_X86_REG_RSP);
-		__uint arg = esp + (argument_number - 6 + skip_ret_index) * 8;
-		return *(__uint*)arg;
+		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP);
+		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
+		return *(ea_t*)arg;
 	}
 #endif
 #endif
@@ -198,18 +199,18 @@ char read_char_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("Error reading memory from "HEX_FORMAT"\n", address);
+		warning("Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
-triton::__uint read_uint_from_ida(ea_t address)
+ea_t read_uint_from_ida(ea_t address)
 {
-	triton::__uint value;
+	ea_t value;
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("Error reading memory from "HEX_FORMAT"\n", address);
+		warning("Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -350,19 +351,19 @@ Input * solve_formula(ea_t pc, uint bound)
 		{
 			if (cmdOptions.showExtraDebugInfo)
 				msg("Keeping condition %d\n", j);
-			triton::__uint ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
+			ea_t ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
-			triton::__uint takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 		}
 		if (cmdOptions.showExtraDebugInfo)
 			msg("Inverting condition %d\n", bound);
 		//And now we negate the selected condition
-		triton::__uint ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
+		ea_t ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
 		auto symExpr = triton::api.getFullAstFromId(ripId);
-		triton::__uint notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
+		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo)
-			msg("ripId: %d notTakenAddr: "HEX_FORMAT"\n", ripId, notTakenAddr);
+			msg("ripId: %d notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
 		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
 		//Time to solve
@@ -410,7 +411,7 @@ Input * solve_formula(ea_t pc, uint bound)
 				else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
 				{
 					warning("register");
-					newinput->regOperand.push_back(triton::arch::Register((triton::__uint)symbVar->getKindValue(), secondValue));
+					newinput->regOperand.push_back(triton::arch::Register((ea_t)symbVar->getKindValue(), secondValue));
 				}
 				//We represent the number different 
 				switch (symbVar->getSize())
@@ -422,7 +423,6 @@ Input * solve_formula(ea_t pc, uint bound)
 					msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
 					break;
 				case 32:
-					msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint>());
 					break;
 				case 64:
 					msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());

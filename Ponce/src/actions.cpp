@@ -166,9 +166,9 @@ struct ah_taint_memory_t : public action_handler_t
 			return 0;
 
 		//The selection ends in the last item, we need to add 1 to calculate the length
-		unsigned int selection_length = selection_ends - selection_starts + 1;
+		ea_t selection_length = selection_ends - selection_starts + 1;
 		if (cmdOptions.showDebugInfo)
-			msg("[+] Tainting memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
+			msg("[+] Tainting memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
@@ -243,9 +243,9 @@ struct ah_symbolize_memory_t : public action_handler_t
 			return 0;
 
 		//The selection ends in the last item, we need to add 1 to calculate the length
-		unsigned int selection_length = selection_ends - selection_starts + 1;
+		auto selection_length = selection_ends - selection_starts + 1;
 		if (cmdOptions.showDebugInfo)
-			msg("[+] Symbolizing memory from "HEX_FORMAT" to "HEX_FORMAT". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
+			msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		char comment[256];
 		sprintf_s(comment, 256, "Mem "HEX_FORMAT"-"HEX_FORMAT" at address: "HEX_FORMAT"", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
@@ -306,7 +306,7 @@ static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (cmdOptions.showDebugInfo)
-				msg("[+] Solving condition at "HEX_FORMAT"\n", pc);
+				msg("[+] Solving condition at " HEX_FORMAT "\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse	
 			for (unsigned int i = ponce_runtime_status.myPathConstraints.size() - 1; i >= 0; i--)
@@ -356,7 +356,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (cmdOptions.showDebugInfo)
-				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
+				msg("[+] Negating condition at " HEX_FORMAT "\n", pc);
 			//We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
 			unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
 			auto input_ptr = solve_formula(pc, bound);
@@ -412,7 +412,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (cmdOptions.showDebugInfo)
-				msg("[+] Negating condition at "HEX_FORMAT"\n", pc);
+				msg("[+] Negating condition at " HEX_FORMAT "\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 
@@ -459,7 +459,10 @@ struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
+		ea_t pc = ctx->cur_ea;
+		set_cmt(pc, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
+		snapshot.setAddress(pc); // We will use this address later to delete the comment
 		msg("Snapshot Taken\n");
 		return 0;
 	}
