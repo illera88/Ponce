@@ -250,7 +250,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				}
 			}
 			//If the instruciton is not a blacklisted call we analyze the instruction
-			tritonize(pc, tid);
+			//We don't want to reanalize instructions. p.e. if we put a bp we receive two events, the bp and this one
+			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
+				tritonize(pc, tid);
 
 			ponce_runtime_status.current_trace_counter++;
 			ponce_runtime_status.total_number_traced_ins++;
