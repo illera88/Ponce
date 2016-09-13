@@ -39,7 +39,10 @@ struct ah_taint_register_t : public action_handler_t
 					auto reg = it->first;
 					//msg("Register read: %s\n", reg.getName().c_str());
 					if (reg.getId() == register_to_taint->getId())
+					{
 						reanalize_current_instruction();
+						break;
+					}
 				}
 			}
 		}
@@ -86,7 +89,7 @@ struct ah_symbolize_register_t : public action_handler_t
 			{
 				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
-				sprintf_s(comment, 256, "Reg %s at address: " HEX_FORMAT "\n", selected, action_activation_ctx->cur_ea);
+				sprintf_s(comment, 256, "Reg %s at address: "HEX_FORMAT"", selected, action_activation_ctx->cur_ea);
 				triton::api.convertRegisterToSymbolicVariable(*register_to_symbolize, comment);
 				/*When the user symbolize something for the first time we should enable step_tracing*/
 				start_tainting_or_symbolic_analysis();
@@ -97,7 +100,10 @@ struct ah_symbolize_register_t : public action_handler_t
 				{
 					auto reg = it->first;
 					if (reg.getId() == register_to_symbolize->getId())
+					{
 						reanalize_current_instruction();
+						break;
+					}
 				}
 			}
 		}
@@ -168,7 +174,17 @@ struct ah_taint_memory_t : public action_handler_t
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//We reanalyse the instruction where the pc is right now
-		reanalize_current_instruction();
+		auto store_access_list = ponce_runtime_status.last_triton_instruction->getStoreAccess();
+		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		{
+			triton::arch::MemoryAccess memory_access = it->first;
+			//If the address is inside the range just tainted, then reanalize
+			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
+			{
+				reanalize_current_instruction();
+				break;
+			}
+		}
 		return 0;
 	}
 
@@ -232,12 +248,22 @@ struct ah_symbolize_memory_t : public action_handler_t
 			msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		char comment[256];
-		sprintf_s(comment, 256, "Mem " HEX_FORMAT "-" HEX_FORMAT " at address: " HEX_FORMAT "\n", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+		sprintf_s(comment, 256, "Mem "HEX_FORMAT"-"HEX_FORMAT" at address: "HEX_FORMAT"", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 		symbolize_all_memory(selection_starts, selection_length, comment);
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
-		//We reanalyse the instruction where the pc is right now
-		reanalize_current_instruction();
+		//We reanalyse the instruction where the pc is right now if the instruction was reading the memory that was just symbolized
+		auto store_access_list = ponce_runtime_status.last_triton_instruction->getStoreAccess();
+		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		{
+			triton::arch::MemoryAccess memory_access = it->first;
+			//If the address is inside the range just symbolized, then reanalize
+			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
+			{
+				reanalize_current_instruction();
+				break;
+			}
+		}
 		return 0;
 	}
 
