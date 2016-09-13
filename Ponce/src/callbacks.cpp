@@ -39,7 +39,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		warning("[!] Some error decoding instruction at %p", pc);	
 	
 	unsigned char opcodes[15];
-	get_many_bytes(pc, opcodes, sizeof(opcodes));
+	get_many_bytes(pc, opcodes, cmd.size);
 
 	/* Setup Triton information */
 	tritonInst->partialReset();
@@ -131,11 +131,11 @@ void tritonize(ea_t pc, thid_t threadID)
 /*This function is called when we taint a register that is used in the current instruction*/
 void reanalize_current_instruction()
 {
-	uint64 eip;
-	get_reg_val("eip", &eip);
+	uint64 xip;
+	get_reg_val(TRITON_REG_XIP.getName().c_str(), &xip);
 	if (cmdOptions.showDebugInfo)
-		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", eip);
-	tritonize((ea_t)eip, get_current_thread());
+		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", xip);
+	tritonize((ea_t)xip, get_current_thread());
 }
 
 /*This functions is called every time a new debugger session starts*/
