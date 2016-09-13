@@ -34,7 +34,8 @@
     <ClInclude Include="..\..\..\Ponce\src\blacklisted.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\callbacks.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\context.hpp" />
-    <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\formConfiguration.hpp" />
+    <ClInclude Include="..\..\..\Ponce\src\formTaintSymbolizeInput.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\globals.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\runtime_status.hpp" />
     <ClInclude Include="..\..\..\Ponce\src\snapshot.hpp" />
@@ -47,7 +48,8 @@
     <ClCompile Include="..\..\..\Ponce\src\actions.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\callbacks.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\context.cpp" />
-    <ClCompile Include="..\..\..\Ponce\src\formChoser.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\formConfiguration.cpp" />
+    <ClCompile Include="..\..\..\Ponce\src\formTaintSymbolizeInput.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\globals.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\main.cpp" />
     <ClCompile Include="..\..\..\Ponce\src\snapshot.cpp" />
