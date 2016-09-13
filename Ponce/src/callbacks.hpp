@@ -14,8 +14,6 @@ typedef struct
 	bool ignore_breakpoint;
 	//This is the callback will be executed when this breakpoint is reached
 	void(*callback)(ea_t);
-	//Should we remove this item from the breakpoint_pending_actions list?
-	bool remove_after_found;
 } breakpoint_pending_action;
 
 extern std::list<breakpoint_pending_action> breakpoint_pending_actions;

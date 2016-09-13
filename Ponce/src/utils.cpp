@@ -715,3 +715,11 @@ void enableTrigger(ea_t main_address)
 {
 	ponce_runtime_status.runtimeTrigger.enable();
 }
+
+regval_t ida_get_reg_val_invalidate(char *reg_name)
+{
+	regval_t reg_value;
+	invalidate_dbg_state(DBGINV_REGS);
+	get_reg_val(reg_name, &reg_value);
+	return reg_value;
+}

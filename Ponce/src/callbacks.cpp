@@ -183,7 +183,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-
+			msg("Step over at"HEX_FORMAT"\n", pc);
 			if (!decode_insn(pc))
 				warning("[!] Some error decoding instruction at %p", pc);
 			
@@ -206,7 +206,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
-
+			msg("Dgb trace at"HEX_FORMAT"\n", pc);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 			ua_ana0(pc);
@@ -225,20 +225,26 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						blacklisted callback to enable tracing again*/
 						ea_t next_ea = next_head(pc, BADADDR);
 						add_bpt(next_ea, 1, BPT_EXEC);
+						char cmt[256];
+						sprintf_s(cmt, "Temporal bp set by ponce for blacklisting\n");
+						//We set a comment so the user know why there is a new bp there
+						set_cmt(next_ea, cmt, false);
 
 						breakpoint_pending_action bpa;
 						bpa.address = next_ea;
 						bpa.ignore_breakpoint = false;
-						bpa.remove_after_found = true; // we remove this structure from breakpoint_pending_actions after it gets reached
 						bpa.callback = enableTrigger; // We will enable back the trigger when this bp get's reached
+						
 						//We add the action to the list
 						breakpoint_pending_actions.push_back(bpa);
 
 						//Disabling step tracing...
 						disable_step_trace();
+						
 						//We want to tritonize the call, so the memory write for the ret address in the stack will be restore by the snapshot
 						tritonize(pc, tid);
 						ponce_runtime_status.runtimeTrigger.disable();
+
 						return 0;
 					}
 				}
@@ -284,6 +290,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		{
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
+			msg("Dgb bptat"HEX_FORMAT"\n", pc);
 			int *warn = va_arg(va, int *);
 			//This variable defines if a breakpoint is a user-defined breakpoint or not
 			bool user_bp = true;
@@ -308,9 +315,10 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						//We dont want to skip library funcions or debug segments
 						set_step_trace_options(0);
 						continue_process();
+						//We delete the comment
+						set_cmt(pc, "", false);
 
-						if (bpa.remove_after_found)
-							breakpoint_pending_actions.erase(it);
+						breakpoint_pending_actions.erase(it);
 					}
 					break;
 				}
@@ -319,9 +327,13 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//The idea is if the user uses Execute native til next bp, and IDA reachs the next bp we reenable the tracing
 			if (user_bp)
 			{
+				//request_suspend_process();
+				//run_requests();
+				//disable_step_trace();
+				//request_enable_step_trace();
 				//If the trigger is disabled then the user is manually stepping with the ponce tracing disabled
-				if (ponce_runtime_status.runtimeTrigger.getState())
-					enable_step_trace(ponce_runtime_status.runtimeTrigger.getState());
+				//if (ponce_runtime_status.runtimeTrigger.getState())
+				//enable_step_trace(ponce_runtime_status.runtimeTrigger.getState());
 			}
 			break;
 		}
