@@ -143,7 +143,7 @@ ea_t get_args(int argument_number, bool skip_ret)
 	ea_t memprogram = get_args_pointer(argument_number, skip_ret);
 	//We first get the pointer and then we dereference it
 	ea_t value = 0;
-	value = read_uint_from_ida(memprogram);
+	value = read_regSize_from_ida(memprogram);
 	return value;
 
 #else
