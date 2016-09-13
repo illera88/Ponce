@@ -28,13 +28,8 @@ int idaapi modcb(int fid, form_actions_t &fa)
 		fa.get_checkbox_value(fid, &isActivated);
 		fa.enable_field(19, isActivated ? 1 : 0);
 		fa.enable_field(24, isActivated ? 1 : 0);
-		//if (!isActivated){
-		//	fa._set_field_value(19,0);
-		//	fa._set_field_value(24, 0);
-		//}
 		break;
 	default:
-		//msg("unknown id %d\n", fid);
 		break;
 	}
 	return 1;
