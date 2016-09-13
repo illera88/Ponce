@@ -71,6 +71,10 @@ void idaapi run(int)
 		//Registering action for the Ponce config
 		register_action(action_IDA_show_config);
 		attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP);
+		//Registering action for the Ponce taint window
+		register_action(action_IDA_show_taintWindow);
+		attach_action_to_menu("Edit/Ponce/", "Ponce:show_taintWindows", SETMENU_APP);
+
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
 		if (ask_for_a_snapshot() != -1)
 		{

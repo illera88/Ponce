@@ -15,6 +15,17 @@
 #include "taintWindow.hpp"
 #include "globals.hpp"
 
+
+const char *popup_menu_names[] = {
+	"Insert",					// not active
+	"Delete",					// not active
+	"Dump segment to disk",		// menu entry for dumping the segment
+	"Refresh"					// not active
+};
+
+//This is the global pointer that will hold the list object once its filled
+entrylist_t *global_list = NULL;
+
 // function that returns number of lines in the list
 static ulong idaapi sizer(void *obj)
 {
@@ -26,6 +37,7 @@ static ulong idaapi sizer(void *obj)
 // function that is called when the user hits Enter
 static void idaapi enter_cb(void *obj, uint32 n)
 {
+	warning("enter");
 	//netnode *node = (netnode *)obj;
 	//jumpto(node->altval(n - 1));
 }
@@ -34,16 +46,19 @@ static void idaapi enter_cb(void *obj, uint32 n)
 // function that is called when the window is closed
 static void idaapi destroy_cb(void *obj)
 {
-	//  warning("destroy_cb");
-	/*netnode *node = (netnode *)obj;
-	node->kill();
-	delete node;*/
+	if (global_list != NULL){
+		global_list->clear();
+		qfree(global_list);
+		global_list = NULL;
+	}
 }
 
 
 // function that generates the list line
 static void idaapi desc(void *obj, ulong n, char * const *arrptr)
 {
+	msg("desc1 %d"HEX_FORMAT"\n", n,obj);
+
 	if (n == 0) // generate the column headers
 	{
 		for (int i = 0; i < qnumber(header); i++)
@@ -54,18 +69,30 @@ static void idaapi desc(void *obj, ulong n, char * const *arrptr)
 	entrylist_t &li = *(entrylist_t *)obj;
 	item_t;
 
-	qsnprintf(arrptr[0], MAXSTR, "%u", li[n].id);
-	qsnprintf(arrptr[1], MAXSTR, "%08a", li[n].address);
-	qsnprintf(arrptr[2], MAXSTR, "%s", li[n].register_name);
-	qsnprintf(arrptr[3], MAXSTR, "%llu", li[n].value);
-	qsnprintf(arrptr[4], MAXSTR, "%s", li[n].isTainted ? "true" : "false");
-	qsnprintf(arrptr[5], MAXSTR, "%s", li[n].isSymbolized ? "true" : "false");
-	qsnprintf(arrptr[6], MAXSTR, "%s", li[n].comment);
+	qsnprintf(arrptr[0], MAXSTR, "%u", li[n]->id);
+	if (li[n]->address == NULL)
+		qsnprintf(arrptr[1], MAXSTR, "%s", "");
+	else
+		qsnprintf(arrptr[1], MAXSTR, HEX_FORMAT, li[n]->address);
+	if (li[n]->register_name == NULL)
+		qsnprintf(arrptr[1], MAXSTR, "%s", "");
+	else
+		qsnprintf(arrptr[2], MAXSTR, "%s", li[n]->register_name);
+	qsnprintf(arrptr[3], MAXSTR, "%llu", li[n]->value);
+	qsnprintf(arrptr[4], MAXSTR, "%s", li[n]->isTainted ? "true" : "false");
+	qsnprintf(arrptr[5], MAXSTR, "%s", li[n]->isSymbolized ? "true" : "false");
+	if (li[n]->comment == NULL)
+		qsnprintf(arrptr[1], MAXSTR, "%s", "");
+	else
+		qsnprintf(arrptr[6], MAXSTR, "%s", li[n]->comment);
 	
+	msg("desc2 %d"HEX_FORMAT"\n", n,obj);
 }
 
-entrylist_t * fill_entryList(){
-	entrylist_t *li = new entrylist_t;
+void fill_entryList(){	
+
+	//We clear the list
+	global_list->clear();
 
 	if (cmdOptions.use_tainting_engine){
 		auto taintedMemoryList = triton::api.getTaintedMemory();
@@ -73,18 +100,24 @@ entrylist_t * fill_entryList(){
 		
 		//Iterate over tainted memory
 		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
-			item_t list_entry;
-			list_entry.address = *iterator;
-			list_entry.isTainted = true;
-			list_entry.value = triton::api.getConcreteMemoryValue(*iterator);
+			item_t *list_entry = new item_t();
+
+			list_entry->address = *iterator;
+			list_entry->isTainted = true;
+			list_entry->value = triton::api.getConcreteMemoryValue(*iterator);
+
+			global_list->push_back(list_entry);
 		}
 		
 		//Iterate over tainted registers
 		for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
-			item_t list_entry;
-			list_entry.register_name = (*iterator).getName().c_str();
-			list_entry.isTainted = true;
-			list_entry.value = (*iterator).getConcreteValue();
+			item_t *list_entry = new item_t();
+
+			list_entry->register_name = (*iterator).getName().c_str();
+			list_entry->isTainted = true;
+			list_entry->value = (*iterator).getConcreteValue();
+
+			global_list->push_back(list_entry);
 		}
 	}
 	else if (cmdOptions.use_symbolic_engine){
@@ -93,61 +126,77 @@ entrylist_t * fill_entryList(){
 		triton::api.getSymbolicEngine();
 
 		//Iterate over symbolic memory
-		typedef std::map<triton::uint64, triton::engines::symbolic::SymbolicExpression*>::iterator it_type;
-		for (it_type iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
+		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
 			auto symbExpr = iterator->second;
+			item_t *list_entry = new item_t();
+			
+			list_entry->isSymbolized = symbExpr->isSymbolized();
+			list_entry->id = symbExpr->getId();
+			list_entry->address = iterator->first;
+			list_entry->comment = symbExpr->getComment().c_str();
+			list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
 
-			item_t list_entry;
-			list_entry.isSymbolized = symbExpr->isSymbolized();
-			list_entry.id = symbExpr->getId();
-			list_entry.address = symbExpr->getOriginMemory().getAddress();
-			list_entry.comment = symbExpr->getComment().c_str();
-			list_entry.value = symbExpr->getOriginMemory().getConcreteValue();
-
-			li->push_back(list_entry);
+			global_list->push_back(list_entry);
 		}
 
 		//Iterate over symbolic registers
-		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
+		for (auto iterator = symRegMap.begin(); iterator != symRegMap.end(); iterator++) {
 			auto symbExpr = iterator->second;
-			item_t list_entry;
+			auto reg = iterator->first;
+			item_t *list_entry = new item_t();
 
-			list_entry.isSymbolized = symbExpr->isSymbolized();
-			list_entry.id = symbExpr->getId();
-			list_entry.register_name = symbExpr->getOriginRegister().getName().c_str();
-			list_entry.comment = symbExpr->getComment().c_str();
-			list_entry.value = symbExpr->getOriginRegister().getConcreteValue();
+			list_entry->isSymbolized = symbExpr->isSymbolized();
+			list_entry->id = symbExpr->getId();
+			list_entry->register_name = reg.getName().c_str();
+			list_entry->comment = symbExpr->getComment().c_str();
+			list_entry->value = reg.getConcreteValue();
 
-			li->push_back(list_entry);
+			global_list->push_back(list_entry);
 		}
 	}
-	return li;
 }
 
+static uint32 idaapi update_cb(void *obj, uint32 n)
+{
+	warning("update "HEX_FORMAT, obj);
+	fill_entryList();
+	//if (global_list != NULL){
+	//	warning("freeing object");
+	//	//qfree(global_list);
+	//	global_list = NULL;
+	//}
+	//obj = (void *)global_list;
+	//create_taint_window();
+	return n;
+}
 
 void create_taint_window(){
-	auto *li = fill_entryList();
+	if (global_list == NULL){
+		global_list = new entrylist_t();
+		warning("create "HEX_FORMAT, global_list);
+	}
+	//Fill the list with Triton info
+	fill_entryList();
 
 	// now open the window
-	choose2(false,                    // non-modal window
+	auto idx=choose2(false,            // non-modal window
 		-1, -1, -1, -1,       // position is determined by Windows
-		li,                 // pass the created array
+		global_list,          // pass the created array
 		qnumber(header),      // number of columns
 		widths,               // widths of columns
 		sizer,                // function that returns number of lines
 		desc,                 // function that generates a line
-		"windows title",                // window title
-		-1,                   // use the default icon for the window
-		0,                    // position the cursor on the first line
+		"Taint Window",       // window title
+		/*157*/-1,                   // use the default icon for the window
+		-1,                    // position the cursor on the first line
 		NULL,                 // "kill" callback
 		NULL,                 // "new" callback
-		NULL,                 // "update" callback
+		update_cb,            // "update" callback
 		NULL,                 // "edit" callback
 		enter_cb,             // function to call when the user pressed Enter
 		destroy_cb,           // function to call when the window is closed
-		NULL,                 // use default popup menu items
+		NULL,     // use default popup menu items
 		NULL);                // use the same icon for all lines
 
-	qfree(li);
 }
 

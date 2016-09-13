@@ -11,6 +11,7 @@
 #include "formConfiguration.hpp"
 #include "formTaintSymbolizeInput.hpp"
 #include "actions.hpp"
+#include "taintWindow.hpp"
 
 //Triton
 #include "api.hpp"
@@ -583,6 +584,39 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
 	"Ctrl+Shift+P", //Optional: the action shortcut
 	"Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
 	156); //Optional: the action icon (shows when in menus/toolbars)
+
+struct ah_show_taintWindow_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		//So we don't reopen twice the same window
+		auto form = find_tform("Taint Window");
+		if (form != NULL){
+			//let's update it and change to it
+			fill_entryList();
+			switchto_tform(form, true);
+		}
+		
+		else
+			create_taint_window();
+	
+		return 0;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static ah_show_taintWindow_t ah_show_taintWindow;
+
+action_desc_t action_IDA_show_taintWindow = ACTION_DESC_LITERAL(
+	"Ponce:show_taintWindows", // The action name. This acts like an ID and must be unique
+	"Show Taint Window", //The action text.
+	&ah_show_taintWindow, //The action handler.
+	"Ctrl+Shift+T", //Optional: the action shortcut
+	"Show the Taint Window", //Optional: the action tooltip (available in menus/toolbar)
+	157); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_execute_native_t : public action_handler_t
 {
