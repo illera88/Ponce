@@ -33,19 +33,23 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #else
-		//Inx64 we taint the register rcx
+#ifdef __NT__ 
 		auto reg = str_to_register("RCX");
+#elif __LINUX__ || __MAC__
+		auto reg = str_to_register("RDI");
+#endif
 		reg->setConcreteValue(argc);
 		triton::api.taintRegister(*reg);
-#endif
 		start_tainting_or_symbolic_analysis();
+#endif	
 	}
+
 	//Second we taint all the arguments values
 	//We are tainting the argv[0], this is the program path, and it is something that the 
 	//user controls and sometimes is used to do somechecks
 	for (unsigned int i = cmdOptions.taintArgv0 ? 0 : 1; i < argc; i++)
 	{
-		ea_t current_argv = read_uint_from_ida(argv + i * REG_SIZE);
+		ea_t current_argv = read_regSize_from_ida(argv + i * REG_SIZE);
 		if (current_argv == 0xffffffff)
 		{
 			msg("[!] Error reading mem~ " HEX_FORMAT "\n", argv + i * REG_SIZE);
@@ -59,8 +63,10 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			current_char = read_char_from_ida(current_argv + j);
 			if (current_char == '\0' && !cmdOptions.taintEndOfString)
 				break;
-			if (cmdOptions.showExtraDebugInfo)
+			if (cmdOptions.showExtraDebugInfo){
 				msg("[!] %s argv[%d][%d]: %c\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", i, j, current_char);
+				msg("\n");
+			}
 			if (cmdOptions.use_tainting_engine)
 				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j, 1, current_char));
 			else

@@ -64,6 +64,18 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
+	//BORRAMEEEEEEEEEE
+	auto eax_addr = triton::api.getConcreteRegisterValue(triton::arch::x86::x86_reg_rax).convert_to<ea_t>();
+	msg("RAX vale %llx \n", eax_addr);
+
+	auto sym_mem_id=triton::api.getSymbolicMemoryId(eax_addr);
+
+	if (sym_mem_id != triton::engines::symbolic::UNSET){
+		auto is=triton::api.getSymbolicExpressionFromId(sym_mem_id)->isSymbolized();
+
+		msg("EAX %s symbolized\n", is ? " IS ":" IS NOT "); 
+	}
+
 	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
 	if (snapshot.exists())
 	{
@@ -185,7 +197,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = debug_event->ea;
 			msg("Step over at"HEX_FORMAT"\n", pc);
 			if (!decode_insn(pc))
-				warning("[!] Some error decoding instruction at %p", pc);
+				warning("[!] Some error decoding instruction at " HEX_FORMAT, pc);
 			
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
@@ -206,7 +218,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
-			msg("Dgb trace at"HEX_FORMAT"\n", pc);
+			msg("Dgb trace at" HEX_FORMAT "\n", pc);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 			ua_ana0(pc);

@@ -139,11 +139,46 @@ ea_t find_function(char *function_name)
 //This function return the real value of the argument.
 ea_t get_args(int argument_number, bool skip_ret)
 {
+#if !defined(__EA64__)
 	ea_t memprogram = get_args_pointer(argument_number, skip_ret);
 	//We first get the pointer and then we dereference it
 	ea_t value = 0;
 	value = read_uint_from_ida(memprogram);
 	return value;
+
+#else
+	//Not converted to IDA we should use get_reg_val
+#ifdef __NT__ // note the underscore: without it, it's not msdn official!
+	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
+	int skip_ret_index = skip_ret ? 1 : 0;
+	switch (argument_number)
+	{
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	default:
+		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
+		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
+		return get_qword(arg);
+	}
+#elif __LINUX__ || __MAC__ // IDA macros https://www.hex-rays.com/products/ida/support/sdkdoc/pro_8h.html
+	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
+	switch (argument_number)
+	{
+	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<ea_t>();
+	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<ea_t>();
+	case 2: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
+	case 3: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
+	case 4: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
+	case 5: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	default:
+		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP);
+		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
+		return get_qword(arg);
+	}
+#endif
+#endif
 }
 
 // Return the argument at the "argument_number" position. It is independant of the architecture and the OS.
@@ -163,29 +198,29 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
 	switch (argument_number)
 	{
-	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
-	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
-	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
-	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	case 0: 
+	case 1: 
+	case 2: 
+	case 3: error("In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
 		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
-		return *(ea_t*)arg;
+		return arg;
 	}
 #elif __LINUX__ || __MAC__ // IDA macros https://www.hex-rays.com/products/ida/support/sdkdoc/pro_8h.html
 	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
 	switch (argument_number)
 	{
-	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<ea_t>();
-	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<ea_t>();
-	case 2: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
-	case 3: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
-	case 4: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
-	case 5: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	case 0: 
+	case 1: 
+	case 2: 
+	case 3: 
+	case 4: 
+	case 5:error("In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
-		return *(ea_t*)arg;
+		return arg;
 	}
 #endif
 #endif
@@ -203,7 +238,7 @@ char read_char_from_ida(ea_t address)
 	return value;
 }
 
-ea_t read_uint_from_ida(ea_t address)
+ea_t read_regSize_from_ida(ea_t address)
 {
 	ea_t value;
 	//This is the way to force IDA to read the value from the debugger
