@@ -105,6 +105,10 @@ void Snapshot::takeSnapshot() {
 	this->saved_ponce_runtime_status = ponce_runtime_status;
 }
 
+void Snapshot::setAddress(ea_t address){
+	this->address = address;
+}
+
 
 /* Restore the snapshot. */
 void Snapshot::restoreSnapshot() {
@@ -196,6 +200,10 @@ void Snapshot::resetEngine(void) {
 	this->snapshotTaintEngine = nullptr;
 
 	this->snapshotTaken = false;
+
+	//We delete the comment that we created
+	set_cmt(address, "", false);
+	this->address = 0;
 }
 
 

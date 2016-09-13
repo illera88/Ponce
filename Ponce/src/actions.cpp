@@ -433,7 +433,10 @@ struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
+		ea_t pc = ctx->cur_ea;
+		set_cmt(pc, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
+		snapshot.setAddress(pc); // We will use this address later to delete the comment
 		msg("Snapshot Taken\n");
 		return 0;
 	}

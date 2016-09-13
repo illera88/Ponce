@@ -8,6 +8,9 @@
 #ifndef PINTOOL_SNAPSHOT_H
 #define PINTOOL_SNAPSHOT_H
 
+//IDA
+#include <pro.h>
+
 #include <map>
 #include <set>
 
@@ -65,6 +68,9 @@ private:
 	//! Snapshot of the ponce plugin status
 	struct runtime_status_t saved_ponce_runtime_status;
 
+	//! address where the snapshot was taken
+	ea_t address;
+
 public:
 	//! Constructor.
 	Snapshot();
@@ -98,6 +104,9 @@ public:
 
 	//! Tells if a snapshot has been taken
 	bool exists(void);
+
+	//! Setter for the address where the snaphsot was taken
+	void setAddress(ea_t address);
 };
 
 #endif /* PINTOOL_SNAPSHOT_H */
