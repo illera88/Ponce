@@ -69,11 +69,22 @@ entrylist_t * fill_entryList(){
 
 	if (cmdOptions.use_tainting_engine){
 		auto taintedMemoryList = triton::api.getTaintEngine()->getTaintedMemory();
+		auto taintedRegistersList = triton::api.getTaintEngine()->getTaintedRegisters();
+		
+		//Iterate over tainted memory
 		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
 			item_t list_entry;
 			list_entry.address = *iterator;
 			list_entry.isTainted = true;
 			list_entry.value = triton::api.getConcreteMemoryValue(*iterator);
+		}
+		
+		//Iterate over tainted registers
+		for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
+			item_t list_entry;
+			list_entry.register_name = (*iterator).getName().c_str();
+			list_entry.isTainted = true;
+			list_entry.value = (*iterator).getConcreteValue();
 		}
 	}
 	else if (cmdOptions.use_symbolic_engine){
@@ -97,8 +108,6 @@ entrylist_t * fill_entryList(){
 		}
 
 		//Iterate over symbolic registers
-		
-		//typedef std::map<triton::arch::Register, triton::engines::symbolic::SymbolicExpression*>::iterator it_type;
 		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
 			auto symbExpr = iterator->second;
 			item_t list_entry;

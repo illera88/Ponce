@@ -61,9 +61,6 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 }
 
 
-
-
-
 triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
 {
 	if (size > 16){

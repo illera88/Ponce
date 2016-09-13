@@ -64,18 +64,6 @@ void tritonize(ea_t pc, thid_t threadID)
 	/* Process the IR and taint */
 	triton::api.buildSemantics(*tritonInst);
 
-	//BORRAMEEEEEEEEEE
-	auto eax_addr = triton::api.getConcreteRegisterValue(triton::arch::x86::x86_reg_rax).convert_to<ea_t>();
-	msg("RAX vale %llx \n", eax_addr);
-
-	auto sym_mem_id=triton::api.getSymbolicMemoryId(eax_addr);
-
-	if (sym_mem_id != triton::engines::symbolic::UNSET){
-		auto is=triton::api.getSymbolicExpressionFromId(sym_mem_id)->isSymbolized();
-
-		msg("EAX %s symbolized\n", is ? " IS ":" IS NOT "); 
-	}
-
 	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
 	if (snapshot.exists())
 	{
