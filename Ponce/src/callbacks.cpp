@@ -153,7 +153,8 @@ void triton_restart_engines()
 	ponce_runtime_status.is_something_tainted_or_symbolize = false;
 	ponce_runtime_status.tainted_functions_index = 0;
 	//Reset instruction counter
-	ponce_runtime_status.total_number_traced_ins = ponce_runtime_status.current_trace_counter = 0;
+	ponce_runtime_status.total_number_traced_ins = 0;
+	ponce_runtime_status.current_trace_counter = 0;
 	breakpoint_pending_actions.clear();
 	set_automatic_taint_n_simbolic();
 	ponce_runtime_status.myPathConstraints.clear();
@@ -306,6 +307,10 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				{
 					bpa.callback(pc);
 					tritonize(pc, tid);
+					
+					//The pending breakpoints are used for enable the tracing so we consider this instruction tracing too
+					ponce_runtime_status.current_trace_counter++;
+					ponce_runtime_status.total_number_traced_ins++;
 					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
 					if (!bpa.ignore_breakpoint)
 					{
@@ -319,7 +324,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						continue_process();
 						//We delete the comment
 						set_cmt(pc, "", false);
-
 						breakpoint_pending_actions.erase(it);
 					}
 					break;
