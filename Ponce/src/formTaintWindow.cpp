@@ -1,4 +1,6 @@
-
+//C++
+#include <string>
+#include <sstream>
 
 //Triton
 #include <api.hpp>
@@ -12,7 +14,7 @@
 #include <kernwin.hpp>
 
 //Ponce
-#include "taintWindow.hpp"
+#include "formTaintWindow.hpp"
 #include "globals.hpp"
 
 
@@ -37,7 +39,6 @@ static ulong idaapi sizer(void *obj)
 // function that is called when the user hits Enter
 static void idaapi enter_cb(void *obj, uint32 n)
 {
-	warning("enter");
 	//netnode *node = (netnode *)obj;
 	//jumpto(node->altval(n - 1));
 }
@@ -57,8 +58,6 @@ static void idaapi destroy_cb(void *obj)
 // function that generates the list line
 static void idaapi desc(void *obj, ulong n, char * const *arrptr)
 {
-	msg("desc1 %d"HEX_FORMAT"\n", n,obj);
-
 	if (n == 0) // generate the column headers
 	{
 		for (int i = 0; i < qnumber(header); i++)
@@ -70,23 +69,16 @@ static void idaapi desc(void *obj, ulong n, char * const *arrptr)
 	item_t;
 
 	qsnprintf(arrptr[0], MAXSTR, "%u", li[n]->id);
-	if (li[n]->address == NULL)
+	if (li[n]->address == 0)
 		qsnprintf(arrptr[1], MAXSTR, "%s", "");
 	else
 		qsnprintf(arrptr[1], MAXSTR, HEX_FORMAT, li[n]->address);
-	if (li[n]->register_name == NULL)
-		qsnprintf(arrptr[1], MAXSTR, "%s", "");
-	else
-		qsnprintf(arrptr[2], MAXSTR, "%s", li[n]->register_name);
-	qsnprintf(arrptr[3], MAXSTR, "%llu", li[n]->value);
+	qsnprintf(arrptr[2], MAXSTR, "%s", li[n]->register_name.c_str());
+	qsnprintf(arrptr[3], MAXSTR, HEX_FORMAT, li[n]->value.convert_to<ea_t>());
 	qsnprintf(arrptr[4], MAXSTR, "%s", li[n]->isTainted ? "true" : "false");
 	qsnprintf(arrptr[5], MAXSTR, "%s", li[n]->isSymbolized ? "true" : "false");
-	if (li[n]->comment == NULL)
-		qsnprintf(arrptr[1], MAXSTR, "%s", "");
-	else
-		qsnprintf(arrptr[6], MAXSTR, "%s", li[n]->comment);
+	qsnprintf(arrptr[6], MAXSTR, "%s", li[n]->comment.c_str());
 	
-	msg("desc2 %d"HEX_FORMAT"\n", n,obj);
 }
 
 void fill_entryList(){	
@@ -113,7 +105,7 @@ void fill_entryList(){
 		for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
 			item_t *list_entry = new item_t();
 
-			list_entry->register_name = (*iterator).getName().c_str();
+			list_entry->register_name = (*iterator).getName();
 			list_entry->isTainted = true;
 			list_entry->value = (*iterator).getConcreteValue();
 
@@ -133,7 +125,7 @@ void fill_entryList(){
 			list_entry->isSymbolized = symbExpr->isSymbolized();
 			list_entry->id = symbExpr->getId();
 			list_entry->address = iterator->first;
-			list_entry->comment = symbExpr->getComment().c_str();
+			list_entry->comment = symbExpr->getComment();
 			list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
 
 			global_list->push_back(list_entry);
@@ -142,13 +134,13 @@ void fill_entryList(){
 		//Iterate over symbolic registers
 		for (auto iterator = symRegMap.begin(); iterator != symRegMap.end(); iterator++) {
 			auto symbExpr = iterator->second;
-			auto reg = iterator->first;
+			auto reg = symbExpr->getOriginRegister();
 			item_t *list_entry = new item_t();
-
+			
 			list_entry->isSymbolized = symbExpr->isSymbolized();
 			list_entry->id = symbExpr->getId();
-			list_entry->register_name = reg.getName().c_str();
-			list_entry->comment = symbExpr->getComment().c_str();
+			list_entry->register_name = reg.getName();
+			list_entry->comment = symbExpr->getComment();
 			list_entry->value = reg.getConcreteValue();
 
 			global_list->push_back(list_entry);
@@ -158,7 +150,6 @@ void fill_entryList(){
 
 static uint32 idaapi update_cb(void *obj, uint32 n)
 {
-	warning("update "HEX_FORMAT, obj);
 	fill_entryList();
 	//if (global_list != NULL){
 	//	warning("freeing object");
@@ -173,7 +164,6 @@ static uint32 idaapi update_cb(void *obj, uint32 n)
 void create_taint_window(){
 	if (global_list == NULL){
 		global_list = new entrylist_t();
-		warning("create "HEX_FORMAT, global_list);
 	}
 	//Fill the list with Triton info
 	fill_entryList();
@@ -186,7 +176,7 @@ void create_taint_window(){
 		widths,               // widths of columns
 		sizer,                // function that returns number of lines
 		desc,                 // function that generates a line
-		"Taint Window",       // window title
+		"Taint/Symbolic items",       // window title
 		/*157*/-1,                   // use the default icon for the window
 		-1,                    // position the cursor on the first line
 		NULL,                 // "kill" callback

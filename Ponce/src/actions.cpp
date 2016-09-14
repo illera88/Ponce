@@ -11,7 +11,7 @@
 #include "formConfiguration.hpp"
 #include "formTaintSymbolizeInput.hpp"
 #include "actions.hpp"
-#include "taintWindow.hpp"
+#include "formTaintWindow.hpp"
 
 //Triton
 #include "api.hpp"
@@ -25,14 +25,21 @@ struct ah_taint_register_t : public action_handler_t
 		char selected[20];
 		if (get_highlighted_identifier(selected, 20, 0))
 		{
-			triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
-			if (register_to_taint != NULL)
+			triton::arch::Register register_to_taint;
+			if (str_to_register(std::string(selected), register_to_taint))
 			{
 				if (cmdOptions.showDebugInfo)
 					msg("[!] Tainting register %s\n", selected);
-				triton::api.taintRegister(*register_to_taint);
+				register_to_taint.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_taint, true));
+				triton::api.taintRegister(register_to_taint);
 				//When the user taints something for the first time we should enable step_tracing
 				start_tainting_or_symbolic_analysis();
+				//If last_instruction is not set this instruction is not analyze
+				if (ponce_runtime_status.last_triton_instruction == NULL)
+				{
+					reanalize_current_instruction();
+					return 0;
+				}
 				//If the register tainted is a source for the instruction then we need to reanalize the instruction
 				//So the self instruction will be tainted
 				auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
@@ -40,7 +47,7 @@ struct ah_taint_register_t : public action_handler_t
 				{
 					auto reg = it->first;
 					//msg("Register read: %s\n", reg.getName().c_str());
-					if (reg.getId() == register_to_taint->getId())
+					if (reg.getId() == register_to_taint.getId())
 					{
 						reanalize_current_instruction();
 						break;
@@ -59,8 +66,8 @@ struct ah_taint_register_t : public action_handler_t
 			char selected[20];
 			if (get_highlighted_identifier(selected, 20, 0))
 			{
-				triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
-				if (register_to_taint != NULL)
+				triton::arch::Register register_to_taint;
+				if (str_to_register(std::string(selected), register_to_taint))
 					return AST_ENABLE;
 			}
 		}
@@ -86,22 +93,29 @@ struct ah_symbolize_register_t : public action_handler_t
 		char selected[20];
 		if (get_highlighted_identifier(selected, 20, 0))
 		{
-			triton::arch::Register *register_to_symbolize = str_to_register(std::string(selected));
-			if (register_to_symbolize != NULL)
+			triton::arch::Register register_to_symbolize;
+			if (str_to_register(std::string(selected), register_to_symbolize))
 			{
-				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
 				sprintf_s(comment, 256, "Reg %s at address: "HEX_FORMAT"", selected, action_activation_ctx->cur_ea);
-				triton::api.convertRegisterToSymbolicVariable(*register_to_symbolize, comment);
+				register_to_symbolize.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_symbolize, true));
+				triton::api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));
+
 				/*When the user symbolize something for the first time we should enable step_tracing*/
 				start_tainting_or_symbolic_analysis();
+				//If last_instruction is not set this instruction is not analyze
+				if (ponce_runtime_status.last_triton_instruction == NULL)
+				{
+					reanalize_current_instruction();
+					return 0;
+				}
 				//If the register symbolize is a source for the instruction then we need to reanalize the instruction
 				//So the self instruction will be tainted
 				auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
 				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
 				{
 					auto reg = it->first;
-					if (reg.getId() == register_to_symbolize->getId())
+					if (reg.getId() == register_to_symbolize.getId())
 					{
 						reanalize_current_instruction();
 						break;
@@ -120,8 +134,8 @@ struct ah_symbolize_register_t : public action_handler_t
 			char selected[20];
 			if (get_highlighted_identifier(selected, 20, 0))
 			{
-				triton::arch::Register *register_to_taint = str_to_register(std::string(selected));
-				if (register_to_taint != NULL)
+				triton::arch::Register register_to_symbolize;
+				if (str_to_register(std::string(selected), register_to_symbolize))
 					return AST_ENABLE;
 			}
 		}
@@ -612,10 +626,10 @@ static ah_show_taintWindow_t ah_show_taintWindow;
 
 action_desc_t action_IDA_show_taintWindow = ACTION_DESC_LITERAL(
 	"Ponce:show_taintWindows", // The action name. This acts like an ID and must be unique
-	"Show Taint Window", //The action text.
+	"Show Taint/Symbolic items", //The action text.
 	&ah_show_taintWindow, //The action handler.
-	"Ctrl+Shift+T", //Optional: the action shortcut
-	"Show the Taint Window", //Optional: the action tooltip (available in menus/toolbar)
+	"Alt+Shift+T", //Optional: the action shortcut
+	"Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
 	157); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_execute_native_t : public action_handler_t

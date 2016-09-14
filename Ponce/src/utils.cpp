@@ -31,16 +31,19 @@ void start_tainting_or_symbolic_analysis()
 
 /*This functions gets a string and return the triton register assign or NULL
 This is using the triton current architecture so it is more generic.*/
-triton::arch::Register *str_to_register(std::string register_name)
+bool str_to_register(std::string register_name, triton::arch::Register &reg)
 {
 	auto regs = triton::api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		triton::arch::Register *reg = *it;
-		if (reg->getName() == register_name)
-			return reg;
+		triton::arch::Register *r = *it;
+		if (r->getName() == register_name)
+		{
+			reg = *r;
+			return true;
+		}
 	}
-	return NULL;
+	return false;
 }
 
 /*We need this helper because triton doesn't allow to taint memory regions unalinged, so we taint every byte*/
