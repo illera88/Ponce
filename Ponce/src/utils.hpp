@@ -2,7 +2,7 @@
 #include <string>
 //Triton
 #include <api.hpp>
-
+//Ponce
 #include "globals.hpp"
 
 void start_tainting_or_symbolic_analysis();
@@ -29,3 +29,4 @@ void concretizeAndUntaintAllRegisters();
 void enableTrigger_and_concretize_registers(ea_t main_address);
 regval_t ida_get_reg_val_invalidate(char *reg_name);
 void readBlacklistfile(char* path);
+std::uint64_t GetTimeMs64(void);

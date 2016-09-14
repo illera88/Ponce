@@ -590,7 +590,7 @@ struct ah_execute_native_t : public action_handler_t
 			//Deleting previous snapshot
 			snapshot.resetEngine();
 			//Disabling step tracing...
-			enable_step_trace(false);
+			disable_step_trace();
 			//And continue! (F9)
 			continue_process();
 		}
@@ -633,6 +633,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		{
 			//Enabling step tracing...
 			enable_step_trace(true);
+			ponce_runtime_status.tracing_start_time = 0;
 			//Enabling the trigger
 			ponce_runtime_status.runtimeTrigger.enable();
 			//And analyzing current instruction
