@@ -1,3 +1,14 @@
+//! \file
+/*
+**  Copyright (c) 2016 - Ponce
+**  Authors:
+**         Alberto Garcia Illera		agarciaillera@gmail.com
+**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**
+**  This program is under the terms of the BSD License.
+*/
+
+//C++
 #include <stdio.h>
 #include <string>
 #include <iostream>
