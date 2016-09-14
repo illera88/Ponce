@@ -27,17 +27,13 @@ static const char *header[] =
 
 struct item_t
 {
-	triton::usize id = NULL;
-
-	triton::uint64 address = NULL;
-	const char* register_name = NULL;
-
+	triton::usize id = 0;
+	triton::uint64 address = 0;
+	std::string register_name;
 	triton::uint512 value = 0;
-
 	bool isTainted = false;
 	bool isSymbolized = false;
-
-	const char* comment = NULL; 
+	std::string comment;
 };
 
 typedef std::vector<item_t*> entrylist_t;

@@ -6,7 +6,7 @@
 #include "globals.hpp"
 
 void start_tainting_or_symbolic_analysis();
-triton::arch::Register *str_to_register(std::string register_name);
+bool str_to_register(std::string register_name, triton::arch::Register &reg);
 void taint_all_memory(ea_t address, ea_t size);
 void symbolize_all_memory(ea_t address, ea_t size, char* comment);
 int ask_for_a_snapshot();

@@ -33,13 +33,14 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #else
+		triton::arch::Register reg;
 #ifdef __NT__ 
-		auto reg = str_to_register("RCX");
+		str_to_register("RCX", reg);
 #elif __LINUX__ || __MAC__
-		auto reg = str_to_register("RDI");
+		str_to_register("RDI", reg);
 #endif
-		reg->setConcreteValue(argc);
-		triton::api.taintRegister(*reg);
+		reg.setConcreteValue(argc);
+		triton::api.taintRegister(reg);
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #endif	
