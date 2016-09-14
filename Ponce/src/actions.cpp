@@ -329,57 +329,6 @@ static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
 	"Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
 	50); //Optional: the action icon (shows when in menus/toolbars)
 
-
-/*struct ah_solve_t : public action_handler_t
-{
-	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
-	{
-		//This is only working from the disassembly windows
-		if (action_activation_ctx->form_type == BWN_DISASM)
-		{
-			ea_t pc = action_activation_ctx->cur_ea;
-			if (cmdOptions.showDebugInfo)
-				msg("[+] Solving condition at " HEX_FORMAT "\n", pc);
-			//We need to get the instruction associated with this address, we look for the addres in the map
-			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse	
-			for (unsigned int i = ponce_runtime_status.myPathConstraints.size() - 1; i >= 0; i--)
-			{
-				auto path_constraint = ponce_runtime_status.myPathConstraints[i];
-				if (path_constraint.conditionAddr == pc)
-				{
-					auto input_ptr = solve_formula(pc, i);
-					if (input_ptr != NULL)
-						delete input_ptr;
-					break;
-				}
-			}
-		}
-		return 0;
-	}
-
-	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
-	{
-		//Only enabled if the condition is in the path constrains
-		bool condition_found = false;
-		for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
-		{
-			if (ponce_runtime_status.myPathConstraints[i].conditionAddr == action_update_ctx_t->cur_ea)
-				condition_found = true;
-		}
-		return condition_found ? AST_ENABLE: AST_DISABLE;
-	}
-};
-static ah_solve_t ah_solve;
-
-static const action_desc_t action_IDA_solve = ACTION_DESC_LITERAL(
-	"Ponce:solve", // The action name. This acts like an ID and must be unique
-	"Solve formula", //The action text.
-	&ah_solve, //The action handler.
-	"Ctrl+Shift+S", //Optional: the action shortcut
-	"Solve a selected constraint", //Optional: the action tooltip (available in menus/toolbar)
-	13); //Optional: the action icon (shows when in menus/toolbars)
-	*/
-
 struct ah_negate_and_inject_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
@@ -766,7 +715,6 @@ struct action action_list[] =
 	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true, "Symbolic/"},
 	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true, "Symbolic/" },
 
-	//{ &action_IDA_solve, { BWN_DISASM, NULL }, false, true, "aaa bbbb/" },
 	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
 	{ &action_IDA_negateInjectRestore, { BWN_DISASM, NULL }, true, true, "SMT/" },
 
