@@ -1,6 +1,6 @@
 #pragma once
 
-char* black_func[] = { 
+std::vector<std::string> black_func = {
 	"printf",
 	"puts",
 	"putc",

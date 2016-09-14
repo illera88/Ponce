@@ -13,7 +13,7 @@
 #include "utils.hpp"
 
 //--------------------------------------------------------------------------
-//This function is not used since it only works when  we need to activate or deactivate other items in the form while using it
+//This function is used to activate or deactivate other items in the form while using it
 int idaapi modcb(int fid, form_actions_t &fa)
 {
 	ushort isActivated=0;
@@ -35,7 +35,7 @@ int idaapi modcb(int fid, form_actions_t &fa)
 	return 1;
 }
 
-/*IDA windows style is a fucking FUMADA!! 
+/*IDA windows style is a FUMADA!! Will move soon to Qt :)
 I you want to create a new checkbox you should:
 - add it to the form variable that its in formChoser.hpp
 - Create the global variable in cmdOptions
@@ -54,6 +54,8 @@ void prompt_conf_window(void){
 		chkgroup2 = 1 | 2;
 		chkgroup3 = 1 | 8 | 16;
 		chkgroup4 = 1 | 8;
+
+		cmdOptions.blacklist_path[0] = '\0'; // Will use this to check if the user set some path for the blacklist
 	}
 	else{
 		/*By default all the variables are set to false. If the user wants to change the configuration
@@ -65,7 +67,7 @@ void prompt_conf_window(void){
 		chkgroup3 = (cmdOptions.taintArgv ? 1 : 0) | (cmdOptions.taintArgv0 ? 2 : 0) | (cmdOptions.taintArgc ? 4 : 0) | (cmdOptions.taintRecv ? 8 : 0) | (cmdOptions.taintFread ? 16 : 0);
 		chkgroup4 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
-		symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
+		symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;	
 	}
 	if (AskUsingForm_c(form,
 		modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
@@ -78,7 +80,8 @@ void prompt_conf_window(void){
 		&chkgroup4,
 		&cmdOptions.color_tainted,
 		&cmdOptions.color_tainted_condition,
-		&cmdOptions.color_executed_instruction
+		&cmdOptions.color_executed_instruction,
+		&cmdOptions.blacklist_path
 		) > 0)
 	{
 		/*First we set the flag that indicates that the user already provided a configuration
@@ -116,6 +119,18 @@ void prompt_conf_window(void){
 		cmdOptions.RenameTaintedFunctionNames = chkgroup4 & 2 ? 1 : 0;
 		cmdOptions.addCommentsSymbolicExpresions = chkgroup4 & 4 ? 1 : 0;
 		cmdOptions.paintExecutedInstructions = chkgroup4 & 8 ? 1 : 0;
+
+		if (cmdOptions.blacklist_path[0] != '\0'){
+			//Means that the user set a path for custom blacklisted functions
+			if (blacklkistedUserFunctions != NULL){
+			//Check if we had a previous custom blacklist and if so we delete it
+				blacklkistedUserFunctions->clear();
+				delete blacklkistedUserFunctions;
+				blacklkistedUserFunctions = NULL;
+			}
+			readBlacklistfile(cmdOptions.blacklist_path);
+		}
+
 
 		save_options(&cmdOptions);
 		if (cmdOptions.showDebugInfo){
