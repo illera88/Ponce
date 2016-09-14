@@ -20,7 +20,6 @@
 /*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
 void triton_init()
 {
-	test();
 	//We need to set the architecture for Triton
 	triton::api.setArchitecture(TRITON_ARCH);
 	

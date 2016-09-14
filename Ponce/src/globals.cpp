@@ -24,3 +24,6 @@ Snapshot snapshot = Snapshot();
 //std::map<ea_t, std::list<triton::arch::Instruction *>> instructions_executed_map;
 
 ea_t popup_menu_ea;
+
+//Used to point to the vector of blacklisted user functions
+std::vector<std::string> *blacklkistedUserFunctions = NULL;

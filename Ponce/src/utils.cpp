@@ -351,6 +351,19 @@ bool load_options(struct cmdOptionStruct *cmdOptions)
 		return false;
 	config_file.read((char *)cmdOptions, sizeof(struct cmdOptionStruct));
 	config_file.close();
+
+	//Check if we need to reload the custom blacklisted functions
+	if (cmdOptions->blacklist_path[0] != '\0'){
+		//Means that the user set a path for custom blacklisted functions
+		if (blacklkistedUserFunctions != NULL){
+			//Check if we had a previous custom blacklist and if so we delete it
+			blacklkistedUserFunctions->clear();
+			delete blacklkistedUserFunctions;
+			blacklkistedUserFunctions = NULL;
+		}
+		readBlacklistfile(cmdOptions->blacklist_path);
+	}
+
 	return true;
 }
 
@@ -771,4 +784,16 @@ regval_t ida_get_reg_val_invalidate(char *reg_name)
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val(reg_name, &reg_value);
 	return reg_value;
+}
+
+void readBlacklistfile(char* path){
+	std::ifstream file(path);
+	std::string str;
+	std::vector<std::string>* black_func = new std::vector<std::string>();
+	while (std::getline(file, str)){
+		if (cmdOptions.showDebugInfo)
+			msg("Adding %s to the blacklist funtion list\n",str.c_str());
+		black_func->push_back(str);
+	}
+	
 }

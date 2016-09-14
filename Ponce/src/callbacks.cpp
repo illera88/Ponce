@@ -215,10 +215,19 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
 			{
 				qstring callee = get_callee(pc);
-				unsigned int number_items = sizeof(black_func) / sizeof(char *);
-				for (unsigned int i = 0; i < number_items; i++)
+				std::vector<std::string> *black_func_pointer;
+
+				//Let's check if the user provided any blacklist file or we sholuld use the built in one
+				if (cmdOptions.blacklist_path[0] == '\0'){
+					black_func_pointer = &black_func;
+				}
+				else{//We need to use the user provided file
+					black_func_pointer = blacklkistedUserFunctions;
+				}
+				
+				for (auto it = black_func_pointer->begin(); it != black_func_pointer->end(); ++it)
 				{
-					if (strcmp(callee.c_str(), black_func[i]) == 0)
+					if (strcmp(callee.c_str(), (*it).c_str()) == 0)
 					{
 						//We are in a call to a blacklisted function.
 						/*We should set a BP in the next instruction right after the
