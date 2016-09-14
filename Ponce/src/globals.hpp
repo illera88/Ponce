@@ -83,8 +83,8 @@ extern bool hooked;
 
 //User options
 struct cmdOptionStruct{
-	uint64 limitInstructionsTracingMode = 1000;
-	uint64 limitTime = 100; //seconds
+	uint64 limitInstructionsTracingMode = 10000;
+	uint64 limitTime = 60; //seconds
 
 	//all this variables should be false and initialized in prompt_conf_window in utils.cpp
 	bool already_configured = false; // We use this variable to know if the user already configured anything or if this is the first configuration promt
@@ -100,10 +100,8 @@ struct cmdOptionStruct{
 	bool  showDebugInfo = false;
 	bool  showExtraDebugInfo = false;
 	bool  manageSymbolicIndexing = false;
-	bool  enableTracingAsTainted = false;
-	bool taintEndOfString = false;
-	bool  automatedTainting = false;
 	bool  taintArgv = false;
+	bool  taintEndOfString = false;
 	bool  taintArgv0 = false;
 	bool  taintArgc = false;
 	bool  taintRecv = false;

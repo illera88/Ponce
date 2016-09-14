@@ -17,17 +17,23 @@
 int idaapi modcb(int fid, form_actions_t &fa)
 {
 	ushort isActivated=0;
-	
+	//Symbolic indexing still not implemented
+	fa.enable_field(7, 0);
+
+	//The Taint recv and Taint fread are disabled until we implemented them
+	fa.enable_field(12, 0);
+	fa.enable_field(13, 0);
 	switch (fid)
 	{
 	case -1:
 		break;
 	case -2:
 		break;
-	case 29: // Depending if argv(29) is activated we should activate 19 and 24
+	case 8: // Depending if argv(8) is activated we should activate 9, 10 and 11
 		fa.get_checkbox_value(fid, &isActivated);
-		fa.enable_field(19, isActivated ? 1 : 0);
-		fa.enable_field(24, isActivated ? 1 : 0);
+		fa.enable_field(9, isActivated ? 1 : 0);
+		fa.enable_field(10, isActivated ? 1 : 0);
+		fa.enable_field(11, isActivated ? 1 : 0);
 		break;
 	default:
 		break;
@@ -45,15 +51,14 @@ I you want to create a new checkbox you should:
 - add it to the msg at the end of the function for debug purposes*/
 void prompt_conf_window(void){
 	/*We should create as many ushort variables as groups of checkboxes we have in the form window*/
-	ushort chkgroup1, chkgroup2, chkgroup3, chkgroup4;
+	ushort chkgroup1, chkgroup2, chkgroup3;
 	ushort symbolic_or_taint_engine = 0;
 
 	if (!cmdOptions.already_configured){
 		//Here we can initialize the checkboxes by group
 		chkgroup1 = 1;
-		chkgroup2 = 1 | 2;
-		chkgroup3 = 1 | 8 | 16;
-		chkgroup4 = 1 | 8;
+		chkgroup2 = 1 | 2 | 8;
+		chkgroup3 = 1 | 2 | 8;
 
 		cmdOptions.blacklist_path[0] = '\0'; // Will use this to check if the user set some path for the blacklist
 	}
@@ -62,10 +67,9 @@ void prompt_conf_window(void){
 		after using the plugin we should set the variables to the previously set configuration. If we
 		don't do this the variables will be always initialized to  the previous lines
 		NOTE: Parenthesis are mandatory or it won't work!*/
-		chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0) | (cmdOptions.manageSymbolicIndexing ? 4 : 0) | (cmdOptions.enableTracingAsTainted ? 8 : 0);
-		chkgroup2 = (cmdOptions.automatedTainting ? 1 : 0) | (cmdOptions.taintEndOfString ? 2 : 0);
-		chkgroup3 = (cmdOptions.taintArgv ? 1 : 0) | (cmdOptions.taintArgv0 ? 2 : 0) | (cmdOptions.taintArgc ? 4 : 0) | (cmdOptions.taintRecv ? 8 : 0) | (cmdOptions.taintFread ? 16 : 0);
-		chkgroup4 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
+		chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0) | (cmdOptions.manageSymbolicIndexing ? 4 : 0);
+		chkgroup2 = (cmdOptions.taintArgv ? 1 : 0) | (cmdOptions.taintEndOfString ? 2 : 0) | (cmdOptions.taintArgv0 ? 4 : 0) | (cmdOptions.taintArgc ? 8 : 0) | (cmdOptions.taintRecv ? 16 : 0) | (cmdOptions.taintFread ? 32 : 0);
+		chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
 		symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;	
 	}
@@ -77,7 +81,6 @@ void prompt_conf_window(void){
 		&chkgroup1,
 		&chkgroup2,
 		&chkgroup3,
-		&chkgroup4,
 		&cmdOptions.color_tainted,
 		&cmdOptions.color_tainted_condition,
 		&cmdOptions.color_executed_instruction,
@@ -104,21 +107,18 @@ void prompt_conf_window(void){
 		cmdOptions.showDebugInfo = chkgroup1 & 1 ? 1 : 0;
 		cmdOptions.showExtraDebugInfo = chkgroup1 & 2 ? 1 : 0;
 		cmdOptions.manageSymbolicIndexing = chkgroup1 & 4 ? 1 : 0;
-		cmdOptions.enableTracingAsTainted = chkgroup1 & 8 ? 1 : 0;
 		//
-		cmdOptions.automatedTainting = chkgroup2 & 1 ? 1 : 0;
+		cmdOptions.taintArgv = chkgroup2 & 1 ? 1 : 0;
 		cmdOptions.taintEndOfString = chkgroup2 & 2 ? 1 : 0;
+		cmdOptions.taintArgv0 = chkgroup2 & 4 ? 1 : 0;
+		cmdOptions.taintArgc = chkgroup2 & 8 ? 1 : 0;
+		cmdOptions.taintRecv = chkgroup2 & 16 ? 1 : 0;
+		cmdOptions.taintFread = chkgroup2 & 32 ? 1 : 0;
 		//
-		cmdOptions.taintArgv = chkgroup3 & 1 ? 1 : 0;
-		cmdOptions.taintArgv0 = chkgroup3 & 2 ? 1 : 0;
-		cmdOptions.taintArgc = chkgroup3 & 4 ? 1 : 0;
-		cmdOptions.taintRecv = chkgroup3 & 8 ? 1 : 0;
-		cmdOptions.taintFread = chkgroup3 & 16 ? 1 : 0;
-		//
-		cmdOptions.addCommentsControlledOperands = chkgroup4 & 1 ? 1 : 0;
-		cmdOptions.RenameTaintedFunctionNames = chkgroup4 & 2 ? 1 : 0;
-		cmdOptions.addCommentsSymbolicExpresions = chkgroup4 & 4 ? 1 : 0;
-		cmdOptions.paintExecutedInstructions = chkgroup4 & 8 ? 1 : 0;
+		cmdOptions.addCommentsControlledOperands = chkgroup3 & 1 ? 1 : 0;
+		cmdOptions.RenameTaintedFunctionNames = chkgroup3 & 2 ? 1 : 0;
+		cmdOptions.addCommentsSymbolicExpresions = chkgroup3 & 4 ? 1 : 0;
+		cmdOptions.paintExecutedInstructions = chkgroup3 & 8 ? 1 : 0;
 
 		if (cmdOptions.blacklist_path[0] != '\0'){
 			//Means that the user set a path for custom blacklisted functions
@@ -141,10 +141,8 @@ void prompt_conf_window(void){
 				"showDebugInfo: %s\n"
 				"showExtraDebugInfo: %s\n"
 				"manageSymbolicIndexing: %s\n"
-				"enableTracingAsTainted: %s\n"			
-				"automatedTainting: %s\n"
-				"taintEndOfString: %s\n"
 				"taintArgv: %s\n"
+				"taintEndOfString: %s\n"
 				"taintArgv0: %s\n"
 				"taintArgc: %s\n"
 				"taintRecv: %s\n"
@@ -162,10 +160,8 @@ void prompt_conf_window(void){
 				cmdOptions.showDebugInfo ? "true" : "false",
 				cmdOptions.showExtraDebugInfo ? "true" : "false",
 				cmdOptions.manageSymbolicIndexing ? "true" : "false",
-				cmdOptions.enableTracingAsTainted ? "true" : "false",
-				cmdOptions.automatedTainting ? "true" : "false",
-				cmdOptions.taintEndOfString ? "true" : "false",
 				cmdOptions.taintArgv ? "true" : "false",
+				cmdOptions.taintEndOfString ? "true" : "false",
 				cmdOptions.taintArgv0 ? "true" : "false",
 				cmdOptions.taintArgc ? "true" : "false",
 				cmdOptions.taintRecv ? "true" : "false",
