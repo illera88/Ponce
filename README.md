@@ -26,7 +26,7 @@ Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton
 ## Installation
 Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw]() and [Ponce.p64]() to the ```plugins\``` folder in your IDA installation directory. 
 
-The plugin will automatically run asking you for the initial configuration the fist time you use it and the configuration will be saved to a configuration file so you won't have to worry about the config windows again.
+The plugin will automatically run asking you for the initial configuration the fist time you use it and the configuration will be saved to a configuration file so you won't have to worry about the config window again.
 
 ## Building
 We provide compiled binaries for Ponce but if you want to build your own plugin you can do it using Visual Studio 2013. We tried to make the building process as easy as possible:
@@ -40,7 +40,7 @@ You can find that the project has 4 build configurations:
 - x64ReleaseStatic: will create the 64 bits version statically linking every third party library into a whole large plugin file.
 - x64ReleaseZ3dyn: will create the 64 bits version statically linking every third party library but z3.lib.
 
-The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically.
+The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as dll).
 
 ## Usage
 
@@ -51,12 +51,22 @@ You can still debug Linux and Mac OS X binaries with it using built-in IDA remot
 Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually the code we wrote already takes it in consideration using macros for the different OS.
 
 ## FAQ
-
+### Why the name of Ponce?
+fdfd
+### otro
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
 - Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) francisco.oca.gonzalez@gmail.com
 
 ## Examples
+### Use symbolic execution to solve a crackMe
+![manual_symbolize_and_solve_crackme_hash2](https://cloud.githubusercontent.com/assets/5193128/18558235/32561cb2-7b27-11e6-846f-9fde03e88df5.gif)
+
+### Negate and inject a condition
+![crackmexor_negate_and_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
+
+## Using the tainting engine to track user controlled input
+![cmake_tainting_fread](https://cloud.githubusercontent.com/assets/5193128/18558313/7aaa6d88-7b27-11e6-9c63-9870720d14e3.gif)
 
 ## Limitations
 Path explosion
