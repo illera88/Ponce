@@ -44,6 +44,8 @@ You can find that the project has 4 build configurations:
 The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as dll).
 
 ## Usage
+In this section we will list the different Ponce options and when can be used:
+
 
 ## OS Support
 Ponce currently works with IDA Pro in the Windows flavour for x86 and x64 binaries. 
@@ -90,12 +92,6 @@ In this example we can see the use of the tainting engine with cmake. We are:
 ![cmake_tainting_fread](https://cloud.githubusercontent.com/assets/5193128/18558313/7aaa6d88-7b27-11e6-9c63-9870720d14e3.gif)
 
 ## Limitations
-Path explosion
-
-
-
-
-IDA Script to use symbolic execution and taint analysis through IDA PRO.
-
-Installation process
-
+Symbolic execution has some inherent problems:
+- [Path explosion](https://en.wikipedia.org/wiki/Symbolic_execution#Path_Explosion)
+- Symbolic indexing:
