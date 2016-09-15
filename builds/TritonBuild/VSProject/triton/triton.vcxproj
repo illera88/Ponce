@@ -230,7 +230,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\ALL_dyn_MD_x86 &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\ALL_dyn_MD_x86_DR_debug &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\ALL_static_MD_x86 &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\Z3_dyn_rest_static_MT_x86</Command>
+      <Command>copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\Z3_dyn_rest_static_MT_x86 &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\ALL_static_MT_x86</Command>
     </PostBuildEvent>
     <Lib>
       <TargetMachine>MachineX86</TargetMachine>

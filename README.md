@@ -101,8 +101,12 @@ Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually th
 Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin help you out to discover, explore and hopfully conquer the the different path options in a binary. 
 ### Can Ponce be used to analyze Windows, OS X and Linux binaries?
 Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux or OS X box and use it. In the next Ponce version we will support natively Ponce for Linux and OS X IDA versions. 
+### How many instructions per second can handle Ponce?
+Well, it depends, but in our tests we reach to process 3000 instructions per second. We plan to use the PIN tracer IDA offers to increase the speed. 
+### Something is not working!
+Open an [issue](https://github.com/illera88/Ponce/issues), we will solve it asap ;)
 ### I love your project! Can I collaborate?
-Sure! Please do pull requests and work in the opened issues. We will pay beers for help ;)
+Sure! Please do [pull requests](https://github.com/illera88/Ponce/pulls) and work in the opened issues. We will pay beers for help ;)
 
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
@@ -118,6 +122,7 @@ Here we can see the use of the symbolic engine and how we can solve constrains:
 - Test the solution.
 
 ![manual_symbolize_and_solve_crackme_hash2](https://cloud.githubusercontent.com/assets/5193128/18558235/32561cb2-7b27-11e6-846f-9fde03e88df5.gif)
+The crackme source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/crackme_hash.cpp
 
 ### Negate and inject a condition
 In the next gif we can see the use of automatic tainting and how we can negate a condition and inject it in memory while debugging:
@@ -127,6 +132,7 @@ In the next gif we can see the use of automatic tainting and how we can negate a
 - Finally we get the key ```elite``` that has been injected in memory and therefore reach the ```Win``` code.
 
 ![crackmexor_negate_and_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
+The crackme source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp
 
 ### Using the tainting engine to track user controlled input
 In this example we can see the use of the tainting engine with cmake. We are:
@@ -148,8 +154,8 @@ In the next example we are using the snapshot engine:
 - The solution will be "valid" so we will satisfy the existent conditions.
 
 ![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/examples/animated_videos/x64_fread_test_negate_restore_inject.gif?raw=true)
+The example source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/fread_SAGE.cpp
 
 ## Limitations
 Symbolic execution has some inherent problems:
-- [Path explosion](https://en.wikipedia.org/wiki/Symbolic_execution#Path_Explosion)
 - Symbolic indexing
