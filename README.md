@@ -22,6 +22,7 @@ Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton
 - **Exploit development**: Ponce can help you creating an exploit since you can easily see what parts of memory and registers you control and posible addresses you can use as ROP gadgets.
 - **Malware Analysis**: Other use of Ponce is related with malware code. Analyzing the commands that family of malware support can be fastly determined symbolizing a simple known command and negating all the conditions where the command is being checked. 
 - **Protocol Reversing**: One of the most interesting Ponce uses is the possibility of recognizing required magic numbers, headers or even entire protocols for controlled user input. For instance, Ponce can help you to list all the accepted arguments for a given command line binary or extracting the file format required for a specific file parser.
+- **CTF**: Ponce speed up the process of reverse engineer binaries during CTFs. Since it is totally integrated in IDA you don't need to worry about setup timing. It's ready to be used!
 
 ## Installation
 Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw]() and [Ponce.p64]() to the ```plugins\``` folder in your IDA installation directory. 
