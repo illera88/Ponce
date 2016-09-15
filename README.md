@@ -26,7 +26,7 @@ Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton
 ## Installation
 Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw]() and [Ponce.p64]() to the ```plugins\``` folder in your IDA installation directory. 
 
-The plugin will automatically run, guiding you theough the initial configuration the fist time it is run. The configuration will be saved to a configuration file so you won't have to worry about the config window again.
+The plugin will automatically run, guiding you through the initial configuration the fist time it is run. The configuration will be saved to a configuration file so you won't have to worry about the config window again.
 
 ## Building
 We provide compiled binaries for Ponce, but if you want to build your own plugin you can do so using Visual Studio 2013. We tried to make the building process as easy as possible:
