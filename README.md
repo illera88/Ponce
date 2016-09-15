@@ -57,9 +57,8 @@ In this section we will list the different Ponce options and his shortcuts:
 ![2016-09-15 11_32_32-](https://cloud.githubusercontent.com/assets/5193128/18563447/7e4db840-7b3c-11e6-813b-868bdae515bc.png)
 
 - Symbolize/taint memory (Ctl+Shift+M)
+![2016-09-15 11_32_52-ida - testproject idb testproject exe c__users_default default-pc_documents_vi](https://cloud.githubusercontent.com/assets/5193128/18563458/88c5bb7e-7b3c-11e6-8b4e-f4a694cad5a8.png)![2016-09-15 11_33_10-taint _ symbolize memory range](https://cloud.githubusercontent.com/assets/5193128/18563460/8adbb8f0-7b3c-11e6-886f-02441bff63a4.png)
 
-![2016-09-15 11_32_52-ida - testproject idb testproject exe c__users_default default-pc_documents_vi](https://cloud.githubusercontent.com/assets/5193128/18563458/88c5bb7e-7b3c-11e6-8b4e-f4a694cad5a8.png)
-![2016-09-15 11_33_10-taint _ symbolize memory range](https://cloud.githubusercontent.com/assets/5193128/18563460/8adbb8f0-7b3c-11e6-886f-02441bff63a4.png)
 ![2016-09-15 12_09_11-inicio](https://cloud.githubusercontent.com/assets/5193128/18563642/45860a7a-7b3d-11e6-9f95-e7aed529cc85.png)
 
 - Solve formula (Ctl+Shift+S)
@@ -78,6 +77,7 @@ In this section we will list the different Ponce options and his shortcuts:
 ![2016-09-15 11_37_40-](https://cloud.githubusercontent.com/assets/5193128/18563529/cfc599c2-7b3c-11e6-84e1-5dd5c7b27537.png)
 
 - Restore Execution Snapshot (Ctl+Shift+S)
+
 ![2016-09-15 11_38_10-](https://cloud.githubusercontent.com/assets/5193128/18563411/63cfeb50-7b3c-11e6-8f56-255bb27bc8f2.png)
 
 - Delete Execution Snapshot (Ctl+Shift+D)
