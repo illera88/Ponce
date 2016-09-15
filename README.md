@@ -4,7 +4,6 @@
  
 ## Definition
 Ponce (pronuntiated *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. The plugin is entirely written in C/C++.
-Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics and ... 
 
 ## Why?
 Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years when the open source projects like [Triton](https://github.com/JonathanSalwan/Triton) or [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users often are left to implement specific use cases themselfs. 
@@ -12,7 +11,7 @@ Symbolic execution is not a new concept in the security community. It has been a
 We addressed these needs by creating Ponce, an IDA plugin that integrates symbolic and tainting engines withing the most used dissasembler/debugger by reverse engineers.
 
 #Triton
-Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. 
+Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. We would like to thank and endorse Jonathan's work with Triton. It rocks! :)
 
 ## Use modes
 - **Tainting engine**: This engine is used to know at each program point what part of memory and register are controllable by the user input.
@@ -57,7 +56,7 @@ In this section we will list the different Ponce options and his shortcuts:
 
 ![2016-09-15 11_32_32-](https://cloud.githubusercontent.com/assets/5193128/18563447/7e4db840-7b3c-11e6-813b-868bdae515bc.png)
 
-- Symbolize/taint memory (Ctl+Shift+M)
+- Symbolize/taint memory. Can be done from the IDA View or the Hex View (Ctl+Shift+M)
 
 ![2016-09-15 11_32_52-ida - testproject idb testproject exe c__users_default default-pc_documents_vi](https://cloud.githubusercontent.com/assets/5193128/18563458/88c5bb7e-7b3c-11e6-8b4e-f4a694cad5a8.png)![2016-09-15 11_33_10-taint _ symbolize memory range](https://cloud.githubusercontent.com/assets/5193128/18563460/8adbb8f0-7b3c-11e6-886f-02441bff63a4.png)
 
@@ -99,8 +98,12 @@ Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually th
 
 ## FAQ
 ### Why the name of Ponce?
-fdfd
-### otro
+Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin help you out to discover, explore and hopfully conquer the the different path options in a binary. 
+### Can Ponce be used to analyze Windows, OS X and Linux binaries?
+Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux or OS X box and use it. In the next Ponce version we will support natively Ponce for Linux and OS X IDA versions. 
+### I love your project! Can I collaborate?
+Sure! Please do pull requests and work in the opened issues. We will pay beers for help ;)
+
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
 - Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) francisco.oca.gonzalez@gmail.com
@@ -138,4 +141,4 @@ In this example we can see the use of the tainting engine with cmake. We are:
 ## Limitations
 Symbolic execution has some inherent problems:
 - [Path explosion](https://en.wikipedia.org/wiki/Symbolic_execution#Path_Explosion)
-- Symbolic indexing:
+- Symbolic indexing
