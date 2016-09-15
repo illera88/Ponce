@@ -220,10 +220,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
 
-			//If the start_time is 0 then it hasn't been set before, we need to get the first time stamp
-			if (ponce_runtime_status.tracing_start_time == 0)
-				ponce_runtime_status.tracing_start_time = GetTimeMs64();
-
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
@@ -286,7 +282,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ponce_runtime_status.total_number_traced_ins++;
 			//Every 1000 traced instructions we show with extradebug that info in the output
 			if (cmdOptions.showExtraDebugInfo && ponce_runtime_status.total_number_traced_ins % 1000 == 0)
-				msg("Inst traced: %d\n", ponce_runtime_status.total_number_traced_ins);
+				msg("[+] Instructions traced: %d\n", ponce_runtime_status.total_number_traced_ins);
 
 			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
 			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
@@ -320,19 +316,27 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			}
 			
 			//Check if the time limit for tracing was reached
-			if (cmdOptions.limitTime != 0 && (GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
+			if (cmdOptions.limitTime != 0)
 			{
-				int answer = askyn_c(1, "[?] the tracing was working for %d seconds(%d inst traced!). Do you want to execute it %d more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, cmdOptions.limitTime);
-				if (answer == 0 || answer == -1) //No or Cancel
-				{
-					// stop the trace mode and suspend the process
-					disable_step_trace();
-					suspend_process();
-					msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
-				}
-				else
+				//This is the first time we start the tracer
+				if (ponce_runtime_status.tracing_start_time == 0)
 				{
 					ponce_runtime_status.tracing_start_time = GetTimeMs64();
+				}
+				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
+				{
+					int answer = askyn_c(1, "[?] the tracing was working for %d seconds(%d inst traced!). Do you want to execute it %d more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, cmdOptions.limitTime);
+					if (answer == 0 || answer == -1) //No or Cancel
+					{
+						// stop the trace mode and suspend the process
+						disable_step_trace();
+						suspend_process();
+						msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
+					}
+					else
+					{
+						ponce_runtime_status.tracing_start_time = GetTimeMs64();
+					}
 				}
 			}
 			break;
