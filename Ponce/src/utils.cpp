@@ -426,6 +426,8 @@ Input * solve_formula(ea_t pc, uint bound)
 			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+			msg("takenAddr: "HEX_FORMAT"\n", takenAddr);
+
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 		}
 		if (cmdOptions.showExtraDebugInfo)

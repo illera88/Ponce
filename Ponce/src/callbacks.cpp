@@ -284,7 +284,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 			ponce_runtime_status.current_trace_counter++;
 			ponce_runtime_status.total_number_traced_ins++;
-			if (cmdOptions.showExtraDebugInfo)
+			//Every 1000 traced instructions we show with extradebug that info in the output
+			if (cmdOptions.showExtraDebugInfo && ponce_runtime_status.total_number_traced_ins % 1000 == 0)
 				msg("Inst traced: %d\n", ponce_runtime_status.total_number_traced_ins);
 
 			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
@@ -396,6 +397,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Do we want to unhook this event? I don't think so we want to be hooked for future sessions
 			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
 			ponce_runtime_status.runtimeTrigger.disable();
+			//Removing snapshot if it exists
+			if (snapshot.exists())
+				snapshot.resetEngine();
 			break;
 		}
 	}
@@ -497,11 +501,21 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 void set_SMT_results(Input *input_ptr){
 	/*To set the memory types*/
 	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
-		put_many_bytes((ea_t)it->getAddress(), &it->getConcreteValue(), it->getSize());	
+	{
+		put_many_bytes((ea_t)it->getAddress(), &it->getConcreteValue(), it->getSize());
+		triton::api.setConcreteMemoryValue(*it);
+		//We concretize the memory we set
+		triton::api.concretizeMemory(*it);
+	}
 		
 	/*To set the register types*/
 	for (auto it = input_ptr->regOperand.begin(); it != input_ptr->regOperand.end(); it++)
+	{
 		set_reg_val(it->getName().c_str(), it->getConcreteValue().convert_to<uint64>());
+		triton::api.setConcreteRegisterValue(*it);
+		//We concretize the register we set
+		triton::api.concretizeRegister(*it);
+	}
 		
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Memory/Registers set with the SMT results\n");
