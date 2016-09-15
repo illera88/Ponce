@@ -25,6 +25,7 @@
 
 //Triton
 #include "api.hpp"
+#include "x86Specifications.hpp"
 
 struct ah_taint_register_t : public action_handler_t
 {
@@ -412,14 +413,14 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 			auto input_ptr = solve_formula(pc, bound);
 			if (input_ptr != NULL)
 			{
+				//Restore the snapshot
+				snapshot.restoreSnapshot();
+
 				// We set the results obtained from solve_formula
 				set_SMT_results(input_ptr);
 
 				//delete it after setting the proper results
 				delete input_ptr;
-
-				//Restore the snapshot
-				snapshot.restoreSnapshot();
 			}
 		}
 		return 0;
@@ -451,10 +452,13 @@ struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		ea_t pc = ctx->cur_ea;
-		set_cmt(pc, "Snapshot taken here", false);
+		//This is the address where the popup was shown, what we need is the xip
+		//ea_t pc = ctx->cur_ea;
+		uint64 xip;
+		get_reg_val(TRITON_REG_XIP.getName().c_str(), &xip);
+		set_cmt((ea_t)xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
-		snapshot.setAddress(pc); // We will use this address later to delete the comment
+		snapshot.setAddress((ea_t)xip); // We will use this address later to delete the comment
 		msg("Snapshot Taken\n");
 		return 0;
 	}

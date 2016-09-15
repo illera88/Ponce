@@ -165,20 +165,13 @@ void Snapshot::restoreSnapshot() {
 	Suposedly XIP should be set at the same time and execution redirected*/
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
 	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
-		if (set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
-		{
-			msg("OK restoring register %s\n", iterator->first.c_str());
-		}
-		else
-		{
+		if (!set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
 			msg("ERROR restoring register %s\n", iterator->first.c_str());
-		}
 	}
 
 	/* 10 - Restore the Ponce status */
 	ponce_runtime_status = this->saved_ponce_runtime_status;
 }
-
 
 /* Disable the snapshot engine. */
 void Snapshot::disableSnapshot(void) {
@@ -201,7 +194,7 @@ void Snapshot::resetEngine(void) {
 	this->snapshotTaken = false;
 
 	//We delete the comment that we created
-	set_cmt(address, "", false);
+	set_cmt(this->address, "", false);
 	this->address = 0;
 }
 
