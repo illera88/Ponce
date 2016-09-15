@@ -214,7 +214,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	case 0: 
 	case 1: 
 	case 2: 
-	case 3: error("In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
+	case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
 		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
@@ -229,7 +229,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	case 2: 
 	case 3: 
 	case 4: 
-	case 5:error("In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
+	case 5:error("[!] In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
@@ -247,7 +247,7 @@ char read_char_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("Error reading memory from " HEX_FORMAT "\n", address);
+		warning("[!] Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -258,7 +258,7 @@ ea_t read_regSize_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("Error reading memory from " HEX_FORMAT "\n", address);
+		warning("[!] Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -354,7 +354,7 @@ bool load_options(struct cmdOptionStruct *cmdOptions)
 	config_file.open("Ponce.cfg", std::ios::in | std::ios::binary);
 	if (!config_file.is_open())
 	{
-		msg("Config file %s not found\n", "Ponce.cfg");
+		msg("[!] Config file %s not found\n", "Ponce.cfg");
 		return false;
 	}
 	auto begin = config_file.tellg();
@@ -389,7 +389,7 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 	config_file.open("Ponce.cfg", std::ios::out | std::ios::binary);
 	if (!config_file.is_open())
 	{
-		msg("Error opening config file %s\n", "Ponce.cfg");
+		msg("[!] Error opening config file %s\n", "Ponce.cfg");
 		return false;
 	}
 	config_file.write((char *)cmdOptions, sizeof(struct cmdOptionStruct));
@@ -411,20 +411,20 @@ Input * solve_formula(ea_t pc, uint bound)
 		for (j = 0; j < bound; j++)
 		{
 			if (cmdOptions.showExtraDebugInfo)
-				msg("Keeping condition %d\n", j);
+				msg("[+] Keeping condition %d\n", j);
 			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 		}
 		if (cmdOptions.showExtraDebugInfo)
-			msg("Inverting condition %d\n", bound);
+			msg("[+] Inverting condition %d\n", bound);
 		//And now we negate the selected condition
 		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
 		auto symExpr = triton::api.getFullAstFromId(ripId);
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo)
-			msg("ripId: %d notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
+			msg("[+] ripId: %d notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
 		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
 		//Time to solve
@@ -445,7 +445,7 @@ Input * solve_formula(ea_t pc, uint bound)
 			ss << final_expr;
 			ss << "\n(check-sat)";
 			ss << "\n(get-model)";
-			msg("Formula: %s\n", ss.str().c_str());
+			msg("[+] Formula: %s\n", ss.str().c_str());
 		}
 
 		auto model = triton::api.getModel(final_expr);
@@ -456,7 +456,7 @@ Input * solve_formula(ea_t pc, uint bound)
 			//Clone object 
 			newinput->bound = path_constraint.bound;
 
-			msg("Solution found! Values:\n");
+			msg("[+] Solution found! Values:\n");
 			for (auto it = model.begin(); it != model.end(); it++)
 			{
 				auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
@@ -465,13 +465,10 @@ Input * solve_formula(ea_t pc, uint bound)
 				triton::uint512 secondValue = it->second.getValue();
 				if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
 				{
-					msg("memory %x \n", symbVar->getKindValue());
 					newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
-					msg("newinput->memOperand size %d\n", newinput->memOperand.size());
 				}
 				else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
 				{
-					warning("register");
 					newinput->regOperand.push_back(triton::arch::Register((triton::uint32)symbVar->getKindValue(), secondValue));
 				}
 				//We represent the number different 
@@ -495,7 +492,7 @@ Input * solve_formula(ea_t pc, uint bound)
 			return newinput;
 		}
 		else
-			msg("No solution found :(\n");
+			msg("[!] No solution found :(\n");
 	}
 	return NULL;
 }

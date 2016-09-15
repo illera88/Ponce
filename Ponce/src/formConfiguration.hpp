@@ -34,9 +34,9 @@ static const char form[] =
 "<#Will add a comment for every instruction with his symbolic expression. Will dirt the IDA view.#Add comments with symbolic expresions:C17>\n"
 "<#Self explanatory#Paint executed instructions:C18>>\n"
 //
-"<#comment#Color Tainted                 :K19:::>\n"
-"<#comment#Color Tainted Condition       :K20:::>\n"
-"<#comment#Color Executed Instruction    :K21:::>\n"
+"<#comment#Color Tainted Instruction     :K19:::>\n"
+"<#comment#Color Executed Instruction    :K20:::>\n"
+"<#comment#Color Tainted Condition       :K21:::>\n"
 
 "<#Ponce will blacklist some functions that do not modify the passed parameters. You can select a file with the functions you want to blacklist#Blacklist file path:f22::40:>\n"
 

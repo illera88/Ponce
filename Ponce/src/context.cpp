@@ -22,7 +22,6 @@ void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
-	msg("Reading memory value: "HEX_FORMAT"\n", memValue.convert_to<ea_t>());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
 }

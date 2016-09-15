@@ -97,7 +97,11 @@ void tritonize(ea_t pc, thid_t threadID)
 		op->setTrust(true);
 
 	if (cmdOptions.paintExecutedInstructions)
-		set_item_color(pc, cmdOptions.color_executed_instruction);
+	{
+		//We only paint the executed instructions if they don't have a previous color
+		if (get_item_color(pc) == 0xffffffff)
+			set_item_color(pc, cmdOptions.color_executed_instruction);
+	}
 
 	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
 	if (tritonInst->isTainted() || tritonInst->isSymbolized())
@@ -106,7 +110,9 @@ void tritonize(ea_t pc, thid_t threadID)
 			msg("[!] Instruction %s at " HEX_FORMAT "\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
 		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
-		if (tritonInst->isBranch()) // Check if it is a conditional jump
+		// Check if it is a conditional jump
+		// We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
+		if (tritonInst->isBranch() && cmdOptions.use_symbolic_engine) 
 			set_item_color(pc, cmdOptions.color_tainted_condition);
 		else
 			set_item_color(pc, cmdOptions.color_tainted);
@@ -184,7 +190,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-			msg("Step over at"HEX_FORMAT"\n", pc);
 			if (!decode_insn(pc))
 				warning("[!] Some error decoding instruction at " HEX_FORMAT, pc);
 			
@@ -211,7 +216,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
-			msg("Dgb trace at" HEX_FORMAT "\n", pc);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 			ua_ana0(pc);
@@ -326,11 +330,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		{
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
-			msg("Dgb bptat"HEX_FORMAT"\n", pc);
 			int *warn = va_arg(va, int *);
 			//This variable defines if a breakpoint is a user-defined breakpoint or not
 			bool user_bp = true;
-			msg("Breakpoint reached! At " HEX_FORMAT "\n", pc);
 			//We look if there is a pending action for this breakpoint
 			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
 			{
@@ -405,7 +407,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			int view_type= get_tform_type(form);
 
 			//Adding a separator
-			attach_action_to_popup(form, popup_handle, "");
+			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
 			/*Iterate over all the actions*/			
 			for (int i = 0;; i++)
@@ -424,14 +426,14 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 						//We only attach to the popup if the action makes sense with the current configuration
 						if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic)
 						{
-							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_APP);
+							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
 						}
 					}
 				}	
 			}
 
 			//Adding a separator
-			attach_action_to_popup(form, popup_handle, "");
+			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 			break;
 		}
 		case ui_finish_populating_tform_popup:
@@ -466,7 +468,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 							unregister_action(action_IDA_solve_formula_sub.name);
 							success = register_action(action_IDA_solve_formula_sub);
 						}
-						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_APP);
+						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
 					}
 				}
 			}
