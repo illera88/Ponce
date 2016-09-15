@@ -128,7 +128,7 @@ In the next gif we can see the use of automatic tainting and how we can negate a
 
 ![crackmexor_negate_and_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
 
-## Using the tainting engine to track user controlled input
+### Using the tainting engine to track user controlled input
 In this example we can see the use of the tainting engine with cmake. We are:
 - Passing a file as argument to cmake to have him parsing it.
 - We select we want to use the tainting engine
@@ -138,7 +138,7 @@ In this example we can see the use of the tainting engine with cmake. We are:
 
 ![cmake_tainting_fread](https://cloud.githubusercontent.com/assets/5193128/18558313/7aaa6d88-7b27-11e6-9c63-9870720d14e3.gif)
 
-## Use Negate, Inject & Restore
+### Use Negate, Inject & Restore
 In the next example we are using the snapshot engine:
 - Passing a file as argument.
 - We select we want to use the symbolic engine.
