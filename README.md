@@ -26,7 +26,7 @@ Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually th
 - **Protocol Reversing**: One of the most interesting Ponce uses is the possibility of recognizing required magic numbers, headers or even entire protocols for controlled user input. For instance, Ponce can help you to list all the accepted arguments for a given command line binary or extract the file format required for a specific file parser.
 - **CTF**: Ponce speeds up the process of reverse engineer binaries during CTFs. As Ponce is totally integrated into IDA you don't need to worry about setup timing. It's ready to be used!
 
-The plugin will automatically run, guiding you through the initial configuration the fist time it is run. The configuration will be saved to a configuration file so you won't have to worry about the config window again.
+The plugin will automatically run, guiding you through the initial configuration the first time it is run. The configuration will be saved to a configuration file so you won't have to worry about the config window again.
 
 ## Use modes
 - **Tainting engine**: This engine is used to determine at every step of the binary's execution which parts of memory and registers are controllable by the user input.
@@ -36,7 +36,7 @@ The plugin will automatically run, guiding you through the initial configuration
 ### Use symbolic execution to solve a crackMe
 Here we can see the use of the symbolic engine and how we can solve constrains:
 - Passing simple ```aaaaa``` as argument.
-- We fist select the symbolic engine.
+- We first select the symbolic engine.
 - We convert to symbolic the memory pointed by argv[1] (```aaaaa```)
 - Identify the symbolic condition that make us win and solve it.
 - Test the solution.
@@ -124,7 +124,7 @@ In this section we will list the different Ponce options as well as keyboard sho
 ![2016-09-15 12_07_10-](https://cloud.githubusercontent.com/assets/5193128/18563579/fc95339a-7b3c-11e6-9947-971e0510eba4.png)
 
 ##Triton
-Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. We would like to thank and endorse Jonathan's work with Triton. It rocks! :)
+Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. We would like to thank and endorse Jonathan's work with Triton. You rock! :)
 
 ## Building
 We provide compiled binaries for Ponce, but if you want to build your own plugin you can do so using Visual Studio 2013. We tried to make the building process as easy as possible:
