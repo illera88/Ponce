@@ -1,8 +1,16 @@
+//! \file
+/*
+**  Copyright (c) 2016 - Ponce
+**  Authors:
+**         Alberto Garcia Illera		agarciaillera@gmail.com
+**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**
+**  This program is under the terms of the BSD License.
+*/
+
 #pragma once
 #include <vector>
 #include "kernwin.hpp"
-
-
 
 // column widths
 static const int widths[] = { CHCOL_DEC |8,

@@ -1,7 +1,14 @@
+//! \file
 /*
-*  This plugin demonstrates how to use choosers inside forms.
-*
+**  Copyright (c) 2016 - Ponce
+**  Authors:
+**         Alberto Garcia Illera		agarciaillera@gmail.com
+**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**
+**  This program is under the terms of the BSD License.
 */
+
+//IDA
 #include <pro.h>
 #include <idp.hpp>
 #include <loader.hpp>
