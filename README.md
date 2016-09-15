@@ -6,9 +6,9 @@
 Ponce (pronuntiated *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. The plugin is entirely written in C/C++.
 
 ## Why?
-Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years when the open source projects like [Triton](https://github.com/JonathanSalwan/Triton) or [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users often are left to implement specific use cases themselfs. 
+Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years when the open source projects like [Triton](https://github.com/JonathanSalwan/Triton) or [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users often are left to implement specific use cases themselfs.
 
-We addressed these needs by creating Ponce, an IDA plugin that integrates symbolic and tainting engines withing the most used dissasembler/debugger by reverse engineers.
+We addressed these needs by creating Ponce, an IDA plugin that integrates symbolic and taint analysis within the most used dissasembler/debugger by reverse engineers.
 
 #Triton
 Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. We would like to thank and endorse Jonathan's work with Triton. It rocks! :)
