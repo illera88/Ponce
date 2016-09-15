@@ -11,7 +11,7 @@ Symbolic execution is not a new concept in the security community. It has been a
 We addressed these needs by creating Ponce, an IDA plugin that implements symbolic execution and taint analysis within the most used disassembler/debugger for reverse engineers.
 
 ## Installation
-Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw]() and [Ponce.p64]() to the ```plugins\``` folder in your IDA installation directory. 
+Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw](https://github.com/illera88/Ponce/releases/download/v0.1/Ponce.plw) and [Ponce.p64](https://github.com/illera88/Ponce/releases/download/v0.1/Ponce.p64) to the ```plugins\``` folder in your IDA installation directory. 
 
 ## OS Support
 Ponce currently works with IDA Pro on Windows for x86 and x64 binaries. 
