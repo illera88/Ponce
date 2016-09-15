@@ -58,7 +58,7 @@ Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually th
 
 ## Examples
 
-## Known Problems
+## Limitations
 Path explosion
 
 
