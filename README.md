@@ -154,7 +154,7 @@ Sure! Please do pull requests and work in the opened issues. We will pay you in 
 
 ## Limitations
 Symbolic execution has some inherent problems:
-- Symbolic indexing
+- Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` we need to know the limits for the index, get all the possible values `x` could take and generate a symbolic expression to represent this fact.
 
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
