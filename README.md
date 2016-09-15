@@ -138,6 +138,17 @@ In this example we can see the use of the tainting engine with cmake. We are:
 
 ![cmake_tainting_fread](https://cloud.githubusercontent.com/assets/5193128/18558313/7aaa6d88-7b27-11e6-9c63-9870720d14e3.gif)
 
+## Use Negate, Inject & Restore
+In the next example we are using the snapshot engine:
+- Passing a file as argument.
+- We select we want to use the symbolic engine.
+- We taint the buffer that ```fread````reads from the file.
+- We create a snaphot in the function that parses the buffer read from the file.
+- When a condition is evaluted we negate it, inject the solution in memory and restore the snapshot with it.
+- The solution will be "valid" so we will satisfy the existent conditions.
+
+![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/examples/animated_videos/x64_fread_test_negate_restore_inject.gif?raw=true)
+
 ## Limitations
 Symbolic execution has some inherent problems:
 - [Path explosion](https://en.wikipedia.org/wiki/Symbolic_execution#Path_Explosion)
