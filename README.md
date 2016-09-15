@@ -66,9 +66,15 @@ Here we can see the use of the symbolic engine and how we can solve constrains:
 - We convert to symbolic the memory pointed by argv[1] (```aaaaa```)
 - Identify the symbolic condition that make us win and solve it.
 - Test the solution.
+
 ![manual_symbolize_and_solve_crackme_hash2](https://cloud.githubusercontent.com/assets/5193128/18558235/32561cb2-7b27-11e6-846f-9fde03e88df5.gif)
 
 ### Negate and inject a condition
+In the next gif we can see the use of automatic tainting and how we can negate a condition and inject it in memory while debugging:
+- We select the symbolic engine and set the option to taint ```argv```.
+- We identify the condition that needs to be satisfied to win the crackMe.
+- We negate an inject the solution everytime a byte of our input is checked against the key.
+- Finally we get the key ```elite``` that has been injected in memory and therefore reach the ```Win``` code.
 
 ![crackmexor_negate_and_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
 
@@ -79,6 +85,7 @@ In this example we can see the use of the tainting engine with cmake. We are:
 - We taint the buffer that ```fread````reads from the file.
 - We resume the execution under the debugger control to see where the taint input is moved to.
 - Ponce will rename the tainted functions. These are the functions that somehow the user has influence on, not the simply executed functions.
+
 ![cmake_tainting_fread](https://cloud.githubusercontent.com/assets/5193128/18558313/7aaa6d88-7b27-11e6-9c63-9870720d14e3.gif)
 
 ## Limitations
