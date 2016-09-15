@@ -102,6 +102,10 @@ Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually th
 Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin help you out to discover, explore and hopefully conquer the different paths in a binary. 
 ### Can Ponce be used to analyze Windows, OS X and Linux binaries?
 Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux or OS X box and use it. In the next Ponce version we will natively support Ponce for Linux and OS X IDA versions. 
+### How many instructions per second can handle Ponce?
+Well, it depends, but in our tests we reach to process 3000 instructions per second. We plan to use the PIN tracer IDA offers to increase the speed.
+### Something is not working!
+Open an [issue](https://github.com/illera88/Ponce/issues), we will solve it asap ;)
 ### I love your project! Can I collaborate?
 Sure! Please do pull requests and work in the opened issues. We will pay you in beers for help ;)
 
