@@ -3,47 +3,47 @@
 <p align="center"><img src ="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png" /></p>
  
 ## Definition
-Ponce (pronuntiated *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. The plugin is entirely written in C/C++.
+Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. The plugin is entirely written in C/C++.
 
 ## Why?
-Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years when the open source projects like [Triton](https://github.com/JonathanSalwan/Triton) or [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users often are left to implement specific use cases themselfs.
+Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years that open source projects like [Triton](https://github.com/JonathanSalwan/Triton) and [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users are often  left to implement specific use cases themselves.
 
-We addressed these needs by creating Ponce, an IDA plugin that integrates symbolic and taint analysis within the most used dissasembler/debugger by reverse engineers.
+We addressed these needs by creating Ponce, an IDA plugin that implements symbolic execution and taint analysis within the most used disassembler/debugger for reverse engineers.
 
 ##Triton
 Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan]() with a rich library. We would like to thank and endorse Jonathan's work with Triton. It rocks! :)
 
 ## Use modes
-- **Tainting engine**: This engine is used to know at each program point what part of memory and register are controllable by the user input.
-- **Symbolic engine**: This engine maintains a symbolic states of registers and part of memory at each program point. 
+- **Tainting engine**: This engine is used to determine at every step of the binary's execution which parts of memory and registers are controllable by the user input.
+- **Symbolic engine**: This engine maintains a symbolic state of registers and part of memory at each step in a binary's execution path. 
 
 ## Use cases
-- **Exploit development**: Ponce can help you creating an exploit since you can easily see what parts of memory and registers you control and posible addresses you can use as ROP gadgets.
-- **Malware Analysis**: Other use of Ponce is related with malware code. Analyzing the commands that family of malware support can be fastly determined symbolizing a simple known command and negating all the conditions where the command is being checked. 
-- **Protocol Reversing**: One of the most interesting Ponce uses is the possibility of recognizing required magic numbers, headers or even entire protocols for controlled user input. For instance, Ponce can help you to list all the accepted arguments for a given command line binary or extracting the file format required for a specific file parser.
-- **CTF**: Ponce speed up the process of reverse engineer binaries during CTFs. Since it is totally integrated in IDA you don't need to worry about setup timing. It's ready to be used!
+- **Exploit development**: Ponce can help you create an exploit in a far more efficient manner as the exploit developer may easily see what parts of memory and which registers you control, as well as possible addresses which can be leveraged as ROP gadgets.
+- **Malware Analysis**: Another use of Ponce is related to malware code. Analyzing the commands a particular family of malware supports is easily determined by symbolizing a simple known command and negating all the conditions where the command is being checked. 
+- **Protocol Reversing**: One of the most interesting Ponce uses is the possibility of recognizing required magic numbers, headers or even entire protocols for controlled user input. For instance, Ponce can help you to list all the accepted arguments for a given command line binary or extract the file format required for a specific file parser.
+- **CTF**: Ponce speeds up the process of reverse engineer binaries during CTFs. As Ponce is totally integrated into IDA you don't need to worry about setup timing. It's ready to be used!
 
 ## Installation
 Ponce works with both x86 and x64 binaries. Installing the plugin is as simple as copying [Ponce.plw]() and [Ponce.p64]() to the ```plugins\``` folder in your IDA installation directory. 
 
-The plugin will automatically run asking you for the initial configuration the fist time you use it and the configuration will be saved to a configuration file so you won't have to worry about the config window again.
+The plugin will automatically run, guiding you theough the initial configuration the fist time it is run. The configuration will be saved to a configuration file so you won't have to worry about the config window again.
 
 ## Building
-We provide compiled binaries for Ponce but if you want to build your own plugin you can do it using Visual Studio 2013. We tried to make the building process as easy as possible:
+We provide compiled binaries for Ponce, but if you want to build your own plugin you can do so using Visual Studio 2013. We tried to make the building process as easy as possible:
 - Clone the project with submodules: ```git clone --recursive https://github.com/illera88/PonceProject.git```
 - Open ```Build\PonceBuild\Ponce.sln```: The project configuration is ready to use the includes and libraries shipped with the project that reside in ```external-libs\```.
 - The VS project has a ```Post-Build Event``` that will move the created binary plugin to the IDA plugin folder for you. ```copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"```. NOTE: use your IDA installation path.
 
-You can find that the project has 4 build configurations:
+The project has 4 build configurations:
 - x86ReleaseStatic: will create the 32 bits version statically linking every third party library into a whole large plugin file.
 - x86ReleaseZ3dyn: will create the 32 bits version statically linking every third party library but z3.lib.
 - x64ReleaseStatic: will create the 64 bits version statically linking every third party library into a whole large plugin file.
 - x64ReleaseZ3dyn: will create the 64 bits version statically linking every third party library but z3.lib.
 
-The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as dll).
+The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll).
 
 ## Usage
-In this section we will list the different Ponce options and his shortcuts:
+In this section we will list the different Ponce options as well as keyboard shortcuts:
 - Access the configuration and taint/symbolic windows: Edit > Ponce > Show Config (Ctl+Shift+P and Ctl+Alt+T)
 
 ![2016-09-15 11_39_08-configuracion](https://cloud.githubusercontent.com/assets/5193128/18563366/44a8c698-7b3c-11e6-8802-efb3fe4a5a2d.png)
@@ -91,22 +91,19 @@ In this section we will list the different Ponce options and his shortcuts:
 
 
 ## OS Support
-Ponce currently works with IDA Pro in the Windows flavour for x86 and x64 binaries. 
+Ponce currently works with IDA Pro on Windows for x86 and x64 binaries. 
 
-You can still debug Linux and Mac OS X binaries with it using built-in IDA remote debugger. 
-Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually the code we wrote already takes it in consideration using macros for the different OS.
+You can still debug Linux and Mac OS X binaries with Ponce using IDA's built-in remote debugger. 
+
+Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually the code we wrote already takes these architectures into consideration using macros for the different operating systems.
 
 ## FAQ
 ### Why the name of Ponce?
-Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin help you out to discover, explore and hopfully conquer the the different path options in a binary. 
+Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin help you out to discover, explore and hopefully conquer the different paths in a binary. 
 ### Can Ponce be used to analyze Windows, OS X and Linux binaries?
-Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux or OS X box and use it. In the next Ponce version we will support natively Ponce for Linux and OS X IDA versions. 
-### How many instructions per second can handle Ponce?
-Well, it depends, but in our tests we reach to process 3000 instructions per second. We plan to use the PIN tracer IDA offers to increase the speed. 
-### Something is not working!
-Open an [issue](https://github.com/illera88/Ponce/issues), we will solve it asap ;)
+Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux or OS X box and use it. In the next Ponce version we will natively support Ponce for Linux and OS X IDA versions. 
 ### I love your project! Can I collaborate?
-Sure! Please do [pull requests](https://github.com/illera88/Ponce/pulls) and work in the opened issues. We will pay beers for help ;)
+Sure! Please do pull requests and work in the opened issues. We will pay you in beers for help ;)
 
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
@@ -122,7 +119,7 @@ Here we can see the use of the symbolic engine and how we can solve constrains:
 - Test the solution.
 
 ![manual_symbolize_and_solve_crackme_hash2](https://cloud.githubusercontent.com/assets/5193128/18558235/32561cb2-7b27-11e6-846f-9fde03e88df5.gif)
-The crackme source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/crackme_hash.cpp
+The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_hash.cpp)
 
 ### Negate and inject a condition
 In the next gif we can see the use of automatic tainting and how we can negate a condition and inject it in memory while debugging:
@@ -132,13 +129,13 @@ In the next gif we can see the use of automatic tainting and how we can negate a
 - Finally we get the key ```elite``` that has been injected in memory and therefore reach the ```Win``` code.
 
 ![crackmexor_negate_and_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
-The crackme source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp
+The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp)
 
 ### Using the tainting engine to track user controlled input
 In this example we can see the use of the tainting engine with cmake. We are:
 - Passing a file as argument to cmake to have him parsing it.
 - We select we want to use the tainting engine
-- We taint the buffer that ```fread````reads from the file.
+- We taint the buffer that ```fread()```` reads from the file.
 - We resume the execution under the debugger control to see where the taint input is moved to.
 - Ponce will rename the tainted functions. These are the functions that somehow the user has influence on, not the simply executed functions.
 
@@ -148,13 +145,13 @@ In this example we can see the use of the tainting engine with cmake. We are:
 In the next example we are using the snapshot engine:
 - Passing a file as argument.
 - We select we want to use the symbolic engine.
-- We taint the buffer that ```fread````reads from the file.
-- We create a snaphot in the function that parses the buffer read from the file.
-- When a condition is evaluted we negate it, inject the solution in memory and restore the snapshot with it.
+- We taint the buffer that ```fread()```` reads from the file.
+- We create a snapshot in the function that parses the buffer read from the file.
+- When a condition is evaluated we negate it, inject the solution in memory and restore the snapshot with it.
 - The solution will be "valid" so we will satisfy the existent conditions.
 
 ![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/examples/animated_videos/x64_fread_test_negate_restore_inject.gif?raw=true)
-The example source code can be found here: https://github.com/illera88/Ponce/blob/master/examples/fread_SAGE.cpp
+The example source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/fread_SAGE.cpp)
 
 ## Limitations
 Symbolic execution has some inherent problems:
