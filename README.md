@@ -46,7 +46,7 @@ The crackme source code can be found [here](https://github.com/illera88/Ponce/bl
 
 ### Negate and inject a condition
 In the next gif we can see the use of automatic tainting and how we can negate a condition and inject it in memory while debugging:
-- We select the symbolic engine and set the option to taint ```argv```.
+- We select the symbolic engine and set the option to symbolize ```argv```.
 - We identify the condition that needs to be satisfied to win the crackMe.
 - We negate an inject the solution everytime a byte of our input is checked against the key.
 - Finally we get the key ```elite``` that has been injected in memory and therefore reach the ```Win``` code.
