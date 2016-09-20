@@ -138,7 +138,7 @@ The project has 4 build configurations:
 - x64ReleaseStatic: will create the 64 bits version statically linking every third party library into a whole large plugin file.
 - x64ReleaseZ3dyn: will create the 64 bits version statically linking every third party library but z3.lib.
 
-The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll).
+The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll). If you are using z3 dynamically don't forget to copy the [libz3.dll](https://github.com/illera88/Ponce/blob/master/external-libs/libs/Z3_dyn_rest_static_MT_x86/libz3.dll) file into the IDA's directory.
 
 ## FAQ
 ### Why the name of Ponce?
