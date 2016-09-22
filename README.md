@@ -157,5 +157,5 @@ Symbolic execution has some inherent problems:
 - Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input. 
 
 ## Authors
-- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
-- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) francisco.oca.gonzalez@gmail.com
+- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) alberto.garcia@salesforce.com
+- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) foca@salesforce.com
