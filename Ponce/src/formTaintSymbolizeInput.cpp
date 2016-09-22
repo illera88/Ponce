@@ -24,7 +24,7 @@
 
 /*Function to show a dialog to the user asking for an address and a size to taint/symbolize.
 It returns a MemoryAccess with the memory address and the size indicated. the caller need to free this object*/
-triton::arch::MemoryAccess *prompt_window_taint_symbolize(ea_t address)
+bool prompt_window_taint_symbolize(ea_t address, ea_t *selection_start, ea_t *selection_end)
 {
 	sval_t size = 1;
 	if (AskUsingForm_c(formTaintSymbolizeInput,
@@ -33,7 +33,9 @@ triton::arch::MemoryAccess *prompt_window_taint_symbolize(ea_t address)
 		&size
 		) > 0)
 	{
-		return new triton::arch::MemoryAccess((triton::uint64)address, (triton::uint32)size, 0);
+		*selection_start = address;
+		*selection_end = address + size;
+		return true;
 	}
-	return NULL;
+	return false;
 }

@@ -33,8 +33,16 @@ int idaapi modcb(int fid, form_actions_t &fa)
 	switch (fid)
 	{
 	case -1:
+		fa.get_checkbox_value(8, &isActivated);
+		fa.enable_field(9, isActivated ? 1 : 0);
+		fa.enable_field(10, isActivated ? 1 : 0);
+		fa.enable_field(11, isActivated ? 1 : 0);
 		break;
 	case -2:
+		break;
+	case 3:
+		fa.get_checkbox_value(fid, &isActivated);
+		fa.enable_field(21, isActivated ? 1 : 0);
 		break;
 	case 8: // Depending if argv(8) is activated we should activate 9, 10 and 11
 		fa.get_checkbox_value(fid, &isActivated);
@@ -89,8 +97,8 @@ void prompt_conf_window(void){
 		&chkgroup2,
 		&chkgroup3,
 		&cmdOptions.color_tainted,
-		&cmdOptions.color_tainted_condition,
 		&cmdOptions.color_executed_instruction,
+		&cmdOptions.color_tainted_condition,
 		&cmdOptions.blacklist_path
 		) > 0)
 	{
@@ -159,8 +167,8 @@ void prompt_conf_window(void){
 				"addCommentsSymbolicExpresions: %s\n"
 				"paintExecutedInstructions: %s\n"
 				"color_tainted: %x\n"
-				"color_tainted_condition: %x\n"
-				"color_tainted_execution: %x\n",
+				"color_tainted_execution: %x\n"
+				"color_tainted_condition: %x\n",
 				cmdOptions.limitTime,
 				cmdOptions.limitInstructionsTracingMode,
 				cmdOptions.use_symbolic_engine ? "symbolic engine enabled" : "tainting engine enabled",
@@ -178,8 +186,8 @@ void prompt_conf_window(void){
 				cmdOptions.addCommentsSymbolicExpresions ? "true" : "false",
 				cmdOptions.paintExecutedInstructions ? "true" : "false",
 				cmdOptions.color_tainted,
-				cmdOptions.color_tainted_condition,
-				cmdOptions.color_executed_instruction
+				cmdOptions.color_executed_instruction,
+				cmdOptions.color_tainted_condition
 				);
 		}
 	}

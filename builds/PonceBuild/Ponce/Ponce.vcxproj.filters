@@ -36,9 +36,6 @@
     <ClInclude Include="..\..\..\Ponce\src\utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Ponce\src\formChoser.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\Ponce\src\tainting_n_symbolic.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,7 +48,13 @@
     <ClInclude Include="..\..\..\Ponce\src\runtime_status.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Ponce\src\taintWindow.hpp">
+    <ClInclude Include="..\..\..\Ponce\src\formConfiguration.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Ponce\src\formTaintSymbolizeInput.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Ponce\src\formTaintWindow.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,16 +80,19 @@
     <ClCompile Include="..\..\..\Ponce\src\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Ponce\src\formChoser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Ponce\src\tainting_n_symbolic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Ponce\src\snapshot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Ponce\src\taintWindow.cpp">
+    <ClCompile Include="..\..\..\Ponce\src\formConfiguration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Ponce\src\formTaintSymbolizeInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Ponce\src\formTaintWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

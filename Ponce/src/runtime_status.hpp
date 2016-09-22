@@ -52,7 +52,7 @@ typedef struct runtime_status_t
 	//This variable stores all the path constraints executed before reach the current instruction
 	std::vector<PathConstraint> myPathConstraints;
 	//This variable is used to know how much time the tracing was working, and stop if this time is bigger than the user defined value
-	std::uint64_t tracing_start_time;
+	std::uint64_t tracing_start_time = 0;
 } runtime_status_t;
 
 extern runtime_status_t ponce_runtime_status;

@@ -193,8 +193,8 @@
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(SolutionDir)..\..\Ponce\lib\x86_win_vc_32\ida.lib;$(SolutionDir)..\..\external-libs\libs\ALL_static_MT_x86\*.lib</AdditionalDependencies>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -230,8 +230,8 @@
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(SolutionDir)..\..\Ponce\lib\x86_win_vc_64\ida.lib;$(SolutionDir)..\..\external-libs\libs\ALL_static_MT_x86\*.lib</AdditionalDependencies>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -339,8 +339,8 @@
       </OptimizeReferences>
       <AdditionalLibraryDirectories>C:\PonceProject\Ponce\lib\x86_win_vc_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ida.lib;%(AdditionalDependencies);"C:\PonceProject\Triton\build\Win32\Release\triton.lib";"C:\PonceProject\Triton\external-libs\x86\z3-4.4.2-x86-win\bin\libz3-static.lib";"C:\PonceProject\Triton\external-libs\x86\capstone-3.0.4-win32\capstone_static_MT_VS2013_x86.lib"</AdditionalDependencies>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
