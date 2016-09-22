@@ -4,6 +4,7 @@
 **
 **  This program is under the terms of the LGPLv3 License.
 */
+
 #pragma once
 
 //! \class Trigger Enable and disable the Pin's InsertCalls.

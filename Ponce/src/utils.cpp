@@ -2,8 +2,8 @@
 /*
 **  Copyright (c) 2016 - Ponce
 **  Authors:
-**         Alberto Garcia Illera		agarciaillera@gmail.com
-**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**         Alberto Garcia Illera        agarciaillera@gmail.com
+**         Francisco Oca                francisco.oca.gonzalez@gmail.com
 **
 **  This program is under the terms of the BSD License.
 */
@@ -820,7 +820,6 @@ void readBlacklistfile(char* path){
 			msg("Adding %s to the blacklist funtion list\n",str.c_str());
 		black_func->push_back(str);
 	}
-	
 }
 
 std::uint64_t GetTimeMs64(void)
