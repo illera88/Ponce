@@ -3,7 +3,7 @@
 <p align="center"><img src ="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png" /></p>
  
 ## Definition
-Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are two clicks away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
+Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are one click away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
 
 ## Why?
 Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years that open source projects like [Triton](https://github.com/JonathanSalwan/Triton) and [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users are often  left to implement specific use cases themselves.
