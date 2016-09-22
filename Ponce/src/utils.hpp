@@ -40,3 +40,4 @@ void enableTrigger_and_concretize_registers(ea_t main_address);
 regval_t ida_get_reg_val_invalidate(char *reg_name);
 void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
+void concretizeAndUntaintVolatileRegisters();
