@@ -36,7 +36,7 @@ struct ah_taint_register_t : public action_handler_t
 		char selected[20];
 		if (get_highlighted_identifier(selected, 20, 0))
 		{
-			triton::arch::Register register_to	_taint;
+			triton::arch::Register register_to_taint;
 			if (str_to_register(std::string(selected), register_to_taint))
 			{
 				msg("[!] Tainting register %s\n", selected);

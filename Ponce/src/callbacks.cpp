@@ -249,10 +249,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						blacklisted callback to enable tracing again*/
 						ea_t next_ea = next_head(pc, BADADDR);
 						add_bpt(next_ea, 1, BPT_EXEC);
-						char cmt[256];
-						qsnprintf(cmt, "Temporal bp set by ponce for blacklisting\n");
 						//We set a comment so the user know why there is a new bp there
-						set_cmt(next_ea, cmt, false);
+						set_cmt(next_ea, "Temporal bp set by ponce for blacklisting\n", false);
 
 						breakpoint_pending_action bpa;
 						bpa.address = next_ea;
