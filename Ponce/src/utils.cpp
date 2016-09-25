@@ -102,7 +102,7 @@ int ask_for_a_snapshot()
 		if (answer == 1) //Yes
 		{
 			snapshot_t snapshot;
-			strcpy_s(snapshot.desc, MAX_DATABASE_DESCRIPTION, SNAPSHOT_DESCRIPTION);
+			qstrncpy(snapshot.desc, SNAPSHOT_DESCRIPTION, MAX_DATABASE_DESCRIPTION);
 			qstring errmsg;
 			bool success = take_database_snapshot(&snapshot, &errmsg);
 			return 1;

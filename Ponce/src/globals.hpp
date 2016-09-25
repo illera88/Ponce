@@ -45,6 +45,11 @@
 #define CPUSIZE 64
 #endif
 
+//stdcall does not exist in Linux so lets define it to nothing
+#if defined(__LINUX__) || defined(__MAC__)
+#define __stdcall
+#endif
+
 //All the options:
 //#define COLOR_TAINTED 0x99FFCE
 //#define COLOR_TAINTED_CONDITION 0x00b377

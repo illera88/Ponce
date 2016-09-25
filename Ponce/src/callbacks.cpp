@@ -504,7 +504,8 @@ void set_SMT_results(Input *input_ptr){
 	/*To set the memory types*/
 	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
 	{
-		put_many_bytes((ea_t)it->getAddress(), &it->getConcreteValue(), it->getSize());
+		auto concreteValue=it->getConcreteValue();
+		put_many_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
 		triton::api.setConcreteMemoryValue(*it);
 		//We concretize the memory we set
 		triton::api.concretizeMemory(*it);
