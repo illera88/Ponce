@@ -721,20 +721,20 @@ action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-	{ &action_IDA_enable_disable_tracing, { BWN_DISASM, NULL }, true, true, "" },
+	{ &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, true, true, "" },
 	
-	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, NULL }, true, false, "Taint/"},
-	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, NULL }, true, false, "Taint/" },
+	{ &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, true, false, "Taint/"},
+	{ &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, __END__ }, true, false, "Taint/" },
 
-	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, NULL }, false, true, "Symbolic/"},
-	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, NULL }, false, true, "Symbolic/" },
+	{ &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, false, true, "Symbolic/"},
+	{ &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, __END__ }, false, true, "Symbolic/" },
 
-	{ &action_IDA_negate, { BWN_DISASM, NULL }, false, true, "SMT/" },
-	{ &action_IDA_negateInjectRestore, { BWN_DISASM, NULL }, true, true, "SMT/" },
+	{ &action_IDA_negate, { BWN_DISASM, __END__ }, false, true, "SMT/" },
+	{ &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, true, true, "SMT/" },
 
-	{ &action_IDA_createSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/"},
-	{ &action_IDA_restoreSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
-	{ &action_IDA_deleteSnapshot, { BWN_DISASM, NULL }, true, true, "Snapshot/" },
-	{ &action_IDA_execute_native, { BWN_DISASM, NULL }, true, true, "" },
-	{ NULL, NULL, NULL }
+	{ &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/"},
+	{ &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
+	{ &action_IDA_deleteSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
+	{ &action_IDA_execute_native, { BWN_DISASM, __END__ }, true, true, "" },
+	{ NULL, __END__, __END__ }
 };

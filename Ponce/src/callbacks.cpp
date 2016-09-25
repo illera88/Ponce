@@ -46,7 +46,7 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!decode_insn(pc))
-		warning("[!] Some error decoding instruction at %p", pc);	
+		warning("[!] Some error decoding instruction at " HEX_FORMAT, pc);	
 	
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, cmd.size);
@@ -150,7 +150,7 @@ void reanalize_current_instruction()
 	uint64 xip;
 	get_reg_val(TRITON_REG_XIP.getName().c_str(), &xip);
 	if (cmdOptions.showDebugInfo)
-		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", xip);
+		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", (ea_t)xip);
 	tritonize((ea_t)xip, get_current_thread());
 }
 
@@ -224,7 +224,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = va_arg(va, ea_t);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
-			ua_ana0(pc);
+			decode_insn(pc);
 
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
@@ -299,7 +299,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Check if the limit instructions limit was reached
 			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
 			{
-				int answer = askyn_c(1, "[?] %d instructions has been traced. Do you want to execute %d more?", ponce_runtime_status.total_number_traced_ins, cmdOptions.limitInstructionsTracingMode);
+				int answer = askyn_c(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
@@ -434,7 +434,7 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 				/*Iterate over the view types of every action*/
 				for (int j=0;; j++)
 				{
-					if (action_list[i].view_type[j] == NULL){
+					if (action_list[i].view_type[j] == __END__){
 						break;
 					}
 					if (action_list[i].view_type[j] == view_type)

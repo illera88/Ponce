@@ -50,6 +50,8 @@
 #define __stdcall
 #endif
 
+#define __END__ -1
+
 //All the options:
 //#define COLOR_TAINTED 0x99FFCE
 //#define COLOR_TAINTED_CONDITION 0x00b377
