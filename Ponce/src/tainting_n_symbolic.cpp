@@ -86,7 +86,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			{
 				char comment[256];
 				qsnprintf(comment, 256, "argv[%d][%d]", i, j);
-				//msg("Converting memory to symbolic "HEX_FORMAT"\n", current_argv + j);
+				//msg("Converting memory to symbolic " HEX_FORMAT "\n", current_argv + j);
 				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, 1, current_char), comment);
 
 			}

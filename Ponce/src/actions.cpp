@@ -108,7 +108,7 @@ struct ah_symbolize_register_t : public action_handler_t
 			{
 				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
-				qsnprintf(comment, 256, "Reg %s at address: "HEX_FORMAT"", selected, action_activation_ctx->cur_ea);
+				qsnprintf(comment, 256, "Reg %s at address: " HEX_FORMAT "", selected, action_activation_ctx->cur_ea);
 				register_to_symbolize.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_symbolize, true));
 				triton::api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));
 
@@ -284,7 +284,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
 		//Tainting all the selected memory
 		char comment[256];
-		qsnprintf(comment, 256, "Mem "HEX_FORMAT"-"HEX_FORMAT" at address: "HEX_FORMAT"", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+		qsnprintf(comment, 256, "Mem " HEX_FORMAT "-" HEX_FORMAT " at address: " HEX_FORMAT "", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 		symbolize_all_memory(selection_starts, selection_length, comment);
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
