@@ -2,8 +2,8 @@
 /*
 **  Copyright (c) 2016 - Ponce
 **  Authors:
-**         Alberto Garcia Illera		agarciaillera@gmail.com
-**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**         Alberto Garcia Illera        agarciaillera@gmail.com
+**         Francisco Oca                francisco.oca.gonzalez@gmail.com
 **
 **  This program is under the terms of the BSD License.
 */
@@ -40,3 +40,4 @@ void enableTrigger_and_concretize_registers(ea_t main_address);
 regval_t ida_get_reg_val_invalidate(char *reg_name);
 void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
+void concretizeAndUntaintVolatileRegisters();

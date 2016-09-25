@@ -1,0 +1,7 @@
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/install.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/list_install_components.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/rebuild_cache.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/install/local.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/triton.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/install/strip.dir
+/home/default/PonceProject/builds/TritonBuild/linux/x86/build/CMakeFiles/edit_cache.dir

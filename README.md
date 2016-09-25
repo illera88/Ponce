@@ -3,7 +3,7 @@
 <p align="center"><img src ="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png" /></p>
  
 ## Definition
-Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are two clicks away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
+Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are one click away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
 
 ## Why?
 Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years that open source projects like [Triton](https://github.com/JonathanSalwan/Triton) and [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users are often  left to implement specific use cases themselves.
@@ -138,7 +138,7 @@ The project has 4 build configurations:
 - x64ReleaseStatic: will create the 64 bits version statically linking every third party library into a whole large plugin file.
 - x64ReleaseZ3dyn: will create the 64 bits version statically linking every third party library but z3.lib.
 
-The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll).
+The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll). If you are using z3 dynamically don't forget to copy the [libz3.dll](https://github.com/illera88/Ponce/blob/master/external-libs/libs/Z3_dyn_rest_static_MT_x86/libz3.dll) file into the IDA's directory.
 
 ## FAQ
 ### Why the name of Ponce?
@@ -157,5 +157,5 @@ Symbolic execution has some inherent problems:
 - Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input. 
 
 ## Authors
-- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
-- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) francisco.oca.gonzalez@gmail.com
+- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) alberto.garcia@salesforce.com
+- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) foca@salesforce.com

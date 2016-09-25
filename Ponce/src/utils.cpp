@@ -2,8 +2,8 @@
 /*
 **  Copyright (c) 2016 - Ponce
 **  Authors:
-**         Alberto Garcia Illera		agarciaillera@gmail.com
-**         Francisco Oca				francisco.oca.gonzalez@gmail.com
+**         Alberto Garcia Illera        agarciaillera@gmail.com
+**         Francisco Oca                francisco.oca.gonzalez@gmail.com
 **
 **  This program is under the terms of the BSD License.
 */
@@ -426,7 +426,6 @@ Input * solve_formula(ea_t pc, uint bound)
 			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = triton::api.getFullAstFromId(ripId);
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
-			msg("takenAddr: "HEX_FORMAT"\n", takenAddr);
 
 			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 		}
@@ -799,7 +798,7 @@ you couldn't assume any register has been unchanged, so we concretize all of the
 void enableTrigger_and_concretize_registers(ea_t main_address)
 {
 	ponce_runtime_status.runtimeTrigger.enable();
-	concretizeAndUntaintAllRegisters();
+	concretizeAndUntaintVolatileRegisters();
 }
 
 regval_t ida_get_reg_val_invalidate(char *reg_name)
@@ -819,7 +818,6 @@ void readBlacklistfile(char* path){
 			msg("Adding %s to the blacklist funtion list\n",str.c_str());
 		black_func->push_back(str);
 	}
-	
 }
 
 std::uint64_t GetTimeMs64(void)
@@ -855,4 +853,29 @@ std::uint64_t GetTimeMs64(void)
 
 	return ret;
 #endif
+}
+
+
+//Helper to concretize and untaint volatile registers
+void concretizeAndUntaintVolatileRegisters()
+{
+	//ToDo: check how different compilers behave regarding vilatile registers
+#if defined(__i386) || defined(_M_IX86)
+	char* volatile_regs[] = { "eax", "ecx", "edx" };
+#elif defined(__x86_64__) || defined(_M_X64)
+	char* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
+#endif
+
+	auto regs = triton::api.getAllRegisters();
+	for (auto it = regs.begin(); it != regs.end(); it++)
+	{
+		auto reg = **it;
+		for (auto i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++){
+			if (strcmp(reg.getName().c_str(), volatile_regs[i]) == 0){
+				triton::api.concretizeRegister(reg);
+				triton::api.untaintRegister(reg);
+			}
+		}
+
+	}
 }
