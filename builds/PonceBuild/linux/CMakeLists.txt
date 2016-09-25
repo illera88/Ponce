@@ -5,8 +5,16 @@ cmake_policy(SET CMP0015 NEW)
 
 set(CMAKE_BUILD_TYPE Release)
 
-#since IDA does not name libraries with the lib prefix
-#SET_TARGET_PROPERTIES(ponce PROPERTIES PREFIX "")
+#option(ARCH "Build arquitecture" "x86") # Use -DARCH=x64 for 64 bits build
+#option(Z3DYN "Use Z3 dynamyc library" OFF) # Use -DZ3DYN=ON to use the z3 dynamic lib
+if (NOT ARCH)
+    set(ARCH "x86")
+endif()
+if (NOT Z3DYN)
+    set(Z3DYN "No")
+endif()
+
+
 
 if (WIN32)
 # Use VS
@@ -26,11 +34,14 @@ elseif (APPLE)
 elseif (UNIX)
 
     add_definitions(-D__LINUX__=1)
-
-    #Because Bosst uses sprintf_s
-    add_definitions(-DUSE_DANGEROUS_FUNCTIONS)
-
     add_definitions(-D__IDP__)
+
+    if(${ARCH} MATCHES "x64")
+        add_definitions(-D__X_64__=)
+    endif()
+
+    #Because Boost uses sprintf_s
+    add_definitions(-DUSE_DANGEROUS_FUNCTIONS)
 
     #IDA produce this kind of warnings
     add_definitions(-Wno-attributes)
@@ -39,8 +50,11 @@ elseif (UNIX)
 
     set (CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
 
-    link_directories("../../../external-libs/libs/linux/ALL_static_x86/")
-
+    if(${Z3DYN} MATCHES "Yes")
+       link_directories("../../../external-libs/libs/linux/Z3_dyn_rest_static_x86/")
+    else()
+       link_directories("../../../external-libs/libs/linux/ALL_static_x86/")
+    endif()
 
     find_library(IDA_LIB
                  NAMES "pro"
@@ -77,10 +91,6 @@ include_directories("../../../external-libs/includes/z3-4.4.2-linux86/include")
 
 #SET_TARGET_PROPERTIES(ponce PROPERTIES PREFIX "")
 
-message (STATUS "Include directory: " ${IDA_SDK}/include/)
-message (STATUS "IDA_SDK: " ${IDA_SDK})
-message (STATUS "IDA_LIB: " ${IDA_LIB})
-
 add_library(ponce MODULE ${PONCE_SOURCE_FILES})
 #set_target_properties(ponce PROPERTIES COMPILE_FLAGS ${LIBTRITON_CXX_FLAGS})
 
@@ -89,11 +99,28 @@ if (WIN32)
 elseif (APPLE)
     set (IDA_SUFFIX ".pmc")
 elseif (UNIX)
-    set (IDA_SUFFIX ".plx")
+    if(${ARCH} MATCHES "x64")
+        set (IDA_SUFFIX ".plx64")
+    else()
+        set (IDA_SUFFIX ".plx")
+    endif()
 endif()
+
+#Print some info
+message (STATUS "Include directory: " ${IDA_SDK}/include/)
+message (STATUS "IDA_LIB: " ${IDA_LIB})
+message (STATUS "IDA_SUFFIX: " ${IDA_SUFFIX})
+message (STATUS "ARCH: " ${ARCH})
+message (STATUS "Dynamic Z3: " ${Z3DYN})
+
+
+set_target_properties (ponce PROPERTIES SUFFIX ${IDA_SUFFIX})
 
 # include ida library
 target_link_libraries (ponce ${IDA_LIB})
 
 #include z3 capstone and triton
 target_link_libraries (ponce triton z3 capstone)
+
+# Necesary include if compiling z3 with OMP
+target_link_libraries(ponce gomp)
