@@ -285,7 +285,7 @@ void rename_tainted_function(ea_t address)
 		{
 			char new_func_name[MAXSTR];
 			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
-			sprintf_s(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name);
+			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name);
 			//We need the start of the function we can have that info with our function find_function
 			set_name(find_function(func_name), new_func_name);
 			if (cmdOptions.showDebugInfo)

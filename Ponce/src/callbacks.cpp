@@ -250,7 +250,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 						ea_t next_ea = next_head(pc, BADADDR);
 						add_bpt(next_ea, 1, BPT_EXEC);
 						char cmt[256];
-						sprintf_s(cmt, "Temporal bp set by ponce for blacklisting\n");
+						qsnprintf(cmt, "Temporal bp set by ponce for blacklisting\n");
 						//We set a comment so the user know why there is a new bp there
 						set_cmt(next_ea, cmt, false);
 
@@ -474,10 +474,10 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 					{
 						char name[256];
 						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						sprintf_s(name, "%d_Ponce:solve_formula_sub", i);
+						qsnprintf(name, 255, "%d_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
-						sprintf_s(label, "%d. " HEX_FORMAT " -> " HEX_FORMAT "", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						qsnprintf(label, 255, "%d. " HEX_FORMAT " -> " HEX_FORMAT "", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
 						action_IDA_solve_formula_sub.label = label;
 						bool success = register_action(action_IDA_solve_formula_sub);
 						//If the submenu is already registered, we should unregister it and re-register it
