@@ -323,7 +323,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				}
 				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
 				{
-					int answer = askyn_c(1, "[?] the tracing was working for %d seconds(%d inst traced!). Do you want to execute it %d more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, cmdOptions.limitTime);
+					int answer = askyn_c(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
 					if (answer == 0 || answer == -1) //No or Cancel
 					{
 						// stop the trace mode and suspend the process

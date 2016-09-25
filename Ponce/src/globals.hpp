@@ -86,7 +86,7 @@ struct action{
 	int view_type[44]; // This are the posible views
 	bool enable_taint;
 	bool enable_symbolic;
-	char* menu_path; // this is where the item will be conteined in
+	char const* menu_path; // this is where the item will be conteined in
 };
 
 extern Snapshot snapshot;

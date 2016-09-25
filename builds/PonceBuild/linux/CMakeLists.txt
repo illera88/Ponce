@@ -32,8 +32,8 @@ elseif (UNIX)
 
     add_definitions(-D__IDP__)
 
-    #In formTaintWindow.cpp raise error in choose2 because last parameter cannot be NULL :S Weird!
-    add_definitions(-fpermissive)
+    #IDA produce this kind of warnings
+    add_definitions(-Wno-attributes)
 
     set (CMAKE_CXX_FLAGS "-m32 -std=c++0x -pipe -O2")
 

@@ -143,19 +143,19 @@ bool already_exits_a_snapshot()
 /*This function is a helper to find a function having its name.
 It is likely IDA SDK has another API to do this but I can't find it.
 Source: http://www.openrce.org/reference_library/files/ida/idapw.pdf */
-ea_t find_function(char *function_name)
+ea_t find_function(char const *function_name)
 {
 	// get_func_qty() returns the number of functions in file(s) loaded.
 	for (unsigned int f = 0; f < get_func_qty(); f++)
 	{
 		// getn_func() returns a func_t struct for the function number supplied
 		func_t *curFunc = getn_func(f);
-		char funcName[MAXSTR];
-		// get_func_name gets the name of a function,
-		// stored in funcName
-		get_func_name(curFunc->startEA, funcName, sizeof(funcName) - 1);
-		if (strcmp(funcName, function_name) == 0)
-			return curFunc->startEA;
+		qstring funcName;
+		// get_func_name2 gets the name of a function and stored it in funcName
+		if (get_func_name2(&funcName, curFunc->startEA) > 0){ // if found
+			if (strcmp(funcName.c_str(), function_name) == 0)
+				return curFunc->startEA;
+		}
 	}
 	return -1;
 }
@@ -276,20 +276,20 @@ ea_t read_regSize_from_ida(ea_t address)
 /*This function renames a tainted function with the prefix RENAME_TAINTED_FUNCTIONS_PREFIX, by default "T%03d_"*/
 void rename_tainted_function(ea_t address)
 {
-	char func_name[MAXSTR];
+	qstring func_name;
 	//First we get the current function name
-	if (get_func_name(address, func_name, sizeof(func_name)) != NULL)
+	if (get_func_name2(&func_name, address) > 0)
 	{
 		//If the function isn't already renamed
-		if (strstr(func_name, "T0") != func_name)
+		if (strstr(func_name.c_str(), "T0") != func_name.c_str())
 		{
 			char new_func_name[MAXSTR];
 			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
-			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name);
+			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name.c_str());
 			//We need the start of the function we can have that info with our function find_function
-			set_name(find_function(func_name), new_func_name);
+			set_name(find_function(func_name.c_str()), new_func_name);
 			if (cmdOptions.showDebugInfo)
-				msg("[+] Renaming function %s -> %s\n", func_name, new_func_name);
+				msg("[+] Renaming function %s -> %s\n", func_name.c_str(), new_func_name);
 			ponce_runtime_status.tainted_functions_index += 1;
 		}
 	}
@@ -302,7 +302,7 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 		auto expr = tritonInst->symbolicExpressions[exp_index];
 		std::ostringstream oss;
 		oss << expr;
-		add_long_cmt(address, false, oss.str().c_str());
+		add_long_cmt(address, false, "%s", oss.str().c_str());
 	}
 }
 
@@ -766,7 +766,7 @@ qstring get_callee(ea_t address){
 		name = clean_function_name(buf);
 	}
 	else{
-		name = qstrdup(get_name(-1, address, buf, sizeof(buf)));
+		get_ea_name(&name, address);
 		if (name.empty())
 		{
 			if (isCode(get_flags_novalue(address)))
@@ -861,9 +861,9 @@ void concretizeAndUntaintVolatileRegisters()
 {
 	//ToDo: check how different compilers behave regarding vilatile registers
 #if defined(__i386) || defined(_M_IX86)
-	char* volatile_regs[] = { "eax", "ecx", "edx" };
+	char const* volatile_regs[] = { "eax", "ecx", "edx" };
 #elif defined(__x86_64__) || defined(_M_X64)
-	char* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
+	char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
 #endif
 
 	auto regs = triton::api.getAllRegisters();

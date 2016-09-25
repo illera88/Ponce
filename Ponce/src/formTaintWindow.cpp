@@ -38,7 +38,7 @@ const char *popup_menu_names[] = {
 entrylist_t *global_list = NULL;
 
 // function that returns number of lines in the list
-static ulong idaapi sizer(void *obj)
+static uint32 idaapi sizer(void *obj)
 {
 	entrylist_t &li = *(entrylist_t *)obj;
 	return li.size();
@@ -65,7 +65,7 @@ static void idaapi destroy_cb(void *obj)
 
 
 // function that generates the list line
-static void idaapi desc(void *obj, ulong n, char * const *arrptr)
+static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 {
 	if (n == 0) // generate the column headers
 	{
@@ -80,7 +80,8 @@ static void idaapi desc(void *obj, ulong n, char * const *arrptr)
 	if (li[n]->address == 0)
 		qsnprintf(arrptr[1], MAXSTR, "%s", "");
 	else
-		qsnprintf(arrptr[1], MAXSTR, HEX_FORMAT, li[n]->address);
+		qsnprintf(arrptr[1], MAXSTR, HEX_FORMAT, (ea_t)li[n]->address);
+	
 	qsnprintf(arrptr[2], MAXSTR, "%s", li[n]->register_name.c_str());
 	qsnprintf(arrptr[3], MAXSTR, HEX_FORMAT, li[n]->value.convert_to<ea_t>());
 	qsnprintf(arrptr[4], MAXSTR, "%s", li[n]->isTainted ? "true" : "false");
