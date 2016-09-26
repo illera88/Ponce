@@ -35,7 +35,7 @@ static const char form[] =
 "<#Auto taint argv. Will try to find the main function and taint#Tainting options#Taint argv:C8>\n"
 "<#Taint the null byte from a string to taint his lenght#- Taint end of string \\0:C9>\n"
 "<#In some cases argv[0] may be used to perform some checks#- Taint argv[0]:C10>\n"
-"<#Self explanatory#-  Taint argc:C11>\n"
+"<#Self explanatory#- Taint argc:C11>\n"
 "<#Taint the buffer received in every recv API call#\tTaint recv (not implemented):C12>\n"
 "<#Taint the buffer read from a file#Taint fread (not implemented):C13>>\n"
 //

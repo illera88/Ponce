@@ -231,7 +231,8 @@ struct ah_taint_memory_t : public action_handler_t
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
 					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-					if (selection_ends - selection_starts >= 0)
+					int diff = selection_ends - selection_starts;
+					if (diff >= 0)
 						return AST_ENABLE;
 				}
 			}
@@ -320,7 +321,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
 					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-					if (selection_ends - selection_starts >= 0)
+					int diff = selection_ends - selection_starts;
+					if (diff >= 0)
 						return AST_ENABLE;
 				}
 			}
