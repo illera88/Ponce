@@ -42,7 +42,6 @@ Snapshot::Snapshot() {
 	this->snapshotTaintEngine = nullptr;
 	this->snapshotSymEngine = nullptr;
 	this->mustBeRestore = false;
-	this->IDAContext;
 	this->snapshotTaken = false;
 }
 

@@ -436,7 +436,7 @@ Input * solve_formula(ea_t pc, uint bound)
 		auto symExpr = triton::api.getFullAstFromId(ripId);
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo)
-			msg("[+] ripId: %d notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
+			msg("[+] ripId: %lu notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
 		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
 		//Time to solve
