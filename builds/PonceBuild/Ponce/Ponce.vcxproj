@@ -159,36 +159,42 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x86_static</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x68ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x86_static_IDA68</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x64_static</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x64_static_IDA68</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x86_z3dyn</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x64_z3dyn</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64Release|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -205,6 +211,9 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseStatic|Win32'">
     <ClCompile>
@@ -240,7 +249,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x68ReleaseStatic_IDA6.8|Win32'">
@@ -277,7 +286,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic|Win32'">
@@ -314,7 +323,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic_IDA6.8|Win32'">
@@ -351,7 +360,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseZ3dyn|Win32'">
@@ -458,7 +467,7 @@
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"</Command>
+      <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
