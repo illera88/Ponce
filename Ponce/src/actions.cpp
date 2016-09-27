@@ -168,6 +168,7 @@ struct ah_taint_memory_t : public action_handler_t
 	/*Event called when the user taint a memory*/
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
+#ifdef IDA69x
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
@@ -217,11 +218,13 @@ struct ah_taint_memory_t : public action_handler_t
 				break;
 			}
 		}
+#endif
 		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
+#ifdef IDA69x
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
@@ -241,6 +244,7 @@ struct ah_taint_memory_t : public action_handler_t
 				return AST_ENABLE;
 			}
 		}
+#endif
 		return AST_DISABLE;
 	}
 };
@@ -259,6 +263,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 	/*Event called when the user symbolize a memory*/
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
+#ifdef IDA69x
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
@@ -307,11 +312,13 @@ struct ah_symbolize_memory_t : public action_handler_t
 				break;
 			}
 		}
+#endif
 		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
+#ifdef IDA69x
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
@@ -331,6 +338,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 				return AST_ENABLE;
 			}
 		}
+#endif
 		return AST_DISABLE;
 	}
 };
