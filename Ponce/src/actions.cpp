@@ -174,7 +174,7 @@ struct ah_taint_memory_t : public action_handler_t
 		if (action_activation_ctx->form_type == BWN_DUMP)
 		{
 //This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifndef IDA69x
+#ifdef __IDA68__
 			return 0;
 #else
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
@@ -233,7 +233,7 @@ struct ah_taint_memory_t : public action_handler_t
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
 //This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifndef IDA69x
+#ifdef __IDA68__
 				return AST_DISABLE;
 #else
 				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
@@ -275,7 +275,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		if (action_activation_ctx->form_type == BWN_DUMP)
 		{
 			//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifndef IDA69x
+#ifdef __IDA68__
 			return 0;
 #else
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
@@ -333,7 +333,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
 				//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifndef IDA69x
+#ifdef __IDA68__
 				return AST_DISABLE;
 #else
 				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
