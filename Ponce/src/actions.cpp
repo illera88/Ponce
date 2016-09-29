@@ -168,12 +168,15 @@ struct ah_taint_memory_t : public action_handler_t
 	/*Event called when the user taint a memory*/
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
-#ifdef IDA69x
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
 		if (action_activation_ctx->form_type == BWN_DUMP)
 		{
+//This menu is only enable in the HEX DUMP view in IDA 6.9x
+#ifdef __IDA68__
+			return 0;
+#else
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
 			{
 				return 0;
@@ -181,6 +184,7 @@ struct ah_taint_memory_t : public action_handler_t
 			//We get the selection bounds from the action activation context
 			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
 			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
+#endif
 		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
@@ -218,18 +222,20 @@ struct ah_taint_memory_t : public action_handler_t
 				break;
 			}
 		}
-#endif
 		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-#ifdef IDA69x
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
+//This menu is only enable in the HEX DUMP view in IDA 6.9x
+#ifdef __IDA68__
+				return AST_DISABLE;
+#else
 				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
@@ -238,13 +244,13 @@ struct ah_taint_memory_t : public action_handler_t
 					if (diff >= 0)
 						return AST_ENABLE;
 				}
+#endif
 			}
 			else
 			{
 				return AST_ENABLE;
 			}
 		}
-#endif
 		return AST_DISABLE;
 	}
 };
@@ -263,17 +269,21 @@ struct ah_symbolize_memory_t : public action_handler_t
 	/*Event called when the user symbolize a memory*/
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
-#ifdef IDA69x
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
 		if (action_activation_ctx->form_type == BWN_DUMP)
 		{
+			//This menu is only enable in the HEX DUMP view in IDA 6.9x
+#ifdef __IDA68__
+			return 0;
+#else
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
 				return 0;
 			//We get the selection bounds from the action activation context
 			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
 			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
+#endif
 		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
 		else if (action_activation_ctx->form_type == BWN_DISASM)
@@ -312,18 +322,20 @@ struct ah_symbolize_memory_t : public action_handler_t
 				break;
 			}
 		}
-#endif
 		return 0;
 	}
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
-#ifdef IDA69x
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
 			if (action_update_ctx_t->form_type == BWN_DUMP)
 			{
+				//This menu is only enable in the HEX DUMP view in IDA 6.9x
+#ifdef __IDA68__
+				return AST_DISABLE;
+#else
 				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
@@ -332,13 +344,13 @@ struct ah_symbolize_memory_t : public action_handler_t
 					if (diff >= 0)
 						return AST_ENABLE;
 				}
+#endif
 			}
 			else
 			{
 				return AST_ENABLE;
 			}
 		}
-#endif
 		return AST_DISABLE;
 	}
 };

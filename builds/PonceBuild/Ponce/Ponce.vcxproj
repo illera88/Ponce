@@ -225,7 +225,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.95;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>IDA69x;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
@@ -262,7 +262,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__IDA68__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
@@ -299,7 +299,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.95;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>IDA69x;__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
@@ -336,7 +336,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__IDA68__;__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
@@ -373,7 +373,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.95;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>IDA69x;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
@@ -410,7 +410,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)Ponce;$(SolutionDir)..\..\external-libs\includes\z3-4.4.2-win86\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\Triton\src\libtriton\includes;$(SolutionDir)..\..\Ponce\include_IDA6.95;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>IDA69x;__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__EA64__;X86_32;NDEBUG;WIN32;_WINDOWS;_USRDLL;__NT__;__IDP__;MAXSTR=1024;WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CallingConvention>Cdecl</CallingConvention>
