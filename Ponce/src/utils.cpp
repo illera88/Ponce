@@ -171,10 +171,10 @@ ea_t get_args(int argument_number, bool skip_ret)
 	return value;
 
 #else
+	int skip_ret_index = skip_ret ? 1 : 0;
 	//Not converted to IDA we should use get_reg_val
 #ifdef __NT__ // note the underscore: without it, it's not msdn official!
 	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
-	int skip_ret_index = skip_ret ? 1 : 0;
 	switch (argument_number)
 	{
 	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
