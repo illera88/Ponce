@@ -84,6 +84,20 @@ void idaapi run(int)
 //--------------------------------------------------------------------------
 int idaapi init(void)
 {
+	char version[8];
+	//We do some checks with the versions...
+	if (get_kernel_version(version, sizeof(version)))
+	{
+#ifdef __IDA68__
+		//The IDA 6.8 plugin running in IDA 6.9x
+		if (strcmp(version, "6.8") != 0)
+			warning("This plugin was built for IDA 6.8, you are using: %s\n", version);
+#else
+		//The IDA 6.9x plugin running in IDA 6.8
+		if (strcmp(version, "6.8") == 0)
+			warning("This plugin was built for IDA 6.9x, you are using: %s\n", version);
+#endif
+	}
 	for (int i = 0;; i++)
 	{
 		if (action_list[i].action_decs == NULL){
