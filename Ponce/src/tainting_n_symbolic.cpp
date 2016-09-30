@@ -19,7 +19,7 @@
 
 //Triton
 #include <api.hpp>
-
+#include "x86Specifications.hpp"
 
 void taint_or_symbolize_main_callback(ea_t main_address)
 {
@@ -45,9 +45,9 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #else
 		triton::arch::Register reg;
 #ifdef __NT__ 
-		str_to_register("RCX", reg);
+		reg = triton::arch::x86::x86_reg_rsi;
 #elif __LINUX__ || __MAC__
-		str_to_register("RDI", reg);
+		reg = triton::arch::x86::x86_reg_rdi;
 #endif
 		reg.setConcreteValue(argc);
 		triton::api.taintRegister(reg);
@@ -56,7 +56,6 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #endif	
 		start_tainting_or_symbolic_analysis();
 	}
-
 	//Second we taint all the arguments values
 	//We are tainting the argv[0], this is the program path, and it is something that the 
 	//user controls and sometimes is used to do somechecks
