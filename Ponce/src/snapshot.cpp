@@ -118,39 +118,19 @@ void Snapshot::restoreSnapshot() {
 	}
 	this->memory.clear();
 
-	/* 2 - Delete unused expressions */
-	auto currentExpressions = triton::api.getSymbolicExpressions();
-	auto snapshotExpressions = this->snapshotSymEngine->getSymbolicExpressions();
-	ea_t currentSize = currentExpressions.size();
-	ea_t snapshotSize = snapshotExpressions.size();
-	for (auto i = currentExpressions.begin(); i != currentExpressions.end(); ++i) {
-		if (snapshotExpressions.find(i->first) == snapshotExpressions.end())
-			delete currentExpressions[i->first];
-	}
-
-	/* 3 - Delete unused variables */
-	auto currentSymbolicVars = triton::api.getSymbolicVariables();
-	auto snapshotSymbolicVars = this->snapshotSymEngine->getSymbolicVariables();
-	currentSize = currentSymbolicVars.size();
-	snapshotSize = snapshotSymbolicVars.size();
-	for (auto i = currentSymbolicVars.begin(); i != currentSymbolicVars.end(); ++i) {
-		if (snapshotSymbolicVars.find(i->first) == snapshotSymbolicVars.end())
-			delete currentSymbolicVars[i->first];
-	}
-
-	/* 4 - Restore current symbolic engine state */
+	/* 2 - Restore current symbolic engine state */
 	*triton::api.getSymbolicEngine() = *this->snapshotSymEngine;
 
-	/* 5 - Restore current taint engine state */
+	/* 3 - Restore current taint engine state */
 	*triton::api.getTaintEngine() = *this->snapshotTaintEngine;
 
-	/* 6 - Restore current AST node state */
+	/* 4 - Restore current AST node state */
 	triton::api.setAllocatedAstNodes(this->nodesList);
 
-	/* 7 - Restore current variables map state */
+	/* 5 - Restore current variables map state */
 	triton::api.setAstVariableNodes(this->variablesMap);
 
-	/* 8 - Restore the Triton CPU state */
+	/* 6 - Restore the Triton CPU state */
 #if defined(__x86_64__) || defined(_M_X64)
 	*reinterpret_cast<triton::arch::x86::x8664Cpu*>(triton::api.getCpu()) = *this->cpu;
 #endif
@@ -160,7 +140,7 @@ void Snapshot::restoreSnapshot() {
 
 	this->mustBeRestore = false;
 
-	/* 9 - Restore IDA registers context 
+	/* 7 - Restore IDA registers context 
 	Suposedly XIP should be set at the same time and execution redirected*/
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
 	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
@@ -168,8 +148,12 @@ void Snapshot::restoreSnapshot() {
 			msg("ERROR restoring register %s\n", iterator->first.c_str());
 	}
 
-	/* 10 - Restore the Ponce status */
+	/* 8 - Restore the Ponce status */
 	ponce_runtime_status = this->saved_ponce_runtime_status;
+
+	/* 9 - We need to set to NULL the last instruction. We are deleting the last instructions in the Tritonize callback.
+	So after restore a snapshot if last_instruction is not NULL is double freeing the same instruction */
+	ponce_runtime_status.last_triton_instruction = NULL;
 }
 
 /* Disable the snapshot engine. */
@@ -184,10 +168,10 @@ void Snapshot::resetEngine(void) {
 	this->memory.clear();
 
 	//ToDo: We should delete this when this issue is fixed: https://github.com/JonathanSalwan/Triton/issues/385
-	//delete this->snapshotSymEngine;
+	delete this->snapshotSymEngine;
 	this->snapshotSymEngine = nullptr;
 
-	//delete this->snapshotTaintEngine;
+	delete this->snapshotTaintEngine;
 	this->snapshotTaintEngine = nullptr;
 
 	this->snapshotTaken = false;
