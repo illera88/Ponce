@@ -76,7 +76,7 @@ static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 	n--;
 	entrylist_t &li = *(entrylist_t *)obj;
 
-	qsnprintf(arrptr[0], MAXSTR, "%lu", li[n]->id);
+	qsnprintf(arrptr[0], MAXSTR, "%d", li[n]->id);
 	if (li[n]->address == 0)
 		qsnprintf(arrptr[1], MAXSTR, "%s", "");
 	else

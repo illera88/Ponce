@@ -1,4 +1,4 @@
-# Build Ponce
+# Build Ponce in MacOSX
 You need to compile Ponce with GCC, so first you need to set some enviroment variables:
 ```
 export __MAC__=1
@@ -29,7 +29,7 @@ make
 
 If you want to compile the static libraries we provide, Capstone and Z3. You need to follow these instructions:
 
-# Build Z3
+# Build Z3 in MacOSX
 You need to compile it with GCC and manually disable sse extensions
 
 So first set GCC:
@@ -52,7 +52,7 @@ CXXFLAGS=-D_MP_INTERNAL -DNDEBUG -D_EXTERNAL_RELEASE -static-libstdc++ -static-l
 
 After that you can do a `make`.
 
-# Build Capstone
+# Build Capstone in MacOSX
 You can build Capstone with clang or gcc. Whatever it is you choice you need to compile the lib for x86:
 ```
 ./make.sh nix32
