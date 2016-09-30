@@ -36,6 +36,8 @@ So first set GCC:
 ```
 export CC=/usr/local/Cellar/gcc/6.2.0/bin/gcc-6
 export CXX=/usr/local/Cellar/gcc/6.2.0/bin/g++-6
+export CPPFLAGS="-static-libstdc++ -static-libgcc"
+export CXXFLAGS="-static-libstdc++ -static-libgcc"
 ```
 
 Now build the project as a staticlib, without omp support and for x86 (IDA & IDA64 are x86 binaries):
@@ -43,22 +45,15 @@ Now build the project as a staticlib, without omp support and for x86 (IDA & IDA
 python scripts/mk_make.py --staticlib --noomp --x86
 ```
 
-Now you need to edit the build/config.mk and modify these lines:
+Now you need to edit the build/config.mk and modify this line:
 ```
-CXXFLAGS= -D_MP_INTERNAL -DNDEBUG -D_EXTERNAL_RELEASE  -fvisibility=hidden -c -D_NO_OMP_ -O0 -D _EXTERNAL_RELEASE -arch i386
-LINK_EXTRA_FLAGS=-lpthread -arch i386
-SLINK_FLAGS=-dynamiclib -arch i386
+CXXFLAGS=-D_MP_INTERNAL -DNDEBUG -D_EXTERNAL_RELEASE -static-libstdc++ -static-libgcc -fvisibility=hidden -c -D_NO_OMP_ -O0 -D _EXTERNAL_RELEASE -m32
 ```
 
 After that you can do a `make`.
 
 # Build Capstone
-Set the gcc compiler:
-```
-export CC=/usr/local/Cellar/gcc/6.2.0/bin/gcc-6
-export CXX=/usr/local/Cellar/gcc/6.2.0/bin/g++-6
-```
-And make it for x86:
+You can build Capstone with clang or gcc. Whatever it is you choice you need to compile the lib for x86:
 ```
 ./make.sh nix32
 ```

@@ -35,8 +35,8 @@ elseif (APPLE)
     # cstdio uses them
     add_definitions(-DUSE_STANDARD_FILE_FUNCTIONS)
 
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -m32")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 ")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -static-libstdc++ -m32")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc -m32 ")
     
     link_directories("../../../external-libs/libs/osx/ALL_static_x86/")
 elseif (UNIX)
@@ -46,7 +46,7 @@ elseif (UNIX)
     #IDA produce this kind of warnings
     add_definitions(-Wno-attributes)
 
-    set (CMAKE_CXX_FLAGS "-m32 -std=c++0x -pipe -O2")
+    set (CMAKE_CXX_FLAGS "-m32 -std=c++0x -static-libgcc -static-libstdc++ -pipe -O2")
 
     set (CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
     
@@ -85,7 +85,7 @@ add_library(ponce MODULE ${PONCE_SOURCE_FILES})
 
 if (APPLE)
     if(${IDA_ARCH} MATCHES "x64")
-        set (IDA_SUFFIX "_x86_IDA${IDA_VER}_mac.pmc64")
+        set (IDA_SUFFIX "_x64_IDA${IDA_VER}_mac.pmc64")
     else()
 	set (IDA_SUFFIX "_x86_IDA${IDA_VER}_mac.pmc")
     endif()
@@ -93,7 +93,7 @@ elseif (UNIX)
     if(${IDA_ARCH} MATCHES "x64")
         set (IDA_SUFFIX "_x64_IDA${IDA_VER}_mac.plx64")
     else()
-	set (IDA_SUFFIX "x_64_IDA${IDA_VER}_mac.plx")
+	set (IDA_SUFFIX "x_86_IDA${IDA_VER}_mac.plx")
     endif()
 endif()
 
@@ -101,8 +101,6 @@ endif()
 message (STATUS "IDA_LIB: " ${IDA_LIB})
 message (STATUS "IDA_SUFFIX: " ${IDA_SUFFIX})
 message (STATUS "IDA_ARCH: " ${IDA_ARCH})
-message (STATUS "Dynamic Z3: " ${Z3DYN})
-
 
 set_target_properties (ponce PROPERTIES SUFFIX ${IDA_SUFFIX})
 SET_TARGET_PROPERTIES(ponce PROPERTIES PREFIX "")
