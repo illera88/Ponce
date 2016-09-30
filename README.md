@@ -140,6 +140,9 @@ The project has 4 build configurations:
 
 The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll). If you are using z3 dynamically don't forget to copy the [libz3.dll](https://github.com/illera88/Ponce/blob/master/external-libs/libs/Z3_dyn_rest_static_MT_x86/libz3.dll) file into the IDA's directory.
 
+If you want to build Triton for linux or MacOsX check this file:
+https://github.com/illera88/Ponce/tree/master/builds/PonceBuild/nix/README.md
+
 ## FAQ
 ### Why the name of Ponce?
 Juan Ponce de León (1474 – July 1521) was a Spanish  explorer and conquistador. He discovered Florida in the United States. The IDA plugin will help you discover, explore and hopefully conquer the different paths in a binary. 
