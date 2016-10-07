@@ -59,18 +59,20 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	//Second we taint all the arguments values
 	// We should first see if we are tainting main or wmain (Unicode)
 	bool unicode = false;
-	ea_t main_function = find_function("main");
+	ea_t main_function = find_function("wmain");
 	if (main_function == -1)
 	{
 		//Maybe we should look for more? _tmain?
-		main_function = find_function("_main");
-		if (main_function == -1)
+		main_function = find_function("_wmain");
+		if (main_function != -1)
 		{
 			// If main or _main where not found it means that wmain was the function we found before.
 			// Unexpected behaviour if main and wmain exists
 			unicode = true;
 		}
 	}
+	else
+		unicode = true;
 
 	triton::uint32 char_size = 1;// "char_size" in unicode is 2
 	const void* null_byte = "\0";
@@ -135,20 +137,20 @@ void set_automatic_taint_n_simbolic()
 	if (cmdOptions.taintArgv)
 	{
 		//We should transparentelly hook the main so we could taint the argv when the execution is there
-		//First we need to find the main function
+		//First we need to find the main function. Look first for wmain since if wmain exists main is more likely to exist too
 		//Adding wmain feature https://github.com/illera88/Ponce/issues/56
-		ea_t main_function = find_function("main");
+		ea_t main_function = find_function("wmain");
 		if (main_function == -1)
 		{
 			//Maybe we should look for more? _tmain?
-			main_function = find_function("_main");
+			main_function = find_function("_wmain");
 			if (main_function == -1)
 			{
 				// Lets search for wmain
-				main_function = find_function("wmain");
+				main_function = find_function("main");
 				if (main_function == -1)
 				{
-					main_function = find_function("_wmain");
+					main_function = find_function("_main");
 					if (main_function == -1){
 						msg("[!] main function not found, we cannot taint the args :S\n");
 						return;
