@@ -41,3 +41,4 @@ regval_t ida_get_reg_val_invalidate(char *reg_name);
 void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
 void concretizeAndUntaintVolatileRegisters();
+short read_unicode_char_from_ida(ea_t address);
