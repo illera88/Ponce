@@ -156,8 +156,9 @@ Open an [issue](https://github.com/illera88/Ponce/issues), we will solve it ASAP
 Sure! Please do pull requests and work in the opened issues. We will pay you in beers for help ;)
 
 ## Limitations
-Symbolic execution has some inherent problems:
+Concolic execution and Ponce have some problems:
 - Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input. 
+- Triton doesn't work very well with [floating point instructions](https://github.com/illera88/Ponce/issues/59).
 
 ## Authors
 - Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) alberto.garcia@salesforce.com
