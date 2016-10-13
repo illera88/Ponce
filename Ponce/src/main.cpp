@@ -27,7 +27,7 @@
 #include <api.hpp>
 
 /*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
-void triton_init()
+/*void triton_init()
 {
 	//We need to set the architecture for Triton
 	triton::api.setArchitecture(TRITON_ARCH);
@@ -40,7 +40,7 @@ void triton_init()
 	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
 	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
 	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
-}
+}*/
 
 //--------------------------------------------------------------------------
 void idaapi run(int)
@@ -74,7 +74,6 @@ void idaapi run(int)
 				return;
 			}
 		
-			triton_init();
 			msg("[+] Ponce plugin version: %s running!\n", VERSION);
 			hooked = true;
 		}
