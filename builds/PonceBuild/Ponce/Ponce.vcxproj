@@ -436,6 +436,12 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x64Release|Win32'">
     <ClCompile>
