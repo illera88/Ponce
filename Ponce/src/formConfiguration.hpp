@@ -11,6 +11,7 @@
 #pragma once
 //IDA
 #include <ida.hpp>
+#include "globals.hpp"
 
 int idaapi modcb(int fid, form_actions_t &fa);
 void idaapi btn_cb(TView *[], int);
@@ -19,7 +20,7 @@ void prompt_conf_window(void);
 
 static const char form[] =
 "STARTITEM 0\n"
-"Ponce Configuration\n\n"
+"Ponce Configuration v"VERSION"\n\n"
 "%/"
 "<#time in seconds#Time limit before ask user (seconds)             :D1:10:10>\n"
 "<#Number of the instructions executed during tracing before ask to the user#Limit the number of instructions in tracing mode :D2:10:10>\n"

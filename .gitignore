@@ -52,3 +52,6 @@ libz3-static.lib
 
 *.plw
 *.suo
+
+# This file should be generated just before compile the program
+VERSION_NUMBER

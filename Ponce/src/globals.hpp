@@ -17,6 +17,8 @@
 #include <kernwin.hpp>
 //Triton
 #include <api.hpp>
+//Version number
+#include "../../VERSION_NUMBER"
 
 #if !defined(__EA64__)
 //#define X86_32 It is already defined in the preprocessor options

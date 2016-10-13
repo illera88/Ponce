@@ -75,7 +75,7 @@ void idaapi run(int)
 			}
 		
 			triton_init();
-			msg("[+] Ponce plugin running!\n");
+			msg("[+] Ponce plugin version: %s running!\n", VERSION);
 			hooked = true;
 		}
 	}
