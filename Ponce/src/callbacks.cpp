@@ -212,6 +212,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					msg("[+] Stepping %s: " HEX_FORMAT " (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
 				tritonize(pc, tid);
 			}
+			ponce_runtime_status.tracing_start_time = 0;
 			break;
 		}
 		case dbg_trace:

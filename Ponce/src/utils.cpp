@@ -301,7 +301,7 @@ void rename_tainted_function(ea_t address)
 	if (get_func_name2(&func_name, address) > 0)
 	{
 		//If the function isn't already renamed
-		if (strstr(func_name.c_str(), "T0") != func_name.c_str())
+		if (strstr(func_name.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) != func_name.c_str())
 		{
 			char new_func_name[MAXSTR];
 			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
