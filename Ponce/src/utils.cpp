@@ -155,6 +155,14 @@ ea_t find_function(char const *function_name)
 		if (get_func_name2(&funcName, curFunc->startEA) > 0){ // if found
 			if (strcmp(funcName.c_str(), function_name) == 0)
 				return curFunc->startEA;
+			//We need to ignore our prefix when the function is tainted
+			//If the function name starts with our prefix, fix for #51
+			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN)
+			{
+				//Then we ignore the prefix and compare the rest of the function name
+				if (strcmp(funcName.c_str() + RENAME_TAINTED_FUNCTIONS_PATTERN_LEN, function_name) == 0)
+					return curFunc->startEA;
+			}
 		}
 	}
 	return -1;
@@ -285,7 +293,7 @@ ea_t read_regSize_from_ida(ea_t address)
 	return value;
 }
 
-/*This function renames a tainted function with the prefix RENAME_TAINTED_FUNCTIONS_PREFIX, by default "T%03d_"*/
+/*This function renames a tainted function with the prefix RENAME_TAINTED_FUNCTIONS_PATTERN, by default "T%03d_"*/
 void rename_tainted_function(ea_t address)
 {
 	qstring func_name;
@@ -297,7 +305,7 @@ void rename_tainted_function(ea_t address)
 		{
 			char new_func_name[MAXSTR];
 			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
-			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PREFIX"_%s", ponce_runtime_status.tainted_functions_index, func_name.c_str());
+			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PATTERN"%s", ponce_runtime_status.tainted_functions_index, func_name.c_str());
 			//We need the start of the function we can have that info with our function find_function
 			set_name(find_function(func_name.c_str()), new_func_name);
 			if (cmdOptions.showDebugInfo)
