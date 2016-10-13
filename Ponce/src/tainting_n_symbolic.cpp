@@ -64,7 +64,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	// We should first see if we are tainting main or wmain (Unicode)
 	bool unicode = false;
 	ea_t main_function = find_function("wmain");
-	if (main_function =! -1)
+	if (main_function != - 1)
 		unicode = true;
 	else
 	{
@@ -76,19 +76,15 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		// Unexpected behaviour if main and wmain exists
 	}
 
-	triton::uint32 char_size = 1;// "char_size" in unicode is 2
-	const void* null_byte = "\0";
-	if (unicode){
-		char_size = 2;
-		null_byte = "\0\0";
-	}
+	triton::uint32 char_size = unicode? 2: 1;// "char_size" in unicode is 2
+	const void* null_byte =	unicode? "\0\0": "\0";
 
 	//We are tainting the argv[0], this is the program path, and it is something that the 
 	//user controls and sometimes is used to do somechecks
 	for (unsigned int i = cmdOptions.taintArgv0 ? 0 : 1; i < argc; i++)
 	{
 		ea_t current_argv = read_regSize_from_ida(argv + i * REG_SIZE);
-		if (current_argv == 0xffffffff)
+		if (current_argv == (ea_t)-1)
 		{
 			msg("[!] Error reading mem: " HEX_FORMAT "\n", argv + i * REG_SIZE);
 			break;
@@ -98,19 +94,18 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		short current_char;
 		do
 		{
-			if (unicode)	
-				current_char = read_unicode_char_from_ida(current_argv + j);
+			if (unicode)
+				current_char = read_unicode_char_from_ida(current_argv + j*char_size);
 			else		
-				current_char = read_char_from_ida(current_argv + j);
+				current_char = read_char_from_ida(current_argv + j*char_size);
 
 			if (memcmp(&current_char, null_byte, char_size) == 0 && !cmdOptions.taintEndOfString)
+			{
 				break;
-			
-
-			if (cmdOptions.showExtraDebugInfo){
-				msg("[!] %s argv[%d][%d]: %c\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", i, j, current_char);
-				msg("\n");
 			}
+			
+			if (cmdOptions.showExtraDebugInfo)
+				msg("[!] %s argv[%d][%d]: %c\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", i, j, (char)current_char == 0 ? ' ' : (char)current_char);
 			if (cmdOptions.use_tainting_engine)
 				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j, char_size, current_char));
 			else
@@ -119,7 +114,6 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 				qsnprintf(comment, 256, "argv[%d][%d]", i, j);
 				//msg("Converting memory to symbolic " HEX_FORMAT "\n", current_argv + j);
 				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, char_size, current_char), comment);
-
 			}
 			j++;
 		} while (memcmp(&current_char, null_byte, char_size) != 0);

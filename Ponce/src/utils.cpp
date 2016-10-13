@@ -154,7 +154,9 @@ ea_t find_function(char const *function_name)
 		// get_func_name2 gets the name of a function and stored it in funcName
 		if (get_func_name2(&funcName, curFunc->startEA) > 0){ // if found
 			if (strcmp(funcName.c_str(), function_name) == 0)
+			{
 				return curFunc->startEA;
+			}
 			//We need to ignore our prefix when the function is tainted
 			//If the function name starts with our prefix, fix for #51
 			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN)
@@ -507,10 +509,10 @@ Input * solve_formula(ea_t pc, uint bound)
 				switch (symbVar->getSize())
 				{
 				case 8:
-					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>());
+					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>() == 0? ' ': secondValue.convert_to<uchar>() == 0);
 					break;
 				case 16:
-					msg(" - %s (%s):%#04x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>());
+					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>(), secondValue.convert_to<uchar>() == 0 ? ' ' : secondValue.convert_to<uchar>() == 0, (unsigned char)(secondValue.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(secondValue.convert_to<ushort>() >> 8));
 					break;
 				case 32:
 					msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint32>());
