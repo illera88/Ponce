@@ -98,15 +98,16 @@ struct cmdOptionStruct{
 	bgcolor_t color_tainted_condition = 0x00b377;
 	bgcolor_t color_executed_instruction = 0xe6e6e6;
 
-	bool  showDebugInfo = false;
-	bool  showExtraDebugInfo = false;
-	bool  manageSymbolicIndexing = false;
-	bool  taintArgv = false;
-	bool  taintEndOfString = false;
-	bool  taintArgv0 = false;
-	bool  taintArgc = false;
-	bool  taintRecv = false;
-	bool  taintFread = false;
+	bool showDebugInfo = false;
+	bool showExtraDebugInfo = false;
+	bool manageSymbolicIndexing = false;
+	bool taintArgv = false;
+	bool taintEndOfString = false;
+	bool taintArgv0 = false;
+	bool taintArgc = false;
+	bool taintRecv = false;
+	bool taintFread = false;
+	bool only_on_optimization = true;
 
 	bool addCommentsControlledOperands = false;
 	bool RenameTaintedFunctionNames = false;

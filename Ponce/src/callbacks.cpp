@@ -159,11 +159,28 @@ void triton_restart_engines()
 {
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Restarting triton engines...\n");
+	//We need to set the architecture for Triton
+	triton::api.setArchitecture(TRITON_ARCH);
 	//We reset everything at the beginning
 	triton::api.resetEngines();
+	// Memory access callback
+	triton::api.addCallback(needConcreteMemoryValue);
+	// Register access callback
+	triton::api.addCallback(needConcreteRegisterValue);
 	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
 	triton::api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
 	triton::api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
+	// This optimization is veeery good for the size of the formulas
+	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
+	triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true);
+	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
+	if (cmdOptions.only_on_optimization)
+	{
+		if (cmdOptions.use_symbolic_engine)
+			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
+		if (cmdOptions.use_tainting_engine)
+			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
+	}
 	//triton::api.getSymbolicEngine()->enable(true);
 	ponce_runtime_status.runtimeTrigger.disable();
 	ponce_runtime_status.is_something_tainted_or_symbolize = false;

@@ -107,13 +107,13 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			if (cmdOptions.showExtraDebugInfo)
 				msg("[!] %s argv[%d][%d]: %c\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", i, j, (char)current_char == 0 ? ' ' : (char)current_char);
 			if (cmdOptions.use_tainting_engine)
-				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j, char_size, current_char));
+				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j*char_size, char_size, current_char));
 			else
 			{
 				char comment[256];
 				qsnprintf(comment, 256, "argv[%d][%d]", i, j);
 				//msg("Converting memory to symbolic " HEX_FORMAT "\n", current_argv + j);
-				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j, char_size, current_char), comment);
+				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j*char_size, char_size, current_char), comment);
 			}
 			j++;
 		} while (memcmp(&current_char, null_byte, char_size) != 0);

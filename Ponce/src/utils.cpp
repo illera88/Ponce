@@ -509,10 +509,10 @@ Input * solve_formula(ea_t pc, uint bound)
 				switch (symbVar->getSize())
 				{
 				case 8:
-					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>() == 0? ' ': secondValue.convert_to<uchar>() == 0);
+					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>() == 0? ' ': secondValue.convert_to<uchar>());
 					break;
 				case 16:
-					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>(), secondValue.convert_to<uchar>() == 0 ? ' ' : secondValue.convert_to<uchar>() == 0, (unsigned char)(secondValue.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(secondValue.convert_to<ushort>() >> 8));
+					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>(), secondValue.convert_to<uchar>() == 0 ? ' ' : secondValue.convert_to<uchar>(), (unsigned char)(secondValue.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(secondValue.convert_to<ushort>() >> 8));
 					break;
 				case 32:
 					msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint32>());
