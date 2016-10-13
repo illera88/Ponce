@@ -45,14 +45,18 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #else
 		triton::arch::Register reg;
 #ifdef __NT__ 
-		reg = triton::arch::x86::x86_reg_rsi;
+		reg = triton::arch::x86::x86_reg_rcx;
 #elif __LINUX__ || __MAC__
 		reg = triton::arch::x86::x86_reg_rdi;
 #endif
 		reg.setConcreteValue(argc);
-		triton::api.taintRegister(reg);
+		if (cmdOptions.use_tainting_engine)
+			triton::api.taintRegister(reg);
+		else
+			triton::api.convertRegisterToSymbolicVariable(reg, "argc");
+
 		if (cmdOptions.showDebugInfo)
-			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
+			msg("[!] argc (%s) %s\n", reg.getName().c_str(), cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #endif	
 		start_tainting_or_symbolic_analysis();
 	}
@@ -60,19 +64,17 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	// We should first see if we are tainting main or wmain (Unicode)
 	bool unicode = false;
 	ea_t main_function = find_function("wmain");
-	if (main_function == -1)
+	if (main_function =! -1)
+		unicode = true;
+	else
 	{
 		//Maybe we should look for more? _tmain?
 		main_function = find_function("_wmain");
 		if (main_function != -1)
-		{
-			// If main or _main where not found it means that wmain was the function we found before.
-			// Unexpected behaviour if main and wmain exists
 			unicode = true;
-		}
+		// If wmain or _wmain where not found it means that wmain was the function we found before
+		// Unexpected behaviour if main and wmain exists
 	}
-	else
-		unicode = true;
 
 	triton::uint32 char_size = 1;// "char_size" in unicode is 2
 	const void* null_byte = "\0";
