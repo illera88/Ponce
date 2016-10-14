@@ -199,7 +199,7 @@ struct ah_taint_memory_t : public action_handler_t
 			return 0;
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		ea_t selection_length = selection_ends - selection_starts + 1;
-		msg("[+] Tainting memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
+		msg("[+] Tainting memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
@@ -297,7 +297,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts + 1;
-		msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, selection_length);
+		msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		//Tainting all the selected memory
 		char comment[256];
 		qsnprintf(comment, 256, "Mem " HEX_FORMAT "-" HEX_FORMAT " at address: " HEX_FORMAT "", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
