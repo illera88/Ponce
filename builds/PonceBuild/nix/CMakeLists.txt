@@ -5,6 +5,8 @@ cmake_policy(SET CMP0015 NEW)
 
 set(CMAKE_BUILD_TYPE Release)
 
+execute_process(COMMAND /bin/bash -c "cd ../../../../; /bin/bash ./version_number_update.sh")
+
 if (NOT IDA_ARCH)
     set(IDA_ARCH "x86")
 endif()
