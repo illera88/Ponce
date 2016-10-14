@@ -72,7 +72,8 @@ void tritonize(ea_t pc, thid_t threadID)
 		msg("[+] Triton At " HEX_FORMAT ": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
 	/* Process the IR and taint */
-	triton::api.buildSemantics(*tritonInst);
+	if (!triton::api.buildSemantics(*tritonInst))
+		msg("[!] Instruction at " HEX_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
 	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
 	if (snapshot.exists())
