@@ -159,42 +159,42 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x86_static</TargetName>
+    <TargetName>$(ProjectName)_x86_IDA69_win</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x68ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x86_static_IDA68</TargetName>
+    <TargetName>$(ProjectName)_x86_IDA68_win</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x64_static</TargetName>
+    <TargetName>$(ProjectName)_x64_IDA69_win</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x64_static_IDA68</TargetName>
+    <TargetName>$(ProjectName)_x64_IDA68_win</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x86_z3dyn</TargetName>
+    <TargetName>$(ProjectName)_x86_IDA69_win_z3dyn</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_x64_z3dyn</TargetName>
+    <TargetName>$(ProjectName)_x64_IDA69_win_z3dyn</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64Release|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -214,6 +214,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseStatic|Win32'">
     <ClCompile>
@@ -251,6 +255,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x68ReleaseStatic_IDA6.8|Win32'">
     <ClCompile>
@@ -288,6 +296,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic|Win32'">
     <ClCompile>
@@ -325,6 +337,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic_IDA6.8|Win32'">
     <ClCompile>
@@ -362,6 +378,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseZ3dyn|Win32'">
     <ClCompile>
@@ -399,6 +419,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='x64ReleaseZ3dyn|Win32'">
     <ClCompile>
@@ -475,6 +499,10 @@
     <PostBuildEvent>
       <Command>copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.95\plugins"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"C:\Program Files\Git\git-bash.exe" -c "cd /c/PonceProject/; bash version_number_update.sh"</Command>
+      <Message>This event update the version before compile the plugin</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
