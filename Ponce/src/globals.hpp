@@ -58,8 +58,6 @@
 #define SNAPSHOT_DESCRIPTION "Before use the script"
 //It enables the instruction tracing the first time a register/memory is tainted
 #define ENABLE_STEP_INTO_WHEN_TAINTING true
-//It runs the plugin when it is initiallized
-#define AUTO_RUN true
 
 #define RENAME_TAINTED_FUNCTIONS_PREFIX "T_"
 #define RENAME_TAINTED_FUNCTIONS_PATTERN RENAME_TAINTED_FUNCTIONS_PREFIX"%03d_"
@@ -84,6 +82,7 @@ extern bool hooked;
 
 //User options
 struct cmdOptionStruct{
+	bool auto_init = false;
 	uint64 limitInstructionsTracingMode = 10000;
 	uint64 limitTime = 60; //seconds
 

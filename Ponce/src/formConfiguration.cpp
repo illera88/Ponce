@@ -25,30 +25,30 @@ int idaapi modcb(int fid, form_actions_t &fa)
 {
 	ushort isActivated=0;
 	//Symbolic indexing still not implemented
-	fa.enable_field(14, 0);
+	fa.enable_field(15, 0);
 
 	//The Taint recv and Taint fread are disabled until we implemented them
-	fa.enable_field(11, 0);
 	fa.enable_field(12, 0);
+	fa.enable_field(13, 0);
 	switch (fid)
 	{
 	case -1:
-		fa.get_checkbox_value(7, &isActivated);
-		fa.enable_field(8, isActivated ? 1 : 0);
+		fa.get_checkbox_value(8, &isActivated);
 		fa.enable_field(9, isActivated ? 1 : 0);
 		fa.enable_field(10, isActivated ? 1 : 0);
+		fa.enable_field(11, isActivated ? 1 : 0);
 		break;
 	case -2:
 		break;
-	case 3:
-		fa.get_checkbox_value(3, &isActivated);
-		fa.enable_field(21, isActivated ? 1 : 0);
+	case 4:
+		fa.get_checkbox_value(4, &isActivated);
+		fa.enable_field(22, isActivated ? 1 : 0);
 		break;
-	case 7: // Depending if argv(8) is activated we should activate 9, 10 and 11
-		fa.get_checkbox_value(7, &isActivated);
-		fa.enable_field(8, isActivated ? 1 : 0);
+	case 8: // Depending if argv(8) is activated we should activate 9, 10 and 11
+		fa.get_checkbox_value(8, &isActivated);
 		fa.enable_field(9, isActivated ? 1 : 0);
 		fa.enable_field(10, isActivated ? 1 : 0);
+		fa.enable_field(11, isActivated ? 1 : 0);
 		break;
 	default:
 		break;
@@ -71,7 +71,7 @@ void prompt_conf_window(void){
 
 	if (!cmdOptions.already_configured){
 		//Here we can initialize the checkboxes by group
-		chkgroup1 = 1;
+		chkgroup1 = 2;
 		chkgroup2 = 1 | 2 | 8 | 64;
 		chkgroup3 = 1 | 2 | 8;
 
@@ -82,7 +82,7 @@ void prompt_conf_window(void){
 		after using the plugin we should set the variables to the previously set configuration. If we
 		don't do this the variables will be always initialized to  the previous lines
 		NOTE: Parenthesis are mandatory or it won't work!*/
-		chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0);
+		chkgroup1 = (cmdOptions.auto_init ? 1 : 0) | (cmdOptions.showDebugInfo ? 2 : 0) | (cmdOptions.showExtraDebugInfo ? 4 : 0);
 		chkgroup2 = (cmdOptions.taintArgv ? 1 : 0) | (cmdOptions.taintEndOfString ? 2 : 0) | (cmdOptions.taintArgv0 ? 4 : 0) | (cmdOptions.taintArgc ? 8 : 0) | (cmdOptions.taintRecv ? 16 : 0) | (cmdOptions.taintFread ? 32 : 0) | (cmdOptions.only_on_optimization ? 64: 0) | (cmdOptions.manageSymbolicIndexing ? 128 : 0);
 		chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
@@ -119,8 +119,9 @@ void prompt_conf_window(void){
 		}
 
 		/*Now that the user pressed accept we need to transform the chkgroups to actual booleans for cmdOptions*/
-		cmdOptions.showDebugInfo = chkgroup1 & 1 ? 1 : 0;
-		cmdOptions.showExtraDebugInfo = chkgroup1 & 2 ? 1 : 0;
+		cmdOptions.auto_init = chkgroup1 & 1 ? 1 : 0;
+		cmdOptions.showDebugInfo = chkgroup1 & 2 ? 1 : 0;
+		cmdOptions.showExtraDebugInfo = chkgroup1 & 4 ? 1 : 0;
 		//
 		cmdOptions.taintArgv = chkgroup2 & 1 ? 1 : 0;
 		cmdOptions.taintEndOfString = chkgroup2 & 2 ? 1 : 0;
@@ -154,6 +155,7 @@ void prompt_conf_window(void){
 				"limitTime: %lld\n"
 				"limitInstructionsTracingMode: %lld\n"
 				"use_symbolic_engine: %s\n"
+				"auto_init: %s\n"
 				"showDebugInfo: %s\n"
 				"showExtraDebugInfo: %s\n"
 				"taintArgv: %s\n"
@@ -174,6 +176,7 @@ void prompt_conf_window(void){
 				cmdOptions.limitTime,
 				cmdOptions.limitInstructionsTracingMode,
 				cmdOptions.use_symbolic_engine ? "symbolic engine enabled" : "tainting engine enabled",
+				cmdOptions.auto_init ? "true" : "false",
 				cmdOptions.showDebugInfo ? "true" : "false",
 				cmdOptions.showExtraDebugInfo ? "true" : "false",
 				cmdOptions.taintArgv ? "true" : "false",

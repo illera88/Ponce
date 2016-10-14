@@ -109,8 +109,11 @@ int idaapi init(void)
 			return PLUGIN_SKIP;
 		}	
 	}
+	//Error loading config?
+	if (!load_options(&cmdOptions))
+		return PLUGIN_KEEP;
 	//We want to autorun the plugin when IDA starts?
-	if (AUTO_RUN)
+	if (cmdOptions.auto_init)
 		run(0);
 	return PLUGIN_KEEP;
 }
