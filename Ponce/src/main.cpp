@@ -53,6 +53,8 @@ void idaapi run(int)
 
 	if (!hooked)
 	{
+        //Some actions needs to use the api and the api need to have the architecture set
+        triton::api.setArchitecture(TRITON_ARCH);
 		//Registering action for the Ponce config
 		register_action(action_IDA_show_config);
 		attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP);
