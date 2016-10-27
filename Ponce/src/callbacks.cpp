@@ -483,28 +483,6 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			ea_t cur_ea = popup_menu_ea;
 			if (view_type == BWN_DISASM)
 			{
-				//Test code to see all the available icons!
-				for (int i = 0; i < 30; i++)
-				{
-					for (int j = 0; j < 10; j++)
-					{
-						int icon_number = i * 10 + j;
-						char name[256];
-						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						sprintf_s(name, "Ponce:icon_%d", icon_number);
-						action_IDA_solve_formula_sub.icon = icon_number;
-						action_IDA_solve_formula_sub.name = name;
-						action_IDA_solve_formula_sub.label = name;
-						bool success = register_action(action_IDA_solve_formula_sub);
-						msg("registered submenu for solver, result: %d\n", success);
-						char path[256];
-						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						sprintf_s(path, "Icons_%d/", i);
-						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, path, SETMENU_APP);
-						msg("attached submenu for solver, result: %d\n", success);
-					}
-				}
-
 				//Adding submenus for solve with all the conditions executed in the same address
 				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 				{
