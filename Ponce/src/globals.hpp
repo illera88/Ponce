@@ -140,3 +140,5 @@ public:
 extern ea_t popup_menu_ea;
 
 extern std::vector<std::string> *blacklkistedUserFunctions; 
+
+extern void idaapi term(void);

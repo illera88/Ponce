@@ -35,7 +35,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		//First we taint the argc
 #if !defined(__EA64__)
 		//In x86 we taint the memory of the first arg, argc
-		msg("%s argc at memory: " HEX_FORMAT "\n", cmdOptions.use_tainting_engine? "Tainting": "Symbolizing", get_args_pointer(0, true));
+		//msg("[!] %s argc at memory: " HEX_FORMAT "\n", cmdOptions.use_tainting_engine? "Tainting": "Symbolizing", get_args_pointer(0, true));
 		if (cmdOptions.use_tainting_engine)
 			triton::api.taintMemory(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
 		else 
