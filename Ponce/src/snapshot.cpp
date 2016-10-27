@@ -95,7 +95,6 @@ void Snapshot::takeSnapshot() {
 		triton::arch::Register *reg = *it;
 		uint64 ival;
 		if (get_reg_val(reg->getName().c_str(), &ival)){
-			msg("getting register %s with value %lld\n", reg->getName().c_str(), ival);
 			this->IDAContext[reg->getName()] = ival;
 		}
 	}
@@ -145,7 +144,7 @@ void Snapshot::restoreSnapshot() {
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
 	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
 		if (!set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
-			msg("ERROR restoring register %s\n", iterator->first.c_str());
+			msg("[!] ERROR restoring register %s\n", iterator->first.c_str());
 	}
 
 	/* 8 - Restore the Ponce status */

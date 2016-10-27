@@ -616,6 +616,29 @@ action_desc_t action_IDA_show_taintWindow = ACTION_DESC_LITERAL(
 	"Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
 	157); //Optional: the action icon (shows when in menus/toolbars)
 
+struct ah_unload_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t *ctx)
+	{
+		term();
+		return 0;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
+	{
+		return AST_ENABLE_ALWAYS;
+	}
+};
+static ah_unload_t ah_unload;
+
+action_desc_t action_IDA_unload = ACTION_DESC_LITERAL(
+	"Ponce:unload", // The action name. This acts like an ID and must be unique
+	"Unload plugin", //The action text.
+	&ah_unload, //The action handler.
+	"Ctrl+Shift+U", //Optional: the action shortcut
+	"Unload the plugin", //Optional: the action tooltip (available in menus/toolbar)
+	138); //Optional: the action icon (shows when in menus/toolbars)
+
 struct ah_execute_native_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)

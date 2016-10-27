@@ -521,7 +521,7 @@ Input * solve_formula(ea_t pc, uint bound)
 					msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
 					break;
 				default:
-					msg("Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
+					msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
 				}
 			}
 			return newinput;
@@ -844,7 +844,7 @@ void readBlacklistfile(char* path){
 	std::vector<std::string>* black_func = new std::vector<std::string>();
 	while (std::getline(file, str)){
 		if (cmdOptions.showDebugInfo)
-			msg("Adding %s to the blacklist funtion list\n",str.c_str());
+			msg("[+] Adding %s to the blacklist funtion list\n",str.c_str());
 		black_func->push_back(str);
 	}
 }

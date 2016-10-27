@@ -74,7 +74,7 @@ triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 {
 	if (size > 16)
 	{
-		warning("[!]Error, size can't be larger than 16\n");
+		warning("[!] Error, size can't be larger than 16\n");
 		return -1;
 	}
 	triton::uint8 buffer[16] = {0};

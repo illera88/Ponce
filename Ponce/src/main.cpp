@@ -53,26 +53,44 @@ void idaapi run(int)
 
 	if (!hooked)
 	{
-        //Some actions needs to use the api and the api need to have the architecture set
-        triton::api.setArchitecture(TRITON_ARCH);
 		//Registering action for the Ponce config
 		register_action(action_IDA_show_config);
-		attach_action_to_menu("Edit/Ponce/", "Ponce:show_config", SETMENU_APP);
+		attach_action_to_menu("Edit/Ponce/", action_IDA_show_config.name, SETMENU_APP);
 		//Registering action for the Ponce taint window
 		register_action(action_IDA_show_taintWindow);
-		attach_action_to_menu("Edit/Ponce/", "Ponce:show_taintWindows", SETMENU_APP);
+		attach_action_to_menu("Edit/Ponce/", action_IDA_show_taintWindow.name, SETMENU_APP);
+		//Registering action for the unload action
+		register_action(action_IDA_unload);
+		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
+		//Some actions needs to use the api and the api need to have the architecture set
+		triton::api.setArchitecture(TRITON_ARCH);
+		
+		//Loop to register all the actions used in the menus
+		for (int i = 0;; i++)
+		{
+			if (action_list[i].action_decs == NULL){
+				break;
+			}
+			//Here we register all the actions
+			if (!register_action(*action_list[i].action_decs))
+			{
+				warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
+				return;
+			}
+		}
+
 
 		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
 		if (ask_for_a_snapshot() != -1)
 		{
 			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
 			{
-				warning("Could not hook ui callback");
+				warning("[!] Could not hook ui callback");
 				return;
 			}
 			if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
 			{
-				warning("Could not hook tracer callback");
+				warning("[!] Could not hook tracer callback");
 				return;
 			}
 		
@@ -92,24 +110,12 @@ int idaapi init(void)
 #ifdef __IDA68__
 		//The IDA 6.8 plugin running in IDA 6.9x
 		if (strcmp(version, "6.8") != 0)
-			warning("This plugin was built for IDA 6.8, you are using: %s\n", version);
+			warning("[!] This plugin was built for IDA 6.8, you are using: %s\n", version);
 #else
 		//The IDA 6.9x plugin running in IDA 6.8
 		if (strcmp(version, "6.8") == 0)
-			warning("This plugin was built for IDA 6.9x, you are using: %s\n", version);
+			warning("[!] This plugin was built for IDA 6.9x, you are using: %s\n", version);
 #endif
-	}
-	for (int i = 0;; i++)
-	{
-		if (action_list[i].action_decs == NULL){
-			break;
-		}
-		//Here we register all the actions
-		if (!register_action(*action_list[i].action_decs))
-		{
-			warning("Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
-			return PLUGIN_SKIP;
-		}	
 	}
 	//Error loading config?
 	if (!load_options(&cmdOptions))
@@ -123,9 +129,17 @@ int idaapi init(void)
 //--------------------------------------------------------------------------
 void idaapi term(void)
 {
-	// just to be safe
+	// Unhook notifications
 	unhook_from_notification_point(HT_UI, ui_callback, NULL);
 	unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
+	// Unregister and detach menus
+	unregister_action(action_IDA_show_config.name);
+	detach_action_from_menu("Edit/Ponce/", action_IDA_show_config.name);
+	unregister_action(action_IDA_show_taintWindow.name);
+	detach_action_from_menu("Edit/Ponce/", action_IDA_show_taintWindow.name);
+	unregister_action(action_IDA_unload.name);
+	detach_action_from_menu("Edit/Ponce/", action_IDA_unload.name);
+	detach_action_from_menu("Edit/Ponce/", "");
 	hooked = false;
 }
 
