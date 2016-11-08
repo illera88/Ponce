@@ -14,11 +14,7 @@ We addressed these needs by creating Ponce, an IDA plugin that implements symbol
 Ponce works with both x86 and x64 binaries in IDA 6.8 and IDA 6.9x. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory.
 
 ## OS Support
-Ponce currently works with IDA Pro on Windows for x86 and x64 binaries. 
-
-You can still debug Linux and Mac OS X binaries with Ponce using IDA's built-in remote debugger. 
-
-Ponce v0.2 will build native plugins for IDA Linux and IDA Mac OS X. Actually the code we wrote already takes these architectures into consideration using macros for the different operating systems.
+Ponce works on Windows, Linux and OS natively! 
 
 ## Use cases
 - **Exploit development**: Ponce can help you create an exploit in a far more efficient manner as the exploit developer may easily see what parts of memory and which registers you control, as well as possible addresses which can be leveraged as ROP gadgets.
