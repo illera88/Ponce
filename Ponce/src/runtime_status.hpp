@@ -15,6 +15,7 @@
 #include <api.hpp>
 //IDA
 #include <pro.h> 
+#include <idd.hpp>
 
 typedef struct PathConstraint{
 	triton::usize conditionRipId;
@@ -39,6 +40,10 @@ typedef struct runtime_status_t
 {
 	//This variable stores the number of instructions executed during the tracing
 	unsigned int total_number_traced_ins;
+	//This variable is use to have statistics
+	unsigned int total_number_symbolic_ins;
+	//This variable is use to have statistics
+	unsigned int total_number_symbolic_conditions;
 	//This variable is used to count how many instructions were executed after the user was asked
 	unsigned int current_trace_counter;
 	//Is it something tainted or symbolize?
@@ -53,6 +58,9 @@ typedef struct runtime_status_t
 	std::vector<PathConstraint> myPathConstraints;
 	//This variable is used to know how much time the tracing was working, and stop if this time is bigger than the user defined value
 	std::uint64_t tracing_start_time = 0;
+	thid_t analyzed_thread;
+	//Flag used to skip the step over done to deal with wow64 switching
+	bool ignore_wow64_switching_step = false;
 } runtime_status_t;
 
 extern runtime_status_t ponce_runtime_status;

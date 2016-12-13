@@ -45,8 +45,10 @@ void start_tainting_or_symbolic_analysis()
 	if (!ponce_runtime_status.is_something_tainted_or_symbolize)
 	{
 		ponce_runtime_status.runtimeTrigger.enable();
+		ponce_runtime_status.analyzed_thread = get_current_thread();
 		ponce_runtime_status.is_something_tainted_or_symbolize = true;
 		enable_step_trace(true);
+		set_step_trace_options(0);
 		ponce_runtime_status.tracing_start_time = 0;
 	}
 }
@@ -268,7 +270,7 @@ short read_unicode_char_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("[!] Error reading memory from " HEX_FORMAT "\n", address);
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -280,7 +282,7 @@ char read_char_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("[!] Error reading memory from " HEX_FORMAT "\n", address);
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -291,7 +293,7 @@ ea_t read_regSize_from_ida(ea_t address)
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
 	if (!get_many_bytes(address, &value, sizeof(value)))
-		warning("[!] Error reading memory from " HEX_FORMAT "\n", address);
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
 	return value;
 }
 
@@ -473,7 +475,8 @@ Input * solve_formula(ea_t pc, uint bound)
 			/*Create the full formula*/
 			ss << "(set-logic QF_AUFBV)\n";
 			/* Then, delcare all symbolic variables */
-			ss << triton::api.getVariablesDeclaration();
+			ss << triton::api.getSymbolicEngine()->getVariablesDeclaration();
+			//ss << triton::api.getVariablesDeclaration();
 			/* And concat the user expression */
 			ss << "\n\n";
 			ss << final_expr;
