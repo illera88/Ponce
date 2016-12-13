@@ -691,8 +691,10 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		{
 			//Enabling step tracing...
 			enable_step_trace(true);
+			set_step_trace_options(0);
 			ponce_runtime_status.tracing_start_time = 0;
 			//Enabling the trigger
+			ponce_runtime_status.analyzed_thread = get_current_thread();
 			ponce_runtime_status.runtimeTrigger.enable();
 			//And analyzing current instruction
 			reanalize_current_instruction();

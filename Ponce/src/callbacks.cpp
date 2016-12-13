@@ -46,7 +46,7 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!decode_insn(pc))
-		warning("[!] Some error decoding instruction at " HEX_FORMAT, pc);	
+		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);	
 	
 	unsigned char opcodes[15];
 	get_many_bytes(pc, opcodes, cmd.size);
@@ -68,14 +68,14 @@ void tritonize(ea_t pc, thid_t threadID)
 		msg("\n");
 		return;
 	}
-	if (cmdOptions.showDebugInfo)
+	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] Triton At " HEX_FORMAT ": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
 	/* Process the IR and taint */
 	if (!triton::api.buildSemantics(*tritonInst))
 		msg("[!] Instruction at " HEX_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 
-	/*In the case that the snapshot engine is in use we shoudl track every memory write access*/
+	/*In the case that the snapshot engine is in use we should track every memory write access*/
 	if (snapshot.exists())
 	{
 		auto store_access_list = tritonInst->getStoreAccess();
@@ -103,10 +103,6 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (cmdOptions.addCommentsSymbolicExpresions)
 		add_symbolic_expressions(tritonInst, pc);
 
-	/* Trust operands */
-	for (auto op = tritonInst->operands.begin(); op != tritonInst->operands.end(); op++)
-		op->setTrust(true);
-
 	if (cmdOptions.paintExecutedInstructions)
 	{
 		//We only paint the executed instructions if they don't have a previous color
@@ -117,16 +113,22 @@ void tritonize(ea_t pc, thid_t threadID)
 	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
 	if (tritonInst->isTainted() || tritonInst->isSymbolized())
 	{
+		ponce_runtime_status.total_number_symbolic_ins++;
+
 		if (cmdOptions.showDebugInfo)
 			msg("[!] Instruction %s at " HEX_FORMAT "\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
 		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
 		// Check if it is a conditional jump
 		// We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
-		if (tritonInst->isBranch() && cmdOptions.use_symbolic_engine) 
-			set_item_color(pc, cmdOptions.color_tainted_condition);
-		else
-			set_item_color(pc, cmdOptions.color_tainted);
+		if (tritonInst->isBranch())
+		{
+			ponce_runtime_status.total_number_symbolic_conditions++;
+			if (cmdOptions.use_symbolic_engine)
+				set_item_color(pc, cmdOptions.color_tainted_condition);
+			else
+				set_item_color(pc, cmdOptions.color_tainted);
+		}
 	}
 
 	if (tritonInst->isBranch() && tritonInst->isSymbolized())
@@ -173,14 +175,20 @@ void triton_restart_engines()
 	triton::api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
 	// This optimization is veeery good for the size of the formulas
 	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
-	triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true);
 	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
 	if (cmdOptions.only_on_optimization)
 	{
 		if (cmdOptions.use_symbolic_engine)
+		{
+			triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true);
 			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
+		}
 		if (cmdOptions.use_tainting_engine)
+		{
+			//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
+			triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
 			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
+		}
 	}
 	//triton::api.getSymbolicEngine()->enable(true);
 	ponce_runtime_status.runtimeTrigger.disable();
@@ -188,6 +196,8 @@ void triton_restart_engines()
 	ponce_runtime_status.tainted_functions_index = 0;
 	//Reset instruction counter
 	ponce_runtime_status.total_number_traced_ins = 0;
+	ponce_runtime_status.total_number_symbolic_ins = 0;
+	ponce_runtime_status.total_number_symbolic_conditions  = 0;
 	ponce_runtime_status.current_trace_counter = 0;
 	breakpoint_pending_actions.clear();
 	set_automatic_taint_n_simbolic();
@@ -201,6 +211,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 	switch (notification_code)
 	{
 		case dbg_process_start:
+		case dbg_process_attach:
 		{
 			if (cmdOptions.showDebugInfo)
 				msg("[+] Starting the debugged process. Reseting all the engines.\n");
@@ -211,6 +222,14 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_into:
 		case dbg_step_over:
 		{
+			if (ponce_runtime_status.ignore_wow64_switching_step)
+			{
+				ponce_runtime_status.ignore_wow64_switching_step = false;
+				break;
+			}
+			//We only want to analyze the thread being analyzed
+			if (ponce_runtime_status.analyzed_thread != get_current_thread())
+				break;
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
 			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
@@ -219,7 +238,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
 			if (!decode_insn(pc))
-				warning("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+				msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
 			
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
@@ -235,6 +254,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_trace:
 		{
+			//We only want to analyze the thread being analyzed
+			if (ponce_runtime_status.analyzed_thread != get_current_thread())
+				break;
 			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
 			if (!ponce_runtime_status.runtimeTrigger.getState())
 				break;
@@ -297,9 +319,10 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 			ponce_runtime_status.current_trace_counter++;
 			ponce_runtime_status.total_number_traced_ins++;
-			//Every 1000 traced instructions we show with extradebug that info in the output
-			if (cmdOptions.showExtraDebugInfo && ponce_runtime_status.total_number_traced_ins % 1000 == 0)
-				msg("[+] Instructions traced: %d\n", ponce_runtime_status.total_number_traced_ins);
+			//Every 1000 traced instructions we show with debug that info in the output
+			if (cmdOptions.showDebugInfo && ponce_runtime_status.total_number_traced_ins % 1000 == 0)
+				msg("Instructions traced: %d Symbolic instructions: %d Symbolic conditions: %d Time: %lld secs\n", ponce_runtime_status.total_number_traced_ins, ponce_runtime_status.total_number_symbolic_ins, ponce_runtime_status.total_number_symbolic_conditions, GetTimeMs64() - ponce_runtime_status.tracing_start_time);
+				//msg("[+] Instructions traced: %d\n", ponce_runtime_status.total_number_traced_ins);
 
 			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
 			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
@@ -309,6 +332,8 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				//And now we need to stop the tracing, do step over and reenable the tracing...
 				//disable_step_trace();
 				suspend_process();
+				//We don't want to do a real step over (it would reset the timer)
+				ponce_runtime_status.ignore_wow64_switching_step = true;
 				request_step_over();
 				request_continue_process();
 				run_requests();
@@ -360,6 +385,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		}
 		case dbg_bpt:
 		{
+			//We only want to analyze the thread being analyzed
+			if (ponce_runtime_status.analyzed_thread != get_current_thread())
+				break;
+			msg("BP Instructions traced: %d Symbolic instructions: %d Symbolic conditions: %d Time: %lld secs\n", ponce_runtime_status.total_number_traced_ins, ponce_runtime_status.total_number_symbolic_ins, ponce_runtime_status.total_number_symbolic_conditions, GetTimeMs64() - ponce_runtime_status.tracing_start_time);
+
 			thid_t tid = va_arg(va, thid_t);
 			ea_t pc = va_arg(va, ea_t);
 			int *warn = va_arg(va, int *);
