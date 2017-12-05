@@ -12,11 +12,11 @@
 version: 1.0.{build}
 
 # Do not build on tags (GitHub and BitBucket)
-skip_tags: true
+#skip_tags: true
 
 # Skipping commits with particular message or from specific user
-skip_commits:
-  message: /Created.*\.(png|jpg|jpeg|bmp|gif)/      # Regex for matching commit message
+#skip_commits:
+#  message: /Created.*\.(png|jpg|jpeg|bmp|gif)/      # Regex for matching commit message
 
 # Maximum number of concurrent jobs for the project
 max_jobs: 1
