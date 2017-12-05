@@ -1,0 +1,65 @@
+# Notes:
+#   - Minimal appveyor.yml file is an empty file. All sections are optional.
+#   - Indent each level of configuration with 2 spaces. Do not use tabs!
+#   - All section names are case-sensitive.
+#   - Section names should be unique on each level.
+
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+# version format
+version: 1.0.{build}
+
+# Do not build on tags (GitHub and BitBucket)
+#skip_tags: true
+
+# Skipping commits with particular message or from specific user
+#skip_commits:
+#  message: /Created.*\.(png|jpg|jpeg|bmp|gif)/      # Regex for matching commit message
+
+# Maximum number of concurrent jobs for the project
+max_jobs: 1
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
+# Build worker image (VM template)
+image: Visual Studio 2013
+
+# this is how to allow failing jobs in the matrix
+matrix:
+  fast_finish: true     # set this flag to immediately finish build once one of the jobs fails.
+
+# build cache to preserve files/folders between builds
+#cache:
+#  - packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
+#  - projectA\libs
+#  - node_modules                    # local npm modules
+#  - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
+#  - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
+
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+
+# build platform, i.e. x86, x64, Any CPU. This setting is optional.
+# to add several platforms to build matrix:
+platform:
+  - Win32
+
+# build Configuration, i.e. Debug, Release, etc.
+configuration:
+   - X64ReleaseStatic_IDA6.8
+   - X64ReleaseStatic
+   - x64ReleaseZ3dyn
+   - x86ReleaseStatic_IDA6
+   - x86ReleaseStatic
+   - x86ReleaseZ3dyn
+
+build:
+  parallel: true                  # enable MSBuild parallel builds
+  project: builds\PonceBuild\Ponce.sln      # path to Visual Studio solution or project
+  # MSBuild verbosity level
+  verbosity: normal
