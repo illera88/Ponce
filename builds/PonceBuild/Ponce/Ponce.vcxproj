@@ -160,6 +160,7 @@
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x86_IDA69_win</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x68ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -167,6 +168,7 @@
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x86_IDA68_win</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -174,6 +176,7 @@
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x64_IDA69_win</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='X64ReleaseStatic_IDA6.8|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -181,6 +184,7 @@
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x64_IDA68_win</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x86ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -188,6 +192,7 @@
     <TargetExt>.plw</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x86_IDA69_win_z3dyn</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64ReleaseZ3dyn|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
@@ -195,6 +200,7 @@
     <TargetExt>.p64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName)_x64_IDA69_win_z3dyn</TargetName>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='x64Release|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\</OutDir>
