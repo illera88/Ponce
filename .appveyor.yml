@@ -63,6 +63,9 @@ configuration:
 
 before_build:
   - cmd: mkdir "C:\Program Files (x86)\IDA 6.95\plugins"
+  
+build_script:
+  - git submodule update --init --recursive
 build:
   parallel: true                  # enable MSBuild parallel builds
   project: builds\PonceBuild\Ponce.sln      # path to Visual Studio solution or project
