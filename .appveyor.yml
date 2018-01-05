@@ -57,7 +57,7 @@ configuration:
    - X64ReleaseStatic_IDA6.8
    - X64ReleaseStatic
    - x64ReleaseZ3dyn
-   - x86ReleaseStatic_IDA6
+   - x86ReleaseStatic_IDA6.8
    - x86ReleaseStatic
    - x86ReleaseZ3dyn
 
