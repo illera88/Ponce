@@ -28,6 +28,9 @@ max_jobs: 1
 # Build worker image (VM template)
 image: Visual Studio 2013
 
+# Directory to clone the project
+clone_folder: c:\PonceProject
+
 # this is how to allow failing jobs in the matrix
 matrix:
   fast_finish: true     # set this flag to immediately finish build once one of the jobs fails.
@@ -58,6 +61,8 @@ configuration:
    - x86ReleaseStatic
    - x86ReleaseZ3dyn
 
+before_build:
+  - cmd: mkdir "C:\Program Files (x86)\IDA 6.95\plugins"
 build:
   parallel: true                  # enable MSBuild parallel builds
   project: builds\PonceBuild\Ponce.sln      # path to Visual Studio solution or project
