@@ -53,5 +53,6 @@ libz3-static.lib
 *.plw
 *.suo
 
-# This file should be generated just before compile the program
-VERSION_NUMBER
+# This file should be generated just before compile the program. 
+# i#20 For some reason the script can not generate this file at Appveyor site. Let's ignore it for a while.
+# VERSION_NUMBER
