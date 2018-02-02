@@ -88,6 +88,21 @@ void prompt_conf_window(void){
 
 		symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;	
 	}
+#ifdef __IDA70__
+	if (ask_form(form,
+		modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
+		&cmdOptions.limitTime,
+		&cmdOptions.limitInstructionsTracingMode,
+		&symbolic_or_taint_engine,
+		&chkgroup1,
+		&chkgroup2,
+		&chkgroup3,
+		&cmdOptions.color_tainted,
+		&cmdOptions.color_executed_instruction,
+		&cmdOptions.color_tainted_condition,
+		&cmdOptions.blacklist_path
+		) > 0)
+#else
 	if (AskUsingForm_c(form,
 		modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
 		&cmdOptions.limitTime,
@@ -101,6 +116,7 @@ void prompt_conf_window(void){
 		&cmdOptions.color_tainted_condition,
 		&cmdOptions.blacklist_path
 		) > 0)
+#endif
 	{
 		/*First we set the flag that indicates that the user already provided a configuration
 		so we should't use the default values anymore but the ones that the user provided previously*/

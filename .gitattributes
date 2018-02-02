@@ -2,7 +2,6 @@
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
 * text=auto
-
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
@@ -11,7 +10,6 @@
 # Note: This is only used by command line
 ###############################################################################
 #*.cs     diff=csharp
-
 ###############################################################################
 # Set the merge driver for project and solution files
 #
@@ -34,7 +32,6 @@
 #*.modelproj merge=binary
 #*.sqlproj   merge=binary
 #*.wwaproj   merge=binary
-
 ###############################################################################
 # behavior for image files
 #
@@ -43,7 +40,6 @@
 #*.jpg   binary
 #*.png   binary
 #*.gif   binary
-
 ###############################################################################
 # diff behavior for common document formats
 # 
@@ -63,3 +59,5 @@
 #*.RTF   diff=astextplain
 external-libs/libs/ALL_static_MT_x86/libz3-static-x86-MT.lib filter=lfs diff=lfs merge=lfs -text
 external-libs/libs/ALL_static_MT_x86_vs2015/libz3-static-x86-MT-2015.lib filter=lfs diff=lfs merge=lfs -text
+libz3.lib filter=lfs diff=lfs merge=lfs -text
+*z3.lib filter=lfs diff=lfs merge=lfs -text

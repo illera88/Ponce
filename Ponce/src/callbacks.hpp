@@ -28,8 +28,13 @@ typedef struct
 
 extern std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
+#ifdef __IDA70__
+ssize_t idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
+ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
+#else
 int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
 int idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
+#endif
 void tritonize(va_list va);
 void reanalize_current_instruction();
 void set_SMT_results(Input* input_ptr);

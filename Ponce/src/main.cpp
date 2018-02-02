@@ -43,7 +43,12 @@
 }*/
 
 //--------------------------------------------------------------------------
+
+#ifdef __IDA70__
+bool idaapi run(size_t)
+#else
 void idaapi run(int)
+#endif
 {
 	/*We shouldn't prompt for it if the user has a saved configuration*/
 	if (!load_options(&cmdOptions))
@@ -75,7 +80,11 @@ void idaapi run(int)
 			if (!register_action(*action_list[i].action_decs))
 			{
 				warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
+#ifdef __IDA70__
+				return false;
+#else
 				return;
+#endif
 			}
 		}
 
@@ -86,18 +95,31 @@ void idaapi run(int)
 			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
 			{
 				warning("[!] Could not hook ui callback");
+#ifdef __IDA70__
+				return false;
+#else
 				return;
+#endif
 			}
 			if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
 			{
 				warning("[!] Could not hook tracer callback");
+#ifdef __IDA70__
+				return false;
+#else
 				return;
+#endif
 			}
 		
 			msg("[+] Ponce plugin version: %s running!\n", VERSION);
 			hooked = true;
 		}
 	}
+#ifdef __IDA70__
+	return true;
+#else
+	return;
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -107,7 +129,11 @@ int idaapi init(void)
 	//We do some checks with the versions...
 	if (get_kernel_version(version, sizeof(version)))
 	{
-#ifdef __IDA68__
+#ifdef __IDA70__
+		//The IDA 7.0 plugin running in old IDA
+		if (strcmp(version, "7.00") != 0)
+			warning("[!] This Ponce plugin was built for IDA 7.0, you are using: %s\n", version);
+#elif __IDA68__
 		//The IDA 6.8 plugin running in IDA 6.9x
 		if (strcmp(version, "6.8") != 0)
 			warning("[!] This plugin was built for IDA 6.8, you are using: %s\n", version);

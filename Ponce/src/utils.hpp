@@ -34,7 +34,7 @@ bool save_options(struct cmdOptionStruct *cmdOptions);
 Input* solve_formula(ea_t pc, uint bound);
 void negate_flag_condition(triton::arch::Instruction *triton_instruction);
 bool ask_for_execute_native();
-qstring get_callee(ea_t address);
+qstring get_callee_name(ea_t address);
 void concretizeAndUntaintAllRegisters();
 void enableTrigger_and_concretize_registers(ea_t main_address);
 regval_t ida_get_reg_val_invalidate(char *reg_name);

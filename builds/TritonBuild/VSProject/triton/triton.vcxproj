@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\memoryAccess.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\operandWrapper.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\register.cpp" />
+    <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\registerSpecification.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\x86\x8664Cpu.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\x86\x86Cpu.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\x86\x86Semantics.cpp" />
@@ -38,6 +39,7 @@
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\representations\astRepresentation.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\representations\astSmtRepresentation.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\z3\tritonToZ3Ast.cpp" />
+    <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\z3\z3Interface.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\z3\z3Result.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\z3\z3ToTritonAst.cpp" />
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\callbacks\callbacks.cpp" />
@@ -105,6 +107,7 @@
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\pythonUtils.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\pythonXFunctions.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\register.hpp" />
+    <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\registerSpecification.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\solverEngine.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\solverModel.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\symbolicEngine.hpp" />
@@ -122,6 +125,7 @@
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\x86Cpu.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\x86Semantics.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\x86Specifications.hpp" />
+    <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\z3Interface.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\z3Result.hpp" />
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\z3ToTritonAst.hpp" />
   </ItemGroup>
@@ -172,11 +176,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.lib</TargetExt>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\Objects\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetExt>.lib</TargetExt>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\Objects\</IntDir>
@@ -245,7 +250,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\external-libs\includes\capstone-3.0.4-win\include;$(SolutionDir)..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\src\libtriton\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\..\external-libs\includes\capstone-3.0.4-win\include;$(SolutionDir)..\..\..\external-libs\includes\z3-4.5.0-win64\include;$(SolutionDir)..\..\..\external-libs\includes\boost_1_60_0;$(SolutionDir)..\..\..\Triton\src\libtriton\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <SuppressStartupBanner>
@@ -256,6 +261,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CompileAs>CompileAsCpp</CompileAs>
       <DisableSpecificWarnings>4800;4804</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -264,8 +270,11 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) $(SolutionDir)..\..\external-libs\libs\ALL_dyn_MD_x64 &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\external-libs\libs\ALL_dyn_MD_x64_DR_debug &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\external-libs\libs\ALL_static_MD_x64</Command>
+      <Command>copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\Z3_dyn_rest_static_MT_x86 &amp;&amp; copy /Y $(TargetPath) $(SolutionDir)..\..\..\external-libs\libs\ALL_static_MT_x64</Command>
     </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

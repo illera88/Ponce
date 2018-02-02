@@ -27,6 +27,18 @@ It returns a MemoryAccess with the memory address and the size indicated. the ca
 bool prompt_window_taint_symbolize(ea_t address, ea_t *selection_start, ea_t *selection_end)
 {
 	sval_t size = 1;
+#ifdef __IDA70__
+	if (ask_form(formTaintSymbolizeInput,
+		NULL,
+		&address,
+		&size
+		) > 0)
+	{
+		*selection_start = address;
+		*selection_end = address + size;
+		return true;
+	}
+#else
 	if (AskUsingForm_c(formTaintSymbolizeInput,
 		NULL,
 		&address,
@@ -37,5 +49,6 @@ bool prompt_window_taint_symbolize(ea_t address, ea_t *selection_start, ea_t *se
 		*selection_end = address + size;
 		return true;
 	}
+#endif
 	return false;
 }

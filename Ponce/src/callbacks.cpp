@@ -23,7 +23,7 @@
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <intel.hpp>
-
+#include <bytes.hpp>
 //Triton
 #include "api.hpp"
 #include "x86Specifications.hpp"
@@ -33,7 +33,7 @@ std::list<breakpoint_pending_action> breakpoint_pending_actions;
 /*This function will create and fill the Triton object for every instruction*/
 void tritonize(ea_t pc, thid_t threadID)
 {
-	/*Check tha the runtime Trigger is on just in case*/
+	/*Check that the runtime Trigger is on just in case*/
 	if (!ponce_runtime_status.runtimeTrigger.getState())
 		return;
 
@@ -45,17 +45,30 @@ void tritonize(ea_t pc, thid_t threadID)
 	ponce_runtime_status.last_triton_instruction = tritonInst;
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
+#ifdef __IDA70__
+	if (!can_decode(pc))
+		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+#else
 	if (!decode_insn(pc))
-		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);	
+		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+#endif
 	
 	unsigned char opcodes[15];
-	get_many_bytes(pc, opcodes, cmd.size);
+	ssize_t item_size = 0x0;
+#ifdef __IDA70__
+	insn_t ins;
+	decode_insn(&ins, pc);
+	item_size = ins.size;
+	get_bytes(&opcodes, item_size, pc, GMB_READALL, NULL);
+#else
+	item_size = cmd.size;
+	get_many_bytes(pc, opcodes, item_size);
+#endif
 
 	/* Setup Triton information */
 	tritonInst->partialReset();
-	tritonInst->setOpcodes((triton::uint8*)opcodes, cmd.size);
+	tritonInst->setOpcodes((triton::uint8*)opcodes, item_size);
 	tritonInst->setAddress(pc);
-	tritonInst->setThreadId(threadID);
 
 	/* Disassemble the instruction */
 	try{
@@ -63,7 +76,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	}
 	catch (...){
 		msg("[!] Dissasembling error at " HEX_FORMAT " Opcodes:",pc);
-		for (auto i = 0; i < cmd.size; i++)
+		for (auto i = 0; i < item_size; i++)
 			msg("%2x ", *(unsigned char*)(opcodes + i));
 		msg("\n");
 		return;
@@ -90,7 +103,11 @@ void tritonize(ea_t pc, thid_t threadID)
 			{
 				triton::uint128 value = 0;
 				//We get the memory readed
+#ifdef __IDA70__
+				get_bytes(&value, 1, (ea_t)addr+i, GMB_READALL, NULL);
+#else
 				get_many_bytes((ea_t)addr+i, &value, 1);
+#endif
 				//We add a meomory modification to the snapshot engine
 				snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
 			}
@@ -203,8 +220,11 @@ void triton_restart_engines()
 	set_automatic_taint_n_simbolic();
 	ponce_runtime_status.myPathConstraints.clear();
 }
-
+#ifdef __IDA70__
+ssize_t idaapi tracer_callback(void *user_data, int notification_code, va_list va)
+#else
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
+#endif
 {
 	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
@@ -237,8 +257,13 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
+#ifdef __IDA70__
+			if (!can_decode(pc))
+				msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+#else
 			if (!decode_insn(pc))
 				msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+#endif
 			
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
 			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
@@ -265,12 +290,18 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = va_arg(va, ea_t);
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
+
+#ifdef __IDA70__
+			insn_t cmd;
+			decode_insn(&cmd, pc);
+#else
 			decode_insn(pc);
+#endif
 
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
 			{
-				qstring callee = get_callee(pc);
+				qstring callee = get_callee_name(pc);
 				std::vector<std::string> *black_func_pointer;
 
 				//Let's check if the user provided any blacklist file or we sholuld use the built in one
@@ -343,7 +374,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Check if the limit instructions limit was reached
 			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
 			{
+#ifdef __IDA70__
+				int answer = ask_yn(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
+#else
 				int answer = askyn_c(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
+#endif
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
@@ -367,7 +402,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				}
 				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
 				{
+#ifdef __IDA70__
+					int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
+#else
 					int answer = askyn_c(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
+#endif
 					if (answer == 0 || answer == -1) //No or Cancel
 					{
 						// stop the trace mode and suspend the process
@@ -459,17 +498,33 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 //---------------------------------------------------------------------------
 // Callback for ui notifications
+#ifndef __IDA70__
 int idaapi ui_callback(void * ud, int notification_code, va_list va)
+#else
+ssize_t idaapi ui_callback(void * ud, int notification_code, va_list va)
+#endif
 {
 	switch (notification_code)
 	{
 		// Called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
+#ifdef __IDA70__
+		case ui_populating_widget_popup:
+#else
 		case ui_populating_tform_popup:
+#endif
 		{
+#ifdef __IDA70__
+			TWidget *form = va_arg(va, TWidget *);
+#else
 			TForm *form = va_arg(va, TForm *);
+#endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
-			int view_type= get_tform_type(form);
+#ifdef __IDA70__
+			int view_type = get_widget_type(form);
+#else
+			int view_type = get_tform_type(form);
+#endif
 
 			//Adding a separator
 			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
@@ -501,13 +556,25 @@ int idaapi ui_callback(void * ud, int notification_code, va_list va)
 			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 			break;
 		}
+#ifdef __IDA70__
+		case ui_finish_populating_widget_popup:
+#else
 		case ui_finish_populating_tform_popup:
+#endif
 		{
 			//This event is call after all the Ponce menus have been added and updated
 			//It is the perfect point to add the multiple condition solve submenus
+#ifdef __IDA70__
+			TWidget *form = va_arg(va, TWidget *);
+#else
 			TForm *form = va_arg(va, TForm *);
+#endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
+#ifdef __IDA70__
+			int view_type = get_widget_type(form);
+#else
 			int view_type = get_tform_type(form);
+#endif
 			//We get the ea form a global variable that is set in the update event
 			//This is not very elegant but I don't know how to do it from here
 			ea_t cur_ea = popup_menu_ea;
@@ -554,7 +621,11 @@ void set_SMT_results(Input *input_ptr){
 	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
 	{
 		auto concreteValue=it->getConcreteValue();
+#ifdef __IDA70__
+		put_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
+#else
 		put_many_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
+#endif
 		triton::api.setConcreteMemoryValue(*it);
 		//We concretize the memory we set
 		triton::api.concretizeMemory(*it);

@@ -31,6 +31,7 @@
 #include <loader.hpp>
 #include <dbg.hpp>
 #include <name.hpp>
+#include <bytes.hpp>
 
 //Ponce
 #include "utils.hpp"
@@ -100,7 +101,11 @@ int ask_for_a_snapshot()
 		return 1;
 	while (true)
 	{
+#ifdef __IDA70__
+		int answer = ask_yn(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
+#else
 		int answer = askyn_c(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
+#endif
 		if (answer == 1) //Yes
 		{
 			snapshot_t snapshot;
@@ -148,24 +153,36 @@ Source: http://www.openrce.org/reference_library/files/ida/idapw.pdf */
 ea_t find_function(char const *function_name)
 {
 	// get_func_qty() returns the number of functions in file(s) loaded.
-	for (unsigned int f = 0; f < get_func_qty(); f++)
-	{
+	for (unsigned int f = 0; f < get_func_qty(); f++) {
 		// getn_func() returns a func_t struct for the function number supplied
 		func_t *curFunc = getn_func(f);
 		qstring funcName;
+		ssize_t size_read = 0;
 		// get_func_name2 gets the name of a function and stored it in funcName
-		if (get_func_name2(&funcName, curFunc->startEA) > 0){ // if found
-			if (strcmp(funcName.c_str(), function_name) == 0)
-			{
+#ifdef __IDA70__
+		size_read = get_func_name(&funcName, curFunc->start_ea);
+#else
+		size_read = get_func_name2(&funcName, curFunc->startEA);
+#endif
+		if (size_read > 0) { // if found
+			if (strcmp(funcName.c_str(), function_name) == 0) {
+#ifdef __IDA70__
+				return curFunc->start_ea;
+#else
 				return curFunc->startEA;
+#endif
 			}
 			//We need to ignore our prefix when the function is tainted
 			//If the function name starts with our prefix, fix for #51
-			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN)
-			{
+			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN) {
 				//Then we ignore the prefix and compare the rest of the function name
-				if (strcmp(funcName.c_str() + RENAME_TAINTED_FUNCTIONS_PATTERN_LEN, function_name) == 0)
+				if (strcmp(funcName.c_str() + RENAME_TAINTED_FUNCTIONS_PATTERN_LEN, function_name) == 0) {
+#ifdef __IDA70__
+					return curFunc->start_ea;
+#else
 					return curFunc->startEA;
+#endif
+				}
 			}
 		}
 	}
@@ -269,8 +286,14 @@ short read_unicode_char_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
+#ifdef __IDA70__
+	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
+	if (bytes_read == 0 || bytes_read == -1)
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#else
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#endif
 	return value;
 }
 
@@ -281,8 +304,14 @@ char read_char_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
+#ifdef __IDA70__
+	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
+	if (bytes_read == 0 || bytes_read == -1)
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#else
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#endif
 	return value;
 }
 
@@ -292,8 +321,14 @@ ea_t read_regSize_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
+#ifdef __IDA70__
+	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
+	if (bytes_read == 0 || bytes_read == -1)
+		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#else
 	if (!get_many_bytes(address, &value, sizeof(value)))
 		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+#endif
 	return value;
 }
 
@@ -301,8 +336,14 @@ ea_t read_regSize_from_ida(ea_t address)
 void rename_tainted_function(ea_t address)
 {
 	qstring func_name;
+	ssize_t size = 0x0;
 	//First we get the current function name
-	if (get_func_name2(&func_name, address) > 0)
+#ifdef __IDA70__
+	size = get_func_name(&func_name, address);
+#else
+	size = get_func_name2(&func_name, address);
+#endif
+	if (size > 0)
 	{
 		//If the function isn't already renamed
 		if (strstr(func_name.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) != func_name.c_str())
@@ -326,7 +367,11 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 		auto expr = tritonInst->symbolicExpressions[exp_index];
 		std::ostringstream oss;
 		oss << expr;
+#ifdef __IDA70__
+		add_extra_cmt(address, false, "%s", oss.str().c_str());
+#else
 		add_long_cmt(address, false, "%s", oss.str().c_str());
+#endif
 	}
 }
 
@@ -753,8 +798,11 @@ bool ask_for_execute_native()
 	if (!snapshot.exists())
 		return true;
 	//If so we should say to the user that he cannot execute native code and expect the snapshot to work
-
+#ifdef __IDA70__
+	int answer = ask_yn(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications so the execution snapshot will be deleted. Do you still want to do it? (Y/n):");
+#else
 	int answer = askyn_c(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications so the execution snapshot will be deleted. Do you still want to do it? (Y/n):");
+#endif
 	if (answer == 1) //Yes
 		return true;
 	else // No or Cancel
@@ -780,31 +828,46 @@ qstring clean_function_name(qstring name){
 	return name;
 }
 
-qstring get_callee(ea_t address){
+qstring get_callee_name(ea_t address) {
 	qstring name;
 	char buf[100] = {0};
 	static const char * nname = "$ vmm functions";
 	netnode n(nname);
 	auto fun = n.altval(address) - 1;
-	
-	if (fun == -1){
+	if (fun == -1) {
+#ifdef __IDA70__
+		qstring buf_op;
+		if (is_code(get_flags(address)))
+			print_operand(&buf_op, address, 0);
+		qstring buf_tag;
+		tag_remove(&buf_tag, buf_op);
+		name = clean_function_name(buf_tag);
+#else
 		if (isCode(get_flags_novalue(address)))
 			ua_outop2(address, buf, sizeof(buf), 0);
-		tag_remove(buf, buf, sizeof(buf));		
+		tag_remove(buf, buf, sizeof(buf));
 		name = clean_function_name(buf);
+#endif
 	}
-	else{
+	else {
 		get_ea_name(&name, fun); // 00C5101A call    edi ; __imp__malloc style
 		
-		if (name.empty())
-		{
+		if (name.empty()) {
+#ifdef __IDA70__
+			qstring buf_op;
+			if (is_code(get_flags(address)))
+				print_operand(&buf_op, address, 0);
+			qstring buf_tag;
+			tag_remove(&buf_tag, buf_op);
+			name = clean_function_name(buf_tag);
+#else
 			if (isCode(get_flags_novalue(address)))
 				ua_outop2(address, buf, sizeof(buf), 0);
 			tag_remove(buf, buf, sizeof(buf));
-
 			name = clean_function_name(buf);
+#endif
 		}
-		else{
+		else {
 			name = clean_function_name(name);
 		}
 	}

@@ -144,6 +144,12 @@
     <ClCompile Include="..\..\..\..\Triton\src\libtriton\utils\coreUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\Triton\src\libtriton\arch\registerSpecification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Triton\src\libtriton\ast\z3\z3Interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\abstractBinary.hpp">
@@ -324,6 +330,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\z3ToTritonAst.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\registerSpecification.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Triton\src\libtriton\includes\z3Interface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
