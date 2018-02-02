@@ -49,18 +49,19 @@ matrix:
 
 # build platform, i.e. x86, x64, Any CPU. This setting is optional.
 # to add several platforms to build matrix:
-platform:
-  - Win32
+#platform:
+#  - x64
+#  - Win32
 
 # build Configuration, i.e. Debug, Release, etc.
 configuration:
    - x64ReleaseDyn_IDA7.0|x64
-   - X64ReleaseStatic_IDA6.8
-   - X64ReleaseStatic
-   - x64ReleaseZ3dyn
-   - x86ReleaseStatic_IDA6.8
-   - x86ReleaseStatic
-   - x86ReleaseZ3dyn
+   - X64ReleaseStatic_IDA6.8|Win32
+   - X64ReleaseStatic|Win32
+   - x64ReleaseZ3dyn|Win32
+   - x86ReleaseStatic_IDA6.8|Win32
+   - x86ReleaseStatic|Win32
+   - x86ReleaseZ3dyn|Win32
 
 before_build:
   - cmd: mkdir "C:\Program Files (x86)\IDA 6.95\plugins"
