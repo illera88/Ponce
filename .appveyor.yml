@@ -31,10 +31,6 @@ image: Visual Studio 2013
 # Directory to clone the project
 clone_folder: c:\PonceProject
 
-# this is how to allow failing jobs in the matrix
-matrix:
-  fast_finish: true     # set this flag to immediately finish build once one of the jobs fails.
-
 # build cache to preserve files/folders between builds
 #cache:
 #  - packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
@@ -49,20 +45,38 @@ matrix:
 
 # build platform, i.e. x86, x64, Any CPU. This setting is optional.
 # to add several platforms to build matrix:
-#platform:
-#  - x64
-#  - Win32
+platform:
+  - x64
+  - Win32
 
 # build Configuration, i.e. Debug, Release, etc.
 configuration:
-   - x64ReleaseDyn_IDA7.0|x64
-   - X64ReleaseStatic_IDA6.8|Win32
-   - X64ReleaseStatic|Win32
-   - x64ReleaseZ3dyn|Win32
-   - x86ReleaseStatic_IDA6.8|Win32
-   - x86ReleaseStatic|Win32
-   - x86ReleaseZ3dyn|Win32
+   - x64ReleaseDyn_IDA7.0
+   - X64ReleaseStatic_IDA6.8
+   - X64ReleaseStatic
+   - x64ReleaseZ3dyn
+   - x86ReleaseStatic_IDA6.8
+   - x86ReleaseStatic
+   - x86ReleaseZ3dyn
 
+matrix:
+  fast_finish: true     # set this flag to immediately finish build once one of the jobs fails.
+  exclude:
+    - configuration: x64ReleaseDyn_IDA7.0
+      platform: Win32
+    - configuration:  X64ReleaseStatic_IDA6.8
+      platform: x64
+    - configuration:  X64ReleaseStatic
+      platform: x64
+    - configuration:  x64ReleaseZ3dyn
+      platform: x64
+    - configuration:  x86ReleaseStatic_IDA6.8
+      platform: x64
+    - configuration:  x86ReleaseStatic
+      platform: x64
+    - configuration:  x86ReleaseZ3dyn
+      platform: x64
+   
 before_build:
   - cmd: mkdir "C:\Program Files (x86)\IDA 6.95\plugins"
   - cmd: c:\PonceProject\version_number_update.sh
