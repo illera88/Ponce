@@ -29,7 +29,13 @@ libz3-static.lib
 
 # Compiled Dynamic libraries
 *.dylib
-*.dll
+capstone.dll
+Microsoft.Z3.dll
+libz3.dll
+libz3java.dll
+msvcp110.dll
+msvcr110.dll
+vcomp110.dll
 
 # Fortran module files
 *.mod
