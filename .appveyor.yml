@@ -79,7 +79,7 @@ matrix:
    
 before_build:
   - cmd: mkdir "C:\Program Files (x86)\IDA 6.95\plugins"
-  - cmd mkdir "C:\Program Files\IDA 7.0\plugins"
+  - cmd: mkdir "C:\Program Files\IDA 7.0\plugins"
   - cmd: c:\PonceProject\version_number_update.sh
 
 build:
