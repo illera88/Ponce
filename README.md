@@ -14,7 +14,9 @@ We addressed these needs by creating Ponce, an IDA plugin that implements symbol
 Ponce works with both x86 and x64 binaries in IDA 6.8 and IDA 6.9x. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory.
 
 ### IDA 7.0.
-Ponce has initial support of IDA 7.0 for x64 binaries in Windows. The plugin named ```Ponce64.dll``` should be copied from the [latest_builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory. Don't forget to register Ponce in ```plugins.cfg``` located in the same folder by adding the following line: 
+Ponce has initial support of IDA 7.0 for both x86 and x64 binaries in Windows. The plugin named ```Ponce64.dll``` should be copied from the [latest_builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory. Starting from version 7.0, IDA64 should be used to work with both x86 and x64 binaries.
+
+Don't forget to register Ponce in ```plugins.cfg``` located in the same folder by adding the following line:
 
 ```
 Ponce                            Ponce         Ctrl+Shift+Z 0  WIN
