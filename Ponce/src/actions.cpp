@@ -146,7 +146,12 @@ struct ah_symbolize_register_t : public action_handler_t
 			{
 				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
-				qsnprintf(comment, 256, "Reg %s at address: " HEX_FORMAT "", selected, action_activation_ctx->cur_ea);
+
+				if (inf.is_64bit())
+				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected, action_activation_ctx->cur_ea);
+				else
+					qsnprintf(comment, 256, "Reg %s at address: %#x", selected, action_activation_ctx->cur_ea);
+
 				register_to_symbolize.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_symbolize, true));
 				triton::api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));
 
@@ -256,7 +261,11 @@ struct ah_taint_memory_t : public action_handler_t
 			return 0;
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		ea_t selection_length = selection_ends - selection_starts + 1;
-		msg("[+] Tainting memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		if (inf.is_64bit())
+			msg("[+] Tainting memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		else
+			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+
 		//Tainting all the selected memory
 		taint_all_memory(selection_starts, selection_length);
 		/*When the user taints something for the first time we should enable step_tracing*/
@@ -366,10 +375,18 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts + 1;
-		msg("[+] Symbolizing memory from " HEX_FORMAT " to " HEX_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		if (inf.is_64bit())
+		    msg("[+] Symbolizing memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		else
+			msg("[+] Symbolizing memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+
 		//Tainting all the selected memory
 		char comment[256];
-		qsnprintf(comment, 256, "Mem " HEX_FORMAT "-" HEX_FORMAT " at address: " HEX_FORMAT "", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+		if (inf.is_64bit())
+            qsnprintf(comment, 256, "Mem %#llx - %#llx  at address: %#llx ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+		else
+			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
+
 		symbolize_all_memory(selection_starts, selection_length, comment);
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
@@ -449,7 +466,11 @@ struct ah_negate_and_inject_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			msg("[+] Negating condition at " HEX_FORMAT "\n", pc);
+			if (inf.is_64bit())
+				msg("[+] Negating condition at %#llx\n", pc);
+			else
+				msg("[+] Negating condition at %#x\n", pc);
+
 			//We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
 			unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
 			auto input_ptr = solve_formula(pc, bound);
@@ -508,7 +529,10 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			msg("[+] Negating condition at " HEX_FORMAT "\n", pc);
+			if (inf.is_64bit())
+				msg("[+] Negating condition at %#llx\n", pc);
+			else
+				msg("[+] Negating condition at %#x\n", pc);
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 
@@ -558,7 +582,11 @@ struct ah_create_snapshot_t : public action_handler_t
 		//This is the address where the popup was shown, what we need is the xip
 		//ea_t pc = ctx->cur_ea;
 		uint64 xip;
-		get_reg_val(TRITON_REG_XIP.getName().c_str(), &xip);
+        if (inf.is_64bit())
+			get_reg_val(triton::arch::x86::x86_reg_rip.getName().c_str(), &xip);
+		else
+			get_reg_val(triton::arch::x86::x86_reg_eip.getName().c_str(), &xip);
+
 		set_cmt((ea_t)xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
 		snapshot.setAddress((ea_t)xip); // We will use this address later to delete the comment

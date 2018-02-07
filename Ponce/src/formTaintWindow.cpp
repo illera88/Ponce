@@ -238,6 +238,11 @@ static void idaapi destroy_cb(void *obj)
 // function that generates the list line
 static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 {
+	char *format = NULL;
+	if (inf.is_64bit())
+		format = "%#llx";
+	else
+		format = "%#x";
 	if (n == 0) // generate the column headers
 	{
 		for (int i = 0; i < qnumber(header); i++)
@@ -251,10 +256,10 @@ static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 	if (li[n]->address == 0)
 		qsnprintf(arrptr[1], MAXSTR, "%s", "");
 	else
-		qsnprintf(arrptr[1], MAXSTR, HEX_FORMAT, (ea_t)li[n]->address);
+		qsnprintf(arrptr[1], MAXSTR, format, (ea_t)li[n]->address);
 	
 	qsnprintf(arrptr[2], MAXSTR, "%s", li[n]->register_name.c_str());
-	qsnprintf(arrptr[3], MAXSTR, HEX_FORMAT, li[n]->value.convert_to<ea_t>());
+	qsnprintf(arrptr[3], MAXSTR, format, li[n]->value.convert_to<ea_t>());
 	qsnprintf(arrptr[4], MAXSTR, "%s", li[n]->isTainted ? "true" : "false");
 	qsnprintf(arrptr[5], MAXSTR, "%s", li[n]->isSymbolized ? "true" : "false");
 	qsnprintf(arrptr[6], MAXSTR, "%s", li[n]->comment.c_str());

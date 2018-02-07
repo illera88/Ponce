@@ -46,11 +46,19 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 #ifdef __IDA70__
-	if (!can_decode(pc))
-		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+	if (!can_decode(pc)) {
+		if (inf.is_64bit())
+			msg("[!] Some error decoding instruction at %#llx", pc);
+		else
+			msg("[!] Some error decoding instruction at %#x", pc);
+	}
 #else
-	if (!decode_insn(pc))
-		msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+	if (!decode_insn(pc)) {
+		if (inf.is_64bit())
+			msg("[!] Some error decoding instruction at %#llx", pc);
+		else
+			msg("[!] Some error decoding instruction at %#x", pc);
+	}
 #endif
 	
 	unsigned char opcodes[15];
@@ -74,19 +82,31 @@ void tritonize(ea_t pc, thid_t threadID)
 	try{
 		triton::api.disassembly(*tritonInst);
 	}
-	catch (...){
-		msg("[!] Dissasembling error at " HEX_FORMAT " Opcodes:",pc);
+	catch (...) {
+		if (inf.is_64bit())
+			msg("[!] Dissasembling error at %#llx. Opcodes:", pc);
+		else
+			msg("[!] Dissasembling error at %#x. Opcodes:", pc);
+
 		for (auto i = 0; i < item_size; i++)
 			msg("%2x ", *(unsigned char*)(opcodes + i));
 		msg("\n");
 		return;
 	}
-	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] Triton At " HEX_FORMAT ": %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+	if (cmdOptions.showExtraDebugInfo) {
+		if (inf.is_64bit())
+			msg("[+] Triton at %#llx: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+		else
+			msg("[+] Triton at %#x: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+	}
 
 	/* Process the IR and taint */
-	if (!triton::api.buildSemantics(*tritonInst))
-		msg("[!] Instruction at " HEX_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+	if (!triton::api.buildSemantics(*tritonInst)) {
+		if (inf.is_64bit())
+			msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+		else
+			msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+	}
 
 	/*In the case that the snapshot engine is in use we should track every memory write access*/
 	if (snapshot.exists())
@@ -132,8 +152,12 @@ void tritonize(ea_t pc, thid_t threadID)
 	{
 		ponce_runtime_status.total_number_symbolic_ins++;
 
-		if (cmdOptions.showDebugInfo)
-			msg("[!] Instruction %s at " HEX_FORMAT "\n", tritonInst->isTainted()? "tainted": "symbolized", pc);
+		if (cmdOptions.showDebugInfo) {
+			if (inf.is_64bit())
+				msg("[!] Instruction %s at %#llx \n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
+			else
+				msg("[!] Instruction %s at %#x\n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
+		}
 		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
 		// Check if it is a conditional jump
@@ -152,8 +176,13 @@ void tritonize(ea_t pc, thid_t threadID)
 	{
 		ea_t addr1 = (ea_t)tritonInst->getNextAddress();
 		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
-		if (cmdOptions.showDebugInfo)
-			msg("[+] Branch symbolized detected at " HEX_FORMAT ": " HEX_FORMAT " or " HEX_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+		if (cmdOptions.showDebugInfo) {
+			if (inf.is_64bit())
+				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+			else
+				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+
+		}
 		triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
 		if (tritonInst->isConditionTaken())
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
@@ -168,9 +197,16 @@ void tritonize(ea_t pc, thid_t threadID)
 void reanalize_current_instruction()
 {
 	uint64 xip;
-	get_reg_val(TRITON_REG_XIP.getName().c_str(), &xip);
-	if (cmdOptions.showDebugInfo)
-		msg("[+] Reanalizyng instruction at " HEX_FORMAT "\n", (ea_t)xip);
+    if (inf.is_64bit())
+		get_reg_val(triton::arch::x86::x86_reg_rip.getName().c_str(), &xip);
+    else
+        get_reg_val(triton::arch::x86::x86_reg_eip.getName().c_str(), &xip);
+	if (cmdOptions.showDebugInfo) {
+		if (inf.is_64bit())
+			msg("[+] Reanalizyng instruction at %#llx\n", (ea_t)xip);
+		else
+			msg("[+] Reanalizyng instruction at %#x\n", (ea_t)xip);
+	}
 	tritonize((ea_t)xip, get_current_thread());
 }
 
@@ -180,7 +216,10 @@ void triton_restart_engines()
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Restarting triton engines...\n");
 	//We need to set the architecture for Triton
-	triton::api.setArchitecture(TRITON_ARCH);
+	if (inf.is_64bit())
+		triton::api.setArchitecture(triton::arch::ARCH_X86_64);
+	else
+		triton::api.setArchitecture(triton::arch::ARCH_X86);
 	//We reset everything at the beginning
 	triton::api.resetEngines();
 	// Memory access callback
@@ -258,11 +297,20 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
 #ifdef __IDA70__
-			if (!can_decode(pc))
-				msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+			if (!can_decode(pc)) {
+				if (inf.is_64bit())
+					msg("[!] Some error decoding instruction at %#llx", pc);
+				else
+					msg("[!] Some error decoding instruction at %#x", pc);
+			}
 #else
-			if (!decode_insn(pc))
-				msg("[!] Some error decoding instruction at " HEX_FORMAT, pc);
+			if (!decode_insn(pc)) {
+				if (inf.is_64bit())
+					msg("[!] Some error decoding instruction at %#llx", pc);
+				else
+					msg("[!] Some error decoding instruction at %#x", pc);
+
+			}
 #endif
 			
 			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
@@ -270,8 +318,12 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
 			{
-				if (cmdOptions.showExtraDebugInfo)
-					msg("[+] Stepping %s: " HEX_FORMAT " (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+				if (cmdOptions.showExtraDebugInfo) {
+					if (inf.is_64bit())
+						msg("[+] Stepping %s: %#llx (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+					else
+						msg("[+] Stepping %s: %#x (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
+				}
 				tritonize(pc, tid);
 			}
 			ponce_runtime_status.tracing_start_time = 0;
@@ -591,7 +643,11 @@ ssize_t idaapi ui_callback(void * ud, int notification_code, va_list va)
 						qsnprintf(name, 255, "%d_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
-						qsnprintf(label, 255, "%d. " HEX_FORMAT " -> " HEX_FORMAT "", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						if (inf.is_64bit())
+							qsnprintf(label, 255, "%d. %#llx -> %#llx ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						else
+							qsnprintf(label, 255, "%d. %#x -> %#x ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						
 						action_IDA_solve_formula_sub.label = label;
 						bool success = register_action(action_IDA_solve_formula_sub);
 						//If the submenu is already registered, we should unregister it and re-register it

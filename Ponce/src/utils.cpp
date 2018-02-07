@@ -288,11 +288,19 @@ short read_unicode_char_from_ida(ea_t address)
 	invalidate_dbgmem_contents(address, sizeof(value));
 #ifdef __IDA70__
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1)
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (bytes_read == 0 || bytes_read == -1) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+	}
 #else
-	if (!get_many_bytes(address, &value, sizeof(value)))
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (!get_many_bytes(address, &value, sizeof(value))) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+	}
 #endif
 	return value;
 }
@@ -306,11 +314,19 @@ char read_char_from_ida(ea_t address)
 	invalidate_dbgmem_contents(address, sizeof(value));
 #ifdef __IDA70__
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1)
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (bytes_read == 0 || bytes_read == -1) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+	}
 #else
-	if (!get_many_bytes(address, &value, sizeof(value)))
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (!get_many_bytes(address, &value, sizeof(value))) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+    }
 #endif
 	return value;
 }
@@ -323,11 +339,19 @@ ea_t read_regSize_from_ida(ea_t address)
 	invalidate_dbgmem_contents(address, sizeof(value));
 #ifdef __IDA70__
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1)
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (bytes_read == 0 || bytes_read == -1) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+	}
 #else
-	if (!get_many_bytes(address, &value, sizeof(value)))
-		msg("[!] Error reading memory from " HEX_FORMAT "\n", address);
+	if (!get_many_bytes(address, &value, sizeof(value))) {
+		if (inf.is_64bit())
+			msg("[!] Error reading memory from %#llx\n", address);
+		else
+			msg("[!] Error reading memory from %#x\n", address);
+	}
 #endif
 	return value;
 }
@@ -504,8 +528,12 @@ Input * solve_formula(ea_t pc, uint bound)
 		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
 		auto symExpr = triton::api.getFullAstFromId(ripId);
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
-		if (cmdOptions.showExtraDebugInfo)
-			msg("[+] ripId: %d notTakenAddr: " HEX_FORMAT "\n", ripId, notTakenAddr);
+		if (cmdOptions.showExtraDebugInfo) {
+			if (inf.is_64bit())
+				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
+			else
+				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
+		}
 		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
 		//Time to solve

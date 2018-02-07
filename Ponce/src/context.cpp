@@ -29,8 +29,12 @@
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 {
-	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need memory! Address: " HEX_FORMAT " Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
+	if (cmdOptions.showExtraDebugInfo) {
+		if (inf.is_64bit())
+			msg("[+] We need memory! Address: %#llx Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
+		else
+			msg("[+] We need memory! Address: %#x Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
+	}
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	mem.setConcreteValue(memValue);
 	triton::api.setConcreteMemoryValue(mem);
@@ -40,8 +44,12 @@ void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 void needConcreteRegisterValue(triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
-	if (cmdOptions.showExtraDebugInfo)
-		msg("[+] We need a register! Register: %s Value: " HEX_FORMAT "\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+	if (cmdOptions.showExtraDebugInfo) {
+		if (inf.is_64bit())
+			msg("[+] We need a register! Register: %s Value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+		else
+			msg("[+] We need a register! Register: %s Value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+	}
 	reg.setConcreteValue(regValue);
 	triton::api.setConcreteRegisterValue(reg);
 }

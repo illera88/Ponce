@@ -20,32 +20,7 @@
 //Version number
 #include "../../VERSION_NUMBER"
 
-#if !defined(__EA64__)
-//#define X86_32 It is already defined in the preprocessor options
-#define TRITON_X86_REG_XSP triton::arch::x86::x86_reg_esp
-#define TRITON_REG_XIP triton::arch::x86::x86_reg_eip
-#define TRITON_REG_ID_XAX triton::arch::x86::ID_REG_EAX
-#define TRITON_X86_REG_XAX triton::arch::x86::x86_reg_eax
-#define TRITON_ARCH triton::arch::ARCH_X86
-#define REG_SIZE 4
-#define ARCH arch::ARCH_X86
-#define strtol_m strtol
-#define HEX_FORMAT "%#x"
-#define CPUSIZE 32
-
-#else
-//#define X86_64
-#define TRITON_X86_REG_XSP triton::arch::x86::x86_reg_rsp
-#define TRITON_REG_XIP triton::arch::x86::x86_reg_rip
-#define TRITON_REG_ID_XAX triton::arch::x86::ID_REG_RAX
-#define TRITON_X86_REG_XAX triton::arch::x86::x86_reg_rax
-#define TRITON_ARCH triton::arch::ARCH_X86_64
-#define ARCH arch::ARCH_X86_64
 #define strtol_m strtoll
-#define REG_SIZE 8
-#define HEX_FORMAT "%#llx"
-#define CPUSIZE 64
-#endif
 
 //stdcall does not exist in Linux so lets define it to nothing
 #if defined(__LINUX__) || defined(__MAC__)
