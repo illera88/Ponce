@@ -14,12 +14,12 @@
 #include <set>
 
 /* libTriton */
-#include <api.hpp>
-#include <ast.hpp>
-#include <symbolicEngine.hpp>
-#include <taintEngine.hpp>
-#include <x8664Cpu.hpp>
-#include <x86Cpu.hpp>
+#include <triton/api.hpp>
+#include <triton/ast.hpp>
+#include <triton/symbolicEngine.hpp>
+#include <triton/taintEngine.hpp>
+#include <triton/x8664Cpu.hpp>
+#include <triton/x86Cpu.hpp>
 
 // Ponce
 #include "runtime_status.hpp"
@@ -52,6 +52,9 @@ private:
 
 	//! Snapshot of the taint engine.
 	triton::engines::taint::TaintEngine *snapshotTaintEngine;
+
+	//! AST Context
+	triton::ast::AstContext* astCtx;
 
 	//! Snapshot of triton CPU.
 #if defined(__x86_64__) || defined(_M_X64)

@@ -23,8 +23,8 @@
 
 
 //Triton
-#include <api.hpp>
-#include "x86Specifications.hpp"
+#include <triton/api.hpp>
+#include <triton/x86Specifications.hpp>
 
 //IDA
 #include <idp.hpp>
@@ -58,13 +58,13 @@ void start_tainting_or_symbolic_analysis()
 This is using the triton current architecture so it is more generic.*/
 bool str_to_register(std::string register_name, triton::arch::Register &reg)
 {
-	auto regs = triton::api.getAllRegisters();
+	auto regs = api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		triton::arch::Register *r = *it;
-		if (r->getName() == register_name)
+		triton::arch::Register r = it->second;
+		if (r.getName() == register_name)
 		{
-			reg = *r;
+			reg = r;
 			return true;
 		}
 	}
@@ -76,16 +76,7 @@ void taint_all_memory(ea_t address, ea_t size)
 {
 	for (unsigned int i = 0; i < size; i++)
 	{
-		triton::api.taintMemory(address + i);
-	}
-}
-
-/*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(ea_t address, ea_t size, char *comment)
-{
-	for (unsigned int i = 0; i < size; i++)
-	{
-		triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(address + i, 1, 0), comment);
+		api.taintMemory(address + i);
 	}
 }
 
@@ -101,7 +92,7 @@ int ask_for_a_snapshot()
 		return 1;
 	while (true)
 	{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		int answer = ask_yn(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
 #else
 		int answer = askyn_c(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
@@ -159,14 +150,14 @@ ea_t find_function(char const *function_name)
 		qstring funcName;
 		ssize_t size_read = 0;
 		// get_func_name2 gets the name of a function and stored it in funcName
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		size_read = get_func_name(&funcName, curFunc->start_ea);
 #else
 		size_read = get_func_name2(&funcName, curFunc->startEA);
 #endif
 		if (size_read > 0) { // if found
 			if (strcmp(funcName.c_str(), function_name) == 0) {
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				return curFunc->start_ea;
 #else
 				return curFunc->startEA;
@@ -177,7 +168,7 @@ ea_t find_function(char const *function_name)
 			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN) {
 				//Then we ignore the prefix and compare the rest of the function name
 				if (strcmp(funcName.c_str() + RENAME_TAINTED_FUNCTIONS_PATTERN_LEN, function_name) == 0) {
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 					return curFunc->start_ea;
 #else
 					return curFunc->startEA;
@@ -286,7 +277,7 @@ short read_unicode_char_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
 		if (inf.is_64bit())
@@ -312,7 +303,7 @@ char read_char_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
 		if (inf.is_64bit())
@@ -337,7 +328,7 @@ ea_t read_regSize_from_ida(ea_t address)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(address, sizeof(value));
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
 		if (inf.is_64bit())
@@ -362,7 +353,7 @@ void rename_tainted_function(ea_t address)
 	qstring func_name;
 	ssize_t size = 0x0;
 	//First we get the current function name
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	size = get_func_name(&func_name, address);
 #else
 	size = get_func_name2(&func_name, address);
@@ -391,7 +382,7 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 		auto expr = tritonInst->symbolicExpressions[exp_index];
 		std::ostringstream oss;
 		oss << expr;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		add_extra_cmt(address, false, "%s", oss.str().c_str());
 #else
 		add_long_cmt(address, false, "%s", oss.str().c_str());
@@ -506,105 +497,113 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 The bound is an index in the myPathConstrains vector*/
 Input * solve_formula(ea_t pc, uint bound)
 {
-	auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
-	if (path_constraint.conditionAddr == pc)
-	{
-		std::vector <triton::ast::AbstractNode *> expr;
-		//First we add to the expresion all the previous path constrains
-		unsigned int j;
-		for (j = 0; j < bound; j++)
-		{
-			if (cmdOptions.showExtraDebugInfo)
-				msg("[+] Keeping condition %d\n", j);
-			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
-			auto symExpr = triton::api.getFullAstFromId(ripId);
-			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+	// Triton API has changed a lot. Commenting for now
+	//auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
+	//if (path_constraint.conditionAddr == pc)
+	//{
+	//	std::vector <triton::ast::AbstractNode *> expr;
+	//	//First we add to the expresion all the previous path constrains
+	//	unsigned int j;
+	//	for (j = 0; j < bound; j++)
+	//	{
+	//		if (cmdOptions.showExtraDebugInfo)
+	//			msg("[+] Keeping condition %d\n", j);
+	//		triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
+	//		auto symExpr = api.unrollAstFromId(ripId);
+	//		ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 
-			expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
-		}
-		if (cmdOptions.showExtraDebugInfo)
-			msg("[+] Inverting condition %d\n", bound);
-		//And now we negate the selected condition
-		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
-		auto symExpr = triton::api.getFullAstFromId(ripId);
-		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
-		if (cmdOptions.showExtraDebugInfo) {
-			if (inf.is_64bit())
-				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
-			else
-				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
-		}
-		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
+	//		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
+	//	}
+	//	if (cmdOptions.showExtraDebugInfo)
+	//		msg("[+] Inverting condition %d\n", bound);
+	//	//And now we negate the selected condition
+	//	triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
+	//	auto symExpr = api.getFullAstFromId(ripId);
+	//	ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
+	//	if (cmdOptions.showExtraDebugInfo) {
+	//		if (inf.is_64bit())
+	//			msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
+	//		else
+	//			msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
+	//	}
+	//	expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
-		//Time to solve
-		auto final_expr = triton::ast::compound(expr);
+	//	//Time to solve
+	//	auto final_expr = triton::ast::compound(expr);
 
-		if (cmdOptions.showDebugInfo)
-			msg("[+] Solving formula...\n");
+	//	if (cmdOptions.showDebugInfo)
+	//		msg("[+] Solving formula...\n");
 
-		if (cmdOptions.showExtraDebugInfo)
-		{
-			std::stringstream ss;
-			/*Create the full formula*/
-			ss << "(set-logic QF_AUFBV)\n";
-			/* Then, delcare all symbolic variables */
-			ss << triton::api.getSymbolicEngine()->getVariablesDeclaration();
-			//ss << triton::api.getVariablesDeclaration();
-			/* And concat the user expression */
-			ss << "\n\n";
-			ss << final_expr;
-			ss << "\n(check-sat)";
-			ss << "\n(get-model)";
-			msg("[+] Formula: %s\n", ss.str().c_str());
-		}
+	//	if (cmdOptions.showExtraDebugInfo)
+	//	{
+	//		std::stringstream ss;
+	//		/*Create the full formula*/
+	//		ss << "(set-logic QF_AUFBV)\n";
+	//		/* Then, delcare all symbolic variables */
+	//		ss << api.getSymbolicEngine()->getVariablesDeclaration();
+	//		//ss << api.getVariablesDeclaration();
+	//		/* And concat the user expression */
+	//		ss << "\n\n";
+	//		ss << final_expr;
+	//		ss << "\n(check-sat)";
+	//		ss << "\n(get-model)";
+	//		msg("[+] Formula: %s\n", ss.str().c_str());
+	//	}
 
-		auto model = triton::api.getModel(final_expr);
+	//	auto model = api.getModel(final_expr);
 
-		if (model.size() > 0)
-		{
-			Input *newinput = new Input();
-			//Clone object 
-			newinput->bound = path_constraint.bound;
+	//	if (model.size() > 0)
+	//	{
+	//		Input *newinput = new Input();
+	//		//Clone object 
+	//		newinput->bound = path_constraint.bound;
 
-			msg("[+] Solution found! Values:\n");
-			for (auto it = model.begin(); it != model.end(); it++)
-			{
-				auto symbVar = triton::api.getSymbolicVariableFromId(it->first);
-				std::string  symbVarComment = symbVar->getComment();
-				triton::engines::symbolic::symkind_e symbVarKind = symbVar->getKind();
-				triton::uint512 secondValue = it->second.getValue();
-				if (symbVarKind == triton::engines::symbolic::symkind_e::MEM)
-				{
-					newinput->memOperand.push_back(triton::arch::MemoryAccess(symbVar->getKindValue(), symbVar->getSize() / 8, secondValue));
-				}
-				else if (symbVarKind == triton::engines::symbolic::symkind_e::REG)
-				{
-					newinput->regOperand.push_back(triton::arch::Register((triton::uint32)symbVar->getKindValue(), secondValue));
-				}
-				//We represent the number different 
-				switch (symbVar->getSize())
-				{
-				case 8:
-					msg(" - %s (%s):%#02x (%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uchar>(), secondValue.convert_to<uchar>() == 0? ' ': secondValue.convert_to<uchar>());
-					break;
-				case 16:
-					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<ushort>(), secondValue.convert_to<uchar>() == 0 ? ' ' : secondValue.convert_to<uchar>(), (unsigned char)(secondValue.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(secondValue.convert_to<ushort>() >> 8));
-					break;
-				case 32:
-					msg(" - %s (%s):%#08x\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint32>());
-					break;
-				case 64:
-					msg(" - %s (%s):%#16llx\n", it->second.getName().c_str(), symbVarComment.c_str(), secondValue.convert_to<uint64>());
-					break;
-				default:
-					msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getName().c_str(), symbVarComment.c_str());
-				}
-			}
-			return newinput;
-		}
-		else
-			msg("[!] No solution found :(\n");
-	}
+	//		msg("[+] Solution found! Values:\n");
+	//		for (auto it = model.begin(); it != model.end(); it++)
+	//		{
+	//			// ToDo: check this for loop bc I feel the conversion did not go well
+	//			auto symId = it->first;
+	//			auto model = it->second;
+
+	//			triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
+	//			std::string  symbVarComment = symbVar->getComment();
+	//			triton::engines::symbolic::variable_e symbVarKind = symbVar->getType();
+	//			triton::uint512 model_value = model.getValue();
+	//			if (symbVarKind == triton::engines::symbolic::variable_e::MEMORY_VARIABLE)
+	//			{
+	//				auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
+	//				newinput->memOperand.push_back(mem);
+	//				api.setConcreteMemoryValue(mem, model_value);
+	//			}
+	//			else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE){
+	//				auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
+	//				newinput->regOperand.push_back(reg);
+	//				api.setConcreteRegisterValue(reg, model_value);
+	//			}
+	//			//We represent the number different 
+	//			switch (symbVar->getSize())
+	//			{
+	//			case 8:
+	//				msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0? ' ': model_value.convert_to<uchar>());
+	//				break;
+	//			case 16:
+	//				msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(model_value.convert_to<ushort>() >> 8));
+	//				break;
+	//			case 32:
+	//				msg(" - %s (%s):%#08x\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
+	//				break;
+	//			case 64:
+	//				msg(" - %s (%s):%#16llx\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
+	//				break;
+	//			default:
+	//				msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str());
+	//			}
+	//		}
+	//		return newinput;
+	//	}
+	//	else
+	//		msg("[!] No solution found :(\n");
+	//}
 	return NULL;
 }
 
@@ -826,7 +825,7 @@ bool ask_for_execute_native()
 	if (!snapshot.exists())
 		return true;
 	//If so we should say to the user that he cannot execute native code and expect the snapshot to work
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	int answer = ask_yn(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications so the execution snapshot will be deleted. Do you still want to do it? (Y/n):");
 #else
 	int answer = askyn_c(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications so the execution snapshot will be deleted. Do you still want to do it? (Y/n):");
@@ -863,7 +862,7 @@ qstring get_callee_name(ea_t address) {
 	netnode n(nname);
 	auto fun = n.altval(address) - 1;
 	if (fun == -1) {
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		qstring buf_op;
 		if (is_code(get_flags(address)))
 			print_operand(&buf_op, address, 0);
@@ -881,7 +880,7 @@ qstring get_callee_name(ea_t address) {
 		get_ea_name(&name, fun); // 00C5101A call    edi ; __imp__malloc style
 		
 		if (name.empty()) {
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			qstring buf_op;
 			if (is_code(get_flags(address)))
 				print_operand(&buf_op, address, 0);
@@ -905,13 +904,12 @@ qstring get_callee_name(ea_t address) {
 //Helper to concretize and untaint all registers
 void concretizeAndUntaintAllRegisters()
 {
-	triton::api.concretizeAllRegister();
+	api.concretizeAllRegister();
 	//We untaint all the registers
-	auto regs = triton::api.getAllRegisters();
+	auto regs = api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		auto reg = **it;
-		triton::api.untaintRegister(reg);
+		api.untaintRegister(it->second);
 	}
 }
 
@@ -989,14 +987,14 @@ void concretizeAndUntaintVolatileRegisters()
 	char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
 #endif
 
-	auto regs = triton::api.getAllRegisters();
+	auto regs = api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		auto reg = **it;
+		auto reg = it->second;
 		for (auto i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++){
 			if (strcmp(reg.getName().c_str(), volatile_regs[i]) == 0){
-				triton::api.concretizeRegister(reg);
-				triton::api.untaintRegister(reg);
+				api.concretizeRegister(reg);
+				api.untaintRegister(reg);
 			}
 		}
 

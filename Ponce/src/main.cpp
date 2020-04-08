@@ -24,27 +24,27 @@
 #include "formConfiguration.hpp"
 
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 
 /*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
-/*void triton_init()
-{
-	//We need to set the architecture for Triton
-	triton::api.setArchitecture(TRITON_ARCH);
-	// Memory access callback
-	triton::api.addCallback(needConcreteMemoryValue);
-	// Register access callback
-	triton::api.addCallback(needConcreteRegisterValue);
-	// This optimization is veeery good for the size of the formulas
-	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
-	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
-	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
-	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
-}*/
+//void triton_init()
+//{	
+//	//We need to set the architecture for Triton
+//	api.setArchitecture(TRITON_ARCH);
+//	// Memory access callback
+//	api.addCallback(needConcreteMemoryValue);
+//	// Register access callback
+//	api.addCallback(needConcreteRegisterValue);
+//	// This optimization is veeery good for the size of the formulas
+//	api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
+//	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
+//	api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
+//	api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
+//}
 
 //--------------------------------------------------------------------------
 
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 bool idaapi run(size_t)
 #else
 void idaapi run(int)
@@ -69,9 +69,9 @@ void idaapi run(int)
 		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
 		//Some actions needs to use the api and the api need to have the architecture set
 		if (inf.is_64bit())
-			triton::api.setArchitecture(triton::arch::ARCH_X86_64);
+			api.setArchitecture(triton::arch::ARCH_X86_64);
 		else
-			triton::api.setArchitecture(triton::arch::ARCH_X86);
+			api.setArchitecture(triton::arch::ARCH_X86);
 		
 		//Loop to register all the actions used in the menus
 		for (int i = 0;; i++)
@@ -83,7 +83,7 @@ void idaapi run(int)
 			if (!register_action(*action_list[i].action_decs))
 			{
 				warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				return false;
 #else
 				return;
@@ -98,7 +98,7 @@ void idaapi run(int)
 			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
 			{
 				warning("[!] Could not hook ui callback");
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				return false;
 #else
 				return;
@@ -107,7 +107,7 @@ void idaapi run(int)
 			if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
 			{
 				warning("[!] Could not hook tracer callback");
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				return false;
 #else
 				return;
@@ -118,7 +118,7 @@ void idaapi run(int)
 			hooked = true;
 		}
 	}
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	return true;
 #else
 	return;
@@ -132,18 +132,19 @@ int idaapi init(void)
 	//We do some checks with the versions...
 	if (get_kernel_version(version, sizeof(version)))
 	{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >= 700
 		//The IDA 7.0 plugin running in old IDA
 		if (strcmp(version, "7.00") != 0)
 			warning("[!] This Ponce plugin was built for IDA 7.0, you are using: %s\n", version);
-#elif __IDA68__
+#elif IDA_SDK_VERSION == 680
 		//The IDA 6.8 plugin running in IDA 6.9x
 		if (strcmp(version, "6.8") != 0)
 			warning("[!] This plugin was built for IDA 6.8, you are using: %s\n", version);
-#else
-		//The IDA 6.9x plugin running in IDA 6.8
+#elif IDA_SDK_VERSION == 690		//The IDA 6.9x plugin running in IDA 6.8
 		if (strcmp(version, "6.8") == 0)
 			warning("[!] This plugin was built for IDA 6.9x, you are using: %s\n", version);
+#else
+#error // not supported
 #endif
 	}
 	//Error loading config?
@@ -189,3 +190,4 @@ plugin_t PLUGIN =
 	"Ponce", // the preferred short name of the plugin
 	"Ctrl+Shift+Z" // the preferred hotkey to run the plugin
 };
+

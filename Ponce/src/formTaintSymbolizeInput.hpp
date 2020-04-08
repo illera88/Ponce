@@ -10,7 +10,7 @@
 
 #pragma once
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 
 //IDA
 #include <ida.hpp>

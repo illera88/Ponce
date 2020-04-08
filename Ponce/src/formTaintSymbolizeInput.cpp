@@ -15,7 +15,7 @@
 #include <kernwin.hpp>
 
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 
 //Ponce
 #include "formTaintSymbolizeInput.hpp"
@@ -27,7 +27,7 @@ It returns a MemoryAccess with the memory address and the size indicated. the ca
 bool prompt_window_taint_symbolize(ea_t address, ea_t *selection_start, ea_t *selection_end)
 {
 	sval_t size = 1;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	if (ask_form(formTaintSymbolizeInput,
 		NULL,
 		&address,

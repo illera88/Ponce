@@ -12,7 +12,7 @@
 //Ponce
 #include "trigger.hpp"
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 //IDA
 #include <pro.h> 
 #include <idd.hpp>

@@ -88,7 +88,7 @@ void prompt_conf_window(void){
 
 		symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;	
 	}
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	if (ask_form(form,
 		modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
 		&cmdOptions.limitTime,

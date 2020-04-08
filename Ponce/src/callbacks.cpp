@@ -25,8 +25,8 @@
 #include <intel.hpp>
 #include <bytes.hpp>
 //Triton
-#include "api.hpp"
-#include "x86Specifications.hpp"
+#include "triton/api.hpp"
+#include "triton/x86Specifications.hpp"
 
 std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
@@ -45,7 +45,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	ponce_runtime_status.last_triton_instruction = tritonInst;
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	if (!can_decode(pc)) {
 		if (inf.is_64bit())
 			msg("[!] Some error decoding instruction at %#llx", pc);
@@ -63,7 +63,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	
 	unsigned char opcodes[15];
 	ssize_t item_size = 0x0;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	insn_t ins;
 	decode_insn(&ins, pc);
 	item_size = ins.size;
@@ -74,13 +74,13 @@ void tritonize(ea_t pc, thid_t threadID)
 #endif
 
 	/* Setup Triton information */
-	tritonInst->partialReset();
-	tritonInst->setOpcodes((triton::uint8*)opcodes, item_size);
+	tritonInst->clear();
+	tritonInst->setOpcode((triton::uint8*)opcodes, item_size);
 	tritonInst->setAddress(pc);
 
 	/* Disassemble the instruction */
 	try{
-		triton::api.disassembly(*tritonInst);
+		api.disassembly(*tritonInst);
 	}
 	catch (...) {
 		if (inf.is_64bit())
@@ -101,7 +101,7 @@ void tritonize(ea_t pc, thid_t threadID)
 	}
 
 	/* Process the IR and taint */
-	if (!triton::api.buildSemantics(*tritonInst)) {
+	if (!api.buildSemantics(*tritonInst)) {
 		if (inf.is_64bit())
 			msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 		else
@@ -123,7 +123,7 @@ void tritonize(ea_t pc, thid_t threadID)
 			{
 				triton::uint128 value = 0;
 				//We get the memory readed
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				get_bytes(&value, 1, (ea_t)addr+i, GMB_READALL, NULL);
 #else
 				get_many_bytes((ea_t)addr+i, &value, 1);
@@ -183,7 +183,14 @@ void tritonize(ea_t pc, thid_t threadID)
 				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 
 		}
-		triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);
+		/*triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);*/
+		// getSymbolicRegister seems not to be like getSymbolicRegisterId since it returns a SharedSymbolicExpression and not a ripId
+		triton::usize ripId = 0;
+		if (inf.is_64bit())
+			ripId = api.getSymbolicRegister(api.registers.x86_rip)->getId();
+		else
+			ripId = api.getSymbolicRegister(api.registers.x86_eip)->getId();
+
 		if (tritonInst->isConditionTaken())
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
 		else
@@ -198,9 +205,9 @@ void reanalize_current_instruction()
 {
 	uint64 xip;
     if (inf.is_64bit())
-		get_reg_val(triton::arch::x86::x86_reg_rip.getName().c_str(), &xip);
+		get_reg_val(api.registers.x86_rip.getName().c_str(), &xip);
     else
-        get_reg_val(triton::arch::x86::x86_reg_eip.getName().c_str(), &xip);
+        get_reg_val(api.registers.x86_eip.getName().c_str(), &xip);
 	if (cmdOptions.showDebugInfo) {
 		if (inf.is_64bit())
 			msg("[+] Reanalizyng instruction at %#llx\n", (ea_t)xip);
@@ -217,33 +224,37 @@ void triton_restart_engines()
 		msg("[+] Restarting triton engines...\n");
 	//We need to set the architecture for Triton
 	if (inf.is_64bit())
-		triton::api.setArchitecture(triton::arch::ARCH_X86_64);
+		api.setArchitecture(triton::arch::ARCH_X86_64);
 	else
-		triton::api.setArchitecture(triton::arch::ARCH_X86);
+		api.setArchitecture(triton::arch::ARCH_X86);
 	//We reset everything at the beginning
-	triton::api.resetEngines();
+	api.reset();
 	// Memory access callback
-	triton::api.addCallback(needConcreteMemoryValue);
+	api.addCallback(needConcreteMemoryValue);
 	// Register access callback
-	triton::api.addCallback(needConcreteRegisterValue);
+	api.addCallback(needConcreteRegisterValue);
 	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
-	triton::api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
-	triton::api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
+	api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
+	api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
 	// This optimization is veeery good for the size of the formulas
-	triton::api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
+	//api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
+	api.setMode(triton::modes::ALIGNED_MEMORY, true);
+
 	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
 	if (cmdOptions.only_on_optimization)
 	{
 		if (cmdOptions.use_symbolic_engine)
 		{
-			triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true);
-			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
+			api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+			/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true); // seems not to exist any more
+			api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);*/
 		}
 		if (cmdOptions.use_tainting_engine)
 		{
 			//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
-			triton::api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
-			triton::api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
+			api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true); 
+			/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
+			api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
 		}
 	}
 	//triton::api.getSymbolicEngine()->enable(true);
@@ -259,7 +270,7 @@ void triton_restart_engines()
 	set_automatic_taint_n_simbolic();
 	ponce_runtime_status.myPathConstraints.clear();
 }
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 ssize_t idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 #else
 int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
@@ -296,7 +307,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			debug_event_t* debug_event = va_arg(va, debug_event_t*);
 			thid_t tid = debug_event->tid;
 			ea_t pc = debug_event->ea;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			if (!can_decode(pc)) {
 				if (inf.is_64bit())
 					msg("[!] Some error decoding instruction at %#llx", pc);
@@ -343,7 +354,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			insn_t cmd;
 			decode_insn(&cmd, pc);
 #else
@@ -426,7 +437,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Check if the limit instructions limit was reached
 			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
 			{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 				int answer = ask_yn(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
 #else
 				int answer = askyn_c(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
@@ -454,7 +465,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				}
 				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
 				{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 					int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
 #else
 					int answer = askyn_c(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
@@ -550,29 +561,29 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 //---------------------------------------------------------------------------
 // Callback for ui notifications
-#ifndef __IDA70__
-int idaapi ui_callback(void * ud, int notification_code, va_list va)
+#if IDA_SDK_VERSION >=700
+ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 #else
-ssize_t idaapi ui_callback(void * ud, int notification_code, va_list va)
+int idaapi ui_callback(void* ud, int notification_code, va_list va)
 #endif
 {
 	switch (notification_code)
 	{
 		// Called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		case ui_populating_widget_popup:
 #else
 		case ui_populating_tform_popup:
 #endif
 		{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			TWidget *form = va_arg(va, TWidget *);
 #else
 			TForm *form = va_arg(va, TForm *);
 #endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			int view_type = get_widget_type(form);
 #else
 			int view_type = get_tform_type(form);
@@ -608,7 +619,7 @@ ssize_t idaapi ui_callback(void * ud, int notification_code, va_list va)
 			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 			break;
 		}
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		case ui_finish_populating_widget_popup:
 #else
 		case ui_finish_populating_tform_popup:
@@ -616,13 +627,13 @@ ssize_t idaapi ui_callback(void * ud, int notification_code, va_list va)
 		{
 			//This event is call after all the Ponce menus have been added and updated
 			//It is the perfect point to add the multiple condition solve submenus
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			TWidget *form = va_arg(va, TWidget *);
 #else
 			TForm *form = va_arg(va, TForm *);
 #endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			int view_type = get_widget_type(form);
 #else
 			int view_type = get_tform_type(form);
@@ -676,24 +687,26 @@ void set_SMT_results(Input *input_ptr){
 	/*To set the memory types*/
 	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
 	{
-		auto concreteValue=it->getConcreteValue();
-#ifdef __IDA70__
+		auto concreteValue = api.getConcreteMemoryValue(*it, false);
+		//auto concreteValue=it->getConcreteValue();
+#if IDA_SDK_VERSION >=700
 		put_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
 #else
 		put_many_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
 #endif
-		triton::api.setConcreteMemoryValue(*it);
+		api.setConcreteMemoryValue(*it, concreteValue);
 		//We concretize the memory we set
-		triton::api.concretizeMemory(*it);
+		api.concretizeMemory(*it);
 	}
 		
 	/*To set the register types*/
 	for (auto it = input_ptr->regOperand.begin(); it != input_ptr->regOperand.end(); it++)
 	{
-		set_reg_val(it->getName().c_str(), it->getConcreteValue().convert_to<uint64>());
-		triton::api.setConcreteRegisterValue(*it);
+		auto concreteRegValue = api.getConcreteRegisterValue(*it, false);
+		set_reg_val(it->getName().c_str(), concreteRegValue.convert_to<uint64>());
+		api.setConcreteRegisterValue(*it, concreteRegValue);
 		//We concretize the register we set
-		triton::api.concretizeRegister(*it);
+		api.concretizeRegister(*it);
 	}
 		
 	if (cmdOptions.showDebugInfo)

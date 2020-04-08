@@ -16,7 +16,7 @@
 //IDA
 #include <kernwin.hpp>
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 //Version number
 #include "../../VERSION_NUMBER"
 
@@ -117,3 +117,5 @@ extern ea_t popup_menu_ea;
 extern std::vector<std::string> *blacklkistedUserFunctions; 
 
 extern void idaapi term(void);
+
+extern triton::API api;

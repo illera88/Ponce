@@ -14,7 +14,7 @@
 #include "globals.hpp"
 #include "trigger.hpp"
 //Triton
-#include "api.hpp"
+#include "triton/api.hpp"
 
 //A variable to store if the plugin has hooked the ui and debugger events
 bool hooked = false;
@@ -37,3 +37,5 @@ ea_t popup_menu_ea;
 
 //Used to point to the vector of blacklisted user functions
 std::vector<std::string> *blacklkistedUserFunctions = NULL;
+
+triton::API api;

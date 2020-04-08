@@ -14,7 +14,7 @@
 #include "globals.hpp"
 
 int idaapi modcb(int fid, form_actions_t &fa);
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 void idaapi btn_cb(TWidget *[], int);
 #else
 void idaapi btn_cb(TView *[], int);

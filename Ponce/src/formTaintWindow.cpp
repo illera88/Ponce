@@ -13,7 +13,7 @@
 #include <sstream>
 
 //Triton
-#include <api.hpp>
+#include <triton/api.hpp>
 
 //IDA
 #include <ida.hpp>
@@ -35,18 +35,15 @@ const char *popup_menu_names[] = {
 
 entrylist_t *global_list;
 
-#ifdef __IDA70__
-
-
-
+#if IDA_SDK_VERSION >=700
 void fill_entryList() {
 
 	//We clear the list
 	global_list->clear();
 
 	if (cmdOptions.use_tainting_engine){
-		auto taintedMemoryList = triton::api.getTaintedMemory();
-		auto taintedRegistersList = triton::api.getTaintedRegisters();
+		auto taintedMemoryList = api.getTaintedMemory();
+		auto taintedRegistersList = api.getTaintedRegisters();
 
 		//Iterate over tainted memory
 		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
@@ -54,7 +51,7 @@ void fill_entryList() {
 
 			list_entry->address = *iterator;
 			list_entry->isTainted = true;
-			list_entry->value = triton::api.getConcreteMemoryValue(*iterator);
+			list_entry->value = api.getConcreteMemoryValue(*iterator);
 
 			global_list->push_back(list_entry);
 		}
@@ -62,18 +59,19 @@ void fill_entryList() {
 		//Iterate over tainted registers
 		for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
 			item_t *list_entry = new item_t();
+			auto reg = *(*iterator);
 
-			list_entry->register_name = (*iterator).getName();
+			list_entry->register_name = reg.getName();
 			list_entry->isTainted = true;
-			list_entry->value = (*iterator).getConcreteValue();
+			list_entry->value = api.getConcreteRegisterValue(reg, false);
 
 			global_list->push_back(list_entry);
 		}
 	}
 	else if (cmdOptions.use_symbolic_engine){
-		auto symMemMap = triton::api.getSymbolicMemory();
-		auto symRegMap = triton::api.getSymbolicRegisters();
-		triton::api.getSymbolicEngine();
+		auto symMemMap = api.getSymbolicMemory();
+		auto symRegMap = api.getSymbolicRegisters();
+		api.getSymbolicEngine();
 
 		//Iterate over symbolic memory
 		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
@@ -84,7 +82,8 @@ void fill_entryList() {
 			list_entry->id = symbExpr->getId();
 			list_entry->address = iterator->first;
 			list_entry->comment = symbExpr->getComment();
-			list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
+			list_entry->value = api.getConcreteMemoryValue(symbExpr->getOriginMemory(), false);
+			//list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
 
 			global_list->push_back(list_entry);
 		}
@@ -99,7 +98,7 @@ void fill_entryList() {
 			list_entry->id = symbExpr->getId();
 			list_entry->register_name = reg.getName();
 			list_entry->comment = symbExpr->getComment();
-			list_entry->value = reg.getConcreteValue();
+			list_entry->value = api.getConcreteRegisterValue(reg, false);
 
 			global_list->push_back(list_entry);
 		}
@@ -272,8 +271,8 @@ void fill_entryList(){
 	global_list->clear();
 
 	if (cmdOptions.use_tainting_engine){
-		auto taintedMemoryList = triton::api.getTaintedMemory();
-		auto taintedRegistersList = triton::api.getTaintedRegisters();
+		auto taintedMemoryList = api.getTaintedMemory();
+		auto taintedRegistersList = api.getTaintedRegisters();
 		
 		//Iterate over tainted memory
 		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
@@ -281,7 +280,7 @@ void fill_entryList(){
 
 			list_entry->address = *iterator;
 			list_entry->isTainted = true;
-			list_entry->value = triton::api.getConcreteMemoryValue(*iterator);
+			list_entry->value = api.getConcreteMemoryValue(*iterator);
 
 			global_list->push_back(list_entry);
 		}
@@ -298,9 +297,9 @@ void fill_entryList(){
 		}
 	}
 	else if (cmdOptions.use_symbolic_engine){
-		auto symMemMap = triton::api.getSymbolicMemory();
-		auto symRegMap = triton::api.getSymbolicRegisters();
-		triton::api.getSymbolicEngine();
+		auto symMemMap = api.getSymbolicMemory();
+		auto symRegMap = api.getSymbolicRegisters();
+		api.getSymbolicEngine();
 
 		//Iterate over symbolic memory
 		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {

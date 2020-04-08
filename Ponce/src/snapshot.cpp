@@ -69,33 +69,31 @@ void Snapshot::takeSnapshot() {
 	this->locked = false;
 
 	/* 2 - Save current symbolic engine state */
-	this->snapshotSymEngine = new triton::engines::symbolic::SymbolicEngine(*triton::api.getSymbolicEngine());
+	this->snapshotSymEngine = new triton::engines::symbolic::SymbolicEngine(*api.getSymbolicEngine());
 
 	/* 3 - Save current taint engine state */
-	this->snapshotTaintEngine = new triton::engines::taint::TaintEngine(*triton::api.getTaintEngine());
+	this->snapshotTaintEngine = new triton::engines::taint::TaintEngine(*api.getTaintEngine());
 
 	/* 4 - Save current set of nodes */
-	this->nodesList = triton::api.getAllocatedAstNodes();
+	this->astCtx = new triton::ast::AstContext(*api.getAstContext());
+	//this->nodesList = api.getAllocatedAstNodes();
 
-	/* 5 - Save current map of variables */
-	this->variablesMap = triton::api.getAstVariableNodes();
-
-	/* 6 - Save the Triton CPU state */
+	/* 5 - Save the Triton CPU state */
 #if defined(__x86_64__) || defined(_M_X64)
-	this->cpu = new triton::arch::x86::x8664Cpu(*reinterpret_cast<triton::arch::x86::x8664Cpu*>(triton::api.getCpu()));
+	this->cpu = new triton::arch::x86::x8664Cpu(*reinterpret_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()));
 #endif
 #if defined(__i386) || defined(_M_IX86)
-	this->cpu = new triton::arch::x86::x86Cpu(*reinterpret_cast<triton::arch::x86::x86Cpu*>(triton::api.getCpu()));
+	this->cpu = new triton::arch::x86::x86Cpu(*reinterpret_cast<triton::arch::x86::x86Cpu*>(api.getCpuInstance()));
 #endif
 
 	/* 6 - Save IDA registers context */
-	auto regs = triton::api.getAllRegisters();
+	auto regs = api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		triton::arch::Register *reg = *it;
+		const triton::arch::Register reg = (*it).second;
 		uint64 ival;
-		if (get_reg_val(reg->getName().c_str(), &ival)){
-			this->IDAContext[reg->getName()] = ival;
+		if (get_reg_val(reg.getName().c_str(), &ival)){
+			this->IDAContext[reg.getName()] = ival;
 		}
 	}
 
@@ -113,7 +111,7 @@ void Snapshot::restoreSnapshot() {
 
 	/* 1 - Restore all memory modification. */
 	for (auto i = this->memory.begin(); i != this->memory.end(); ++i){
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		put_bytes(i->first, &i->second, 1);
 #else
 		put_many_bytes(i->first, &i->second, 1);
@@ -122,28 +120,25 @@ void Snapshot::restoreSnapshot() {
 	this->memory.clear();
 
 	/* 2 - Restore current symbolic engine state */
-	*triton::api.getSymbolicEngine() = *this->snapshotSymEngine;
+	*api.getSymbolicEngine() = *this->snapshotSymEngine;
 
 	/* 3 - Restore current taint engine state */
-	*triton::api.getTaintEngine() = *this->snapshotTaintEngine;
+	*api.getTaintEngine() = *this->snapshotTaintEngine;
 
-	/* 4 - Restore current AST node state */
-	triton::api.setAllocatedAstNodes(this->nodesList);
+	/* 4 - Restore current AST context */
+	*api.getAstContext() = *this->astCtx;
 
-	/* 5 - Restore current variables map state */
-	triton::api.setAstVariableNodes(this->variablesMap);
-
-	/* 6 - Restore the Triton CPU state */
+	/* 5 - Restore the Triton CPU state */
 #if defined(__x86_64__) || defined(_M_X64)
-	*reinterpret_cast<triton::arch::x86::x8664Cpu*>(triton::api.getCpu()) = *this->cpu;
+	*reinterpret_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()) = *this->cpu;
 #endif
 #if defined(__i386) || defined(_M_IX86)
-	*reinterpret_cast<triton::arch::x86::x86Cpu*>(triton::api.getCpu()) = *this->cpu;
+	*reinterpret_cast<triton::arch::x86::x86Cpu*>(api.getCpuInstance()) = *this->cpu;
 #endif
 
 	this->mustBeRestore = false;
 
-	/* 7 - Restore IDA registers context 
+	/* 6 - Restore IDA registers context 
 	Suposedly XIP should be set at the same time and execution redirected*/
 	typedef std::map<std::string, triton::uint512>::iterator it_type;
 	for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
@@ -151,10 +146,10 @@ void Snapshot::restoreSnapshot() {
 			msg("[!] ERROR restoring register %s\n", iterator->first.c_str());
 	}
 
-	/* 8 - Restore the Ponce status */
+	/* 7 - Restore the Ponce status */
 	ponce_runtime_status = this->saved_ponce_runtime_status;
 
-	/* 9 - We need to set to NULL the last instruction. We are deleting the last instructions in the Tritonize callback.
+	/* 8 - We need to set to NULL the last instruction. We are deleting the last instructions in the Tritonize callback.
 	So after restore a snapshot if last_instruction is not NULL is double freeing the same instruction */
 	ponce_runtime_status.last_triton_instruction = NULL;
 }

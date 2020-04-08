@@ -12,10 +12,11 @@
 #include <stdexcept>
 
 //Triton
-#include <cpuSize.hpp>
-#include <coreUtils.hpp>
-#include <x86Specifications.hpp>
-#include <api.hpp>
+#include <triton/cpuSize.hpp>
+#include <triton/coreUtils.hpp>
+#include <triton/x86Specifications.hpp>
+#include <triton/api.hpp>
+
 #include "context.hpp"
 #include "globals.hpp"
 
@@ -27,7 +28,7 @@
 #include "globals.hpp"
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
-void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
+void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf.is_64bit())
@@ -36,12 +37,13 @@ void needConcreteMemoryValue(triton::arch::MemoryAccess& mem)
 			msg("[+] We need memory! Address: %#x Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
 	}
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
-	mem.setConcreteValue(memValue);
-	triton::api.setConcreteMemoryValue(mem);
+	api.setConcreteMemoryValue(mem, memValue);
+	/*mem.setConcreteValue(memValue);
+	api.setConcreteMemoryValue(mem);*/
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
-void needConcreteRegisterValue(triton::arch::Register& reg)
+void needConcreteRegisterValue(triton::API& api, const triton::arch::Register& reg)
 {
 	auto regValue = getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo) {
@@ -50,11 +52,12 @@ void needConcreteRegisterValue(triton::arch::Register& reg)
 		else
 			msg("[+] We need a register! Register: %s Value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 	}
-	reg.setConcreteValue(regValue);
-	triton::api.setConcreteRegisterValue(reg);
+	api.setConcreteRegisterValue(reg, regValue);
+	/*reg.setConcreteValue(regValue);
+	api.setConcreteRegisterValue(reg);*/
 }
 
-triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
+triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
 {
 	regval_t reg_value;
 	triton::uint512 value = 0;
@@ -64,17 +67,16 @@ triton::uint512 getCurrentRegisterValue(triton::arch::Register& reg)
 	value = reg_value.ival;
 	/* Sync with the libTriton */
 	triton::arch::Register syncReg;
-	if (reg.getId() >= triton::arch::x86::ID_REG_AF && reg.getId() <= triton::arch::x86::ID_REG_ZF)
-		syncReg = TRITON_X86_REG_EFLAGS;
-	else if (reg.getId() >= triton::arch::x86::ID_REG_IE && reg.getId() <= triton::arch::x86::ID_REG_FZ)
-		syncReg = TRITON_X86_REG_MXCSR;
+	if (reg.getId() >= api.registers.x86_af.getId() && reg.getId() <= api.registers.x86_zf.getId())
+		syncReg = api.registers.x86_eflags;
+	else if (reg.getId() >= api.registers.x86_ie.getId() && reg.getId() <= api.registers.x86_fz.getId())
+		syncReg = api.registers.x86_mxcsr;
 	else
-		syncReg = reg.getParent();
+		syncReg = api.getRegister(reg.getParent());
 
-	syncReg.setConcreteValue(value);
-	triton::api.setConcreteRegisterValue(syncReg);
+	api.setConcreteRegisterValue(syncReg, value);
 	/* Returns the good casted value */
-	return triton::api.getConcreteRegisterValue(reg, false);
+	return api.getConcreteRegisterValue(reg, false);
 }
 
 
@@ -89,10 +91,10 @@ triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(addr, size);
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 	get_bytes(&buffer, size, addr,GMB_READALL, NULL);
 #else
 	get_many_bytes(addr, &buffer, size);
 #endif
-	return triton::utils::fromBufferToUint<triton::uint128>(buffer);
+	return triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer));
 }

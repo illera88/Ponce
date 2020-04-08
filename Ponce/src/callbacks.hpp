@@ -28,7 +28,7 @@ typedef struct
 
 extern std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 ssize_t idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
 ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
 #else

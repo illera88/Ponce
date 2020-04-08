@@ -24,8 +24,8 @@
 #include "formTaintWindow.hpp"
 
 //Triton
-#include "api.hpp"
-#include "x86Specifications.hpp"
+#include "triton/api.hpp"
+#include "triton/x86Specifications.hpp"
 
 struct ah_taint_register_t : public action_handler_t
 {
@@ -34,7 +34,7 @@ struct ah_taint_register_t : public action_handler_t
 	{
 		// Get the address range selected, or return false if there was no selection
 		bool res = false;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		qstring selected;
 		uint32 flags;
 		res = get_highlight(&selected, get_current_viewer(), &flags);
@@ -46,7 +46,7 @@ struct ah_taint_register_t : public action_handler_t
 		if (res)
 		{
 			triton::arch::Register register_to_taint;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			res = str_to_register(std::string(selected.c_str()), register_to_taint);
 #else
 			res = str_to_register(std::string(selected), register_to_taint);
@@ -54,8 +54,12 @@ struct ah_taint_register_t : public action_handler_t
 			if (res)
 			{
 				msg("[!] Tainting register %s\n", selected);
-				register_to_taint.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_taint, true));
-				triton::api.taintRegister(register_to_taint);
+				/*register_to_taint.setConcreteValue(api.getConcreteRegisterValue(register_to_taint, true));
+				api.taintRegister(register_to_taint);*/
+				api.setConcreteRegisterValue(register_to_taint, api.getConcreteRegisterValue(register_to_taint, true));
+				api.taintRegister(register_to_taint);
+
+
 				//When the user taints something for the first time we should enable step_tracing
 				start_tainting_or_symbolic_analysis();
 				//If last_instruction is not set this instruction is not analyze
@@ -87,7 +91,7 @@ struct ah_taint_register_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			qstring selected;
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
@@ -126,7 +130,7 @@ struct ah_symbolize_register_t : public action_handler_t
 	{
 		bool res = false;
 		// Get the address range selected, or return false if there was no selection
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		qstring selected;
 		uint32 flags;
 		res = get_highlight(&selected, get_current_viewer(), &flags);
@@ -137,7 +141,7 @@ struct ah_symbolize_register_t : public action_handler_t
 		if (res)
 		{
 			triton::arch::Register register_to_symbolize;
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			res = str_to_register(std::string(selected.c_str()), register_to_symbolize);
 #else
 			res = str_to_register(std::string(selected), register_to_symbolize);
@@ -152,8 +156,10 @@ struct ah_symbolize_register_t : public action_handler_t
 				else
 					qsnprintf(comment, 256, "Reg %s at address: %#x", selected, action_activation_ctx->cur_ea);
 
-				register_to_symbolize.setConcreteValue(triton::api.getConcreteRegisterValue(register_to_symbolize, true));
-				triton::api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));
+				/*register_to_symbolize.setConcreteValue(api.getConcreteRegisterValue(register_to_symbolize, true));
+				api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));*/
+				api.setConcreteRegisterValue(register_to_symbolize, api.getConcreteRegisterValue(register_to_symbolize, true));
+				api.symbolizeRegister(register_to_symbolize, std::string(comment));
 
 				/*When the user symbolize something for the first time we should enable step_tracing*/
 				start_tainting_or_symbolic_analysis();
@@ -185,7 +191,7 @@ struct ah_symbolize_register_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			qstring selected;
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
@@ -225,7 +231,7 @@ struct ah_taint_memory_t : public action_handler_t
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DUMP)
 #else
 		if (action_activation_ctx->form_type == BWN_DUMP)
@@ -245,7 +251,7 @@ struct ah_taint_memory_t : public action_handler_t
 #endif
 		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		else if (action_activation_ctx->widget_type == BWN_DISASM)
 #else
 		else if (action_activation_ctx->form_type == BWN_DISASM)
@@ -296,7 +302,7 @@ struct ah_taint_memory_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			if (action_update_ctx_t->widget_type == BWN_DUMP)
 #else
 			if (action_update_ctx_t->form_type == BWN_DUMP)
@@ -342,7 +348,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DUMP)
 #else
 		if (action_activation_ctx->form_type == BWN_DUMP)
@@ -360,7 +366,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 #endif
 		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		else if (action_activation_ctx->widget_type == BWN_DISASM)
 #else
 		else if (action_activation_ctx->form_type == BWN_DISASM)
@@ -387,7 +393,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 		else
 			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 
-		symbolize_all_memory(selection_starts, selection_length, comment);
+		api.symbolizeMemory(triton::arch::MemoryAccess(selection_starts, selection_length), comment);
+
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//If last_instruction is not set this instruction is not analyze
@@ -416,7 +423,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			if (action_update_ctx_t->widget_type == BWN_DUMP)
 #else
 			if (action_update_ctx_t->form_type == BWN_DUMP)
@@ -459,7 +466,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
 		//This is only working from the disassembly windows
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DISASM)
 #else
 		if (action_activation_ctx->form_type == BWN_DISASM)
@@ -522,7 +529,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
 		//This is only working from the disassembly windows
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DISASM)
 #else
 		if (action_activation_ctx->form_type == BWN_DISASM)
@@ -583,9 +590,9 @@ struct ah_create_snapshot_t : public action_handler_t
 		//ea_t pc = ctx->cur_ea;
 		uint64 xip;
         if (inf.is_64bit())
-			get_reg_val(triton::arch::x86::x86_reg_rip.getName().c_str(), &xip);
+			get_reg_val(api.registers.x86_rip.getName().c_str(), &xip);
 		else
-			get_reg_val(triton::arch::x86::x86_reg_eip.getName().c_str(), &xip);
+			get_reg_val(api.registers.x86_eip.getName().c_str(), &xip);
 
 		set_cmt((ea_t)xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
@@ -697,7 +704,7 @@ struct ah_show_taintWindow_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
 		//So we don't reopen twice the same window
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 		auto form = find_widget("Taint Window");
 #else
 		auto form = find_tform("Taint Window");
@@ -705,7 +712,7 @@ struct ah_show_taintWindow_t : public action_handler_t
 		if (form != NULL){
 			//let's update it and change to it
 			fill_entryList();
-#ifdef __IDA70__
+#if IDA_SDK_VERSION >=700
 			activate_widget(form, true);
 #else
 			switchto_tform(form, true);

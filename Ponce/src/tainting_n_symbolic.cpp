@@ -18,8 +18,8 @@
 #include <dbg.hpp>
 
 //Triton
-#include <api.hpp>
-#include "x86Specifications.hpp"
+#include <triton/api.hpp>
+#include <triton/x86Specifications.hpp>
 
 void taint_or_symbolize_main_callback(ea_t main_address)
 {
@@ -36,10 +36,14 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #if !defined(__EA64__)
 		//In x86 we taint the memory of the first arg, argc
 		//msg("[!] %s argc at memory: " HEX_FORMAT "\n", cmdOptions.use_tainting_engine? "Tainting": "Symbolizing", get_args_pointer(0, true));
-		if (cmdOptions.use_tainting_engine)
-			triton::api.taintMemory(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc));
-		else 
-			triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc), "argc");
+		auto mem = triton::arch::MemoryAccess(get_args_pointer(0, true), 4);
+		if (cmdOptions.use_tainting_engine){
+			api.taintMemory(mem);
+		}
+		else{
+			api.symbolizeMemory(mem, "argc");
+			//api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(get_args_pointer(0, true), 4, argc), "argc");
+		}
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc %s\n", cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
 #else
@@ -51,9 +55,9 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #endif
 		reg.setConcreteValue(argc);
 		if (cmdOptions.use_tainting_engine)
-			triton::api.taintRegister(reg);
+			api.taintRegister(reg);
 		else
-			triton::api.convertRegisterToSymbolicVariable(reg, "argc");
+			api.convertRegisterToSymbolicVariable(reg, "argc");
 
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc (%s) %s\n", reg.getName().c_str(), cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");
@@ -112,14 +116,16 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 			
 			if (cmdOptions.showExtraDebugInfo)
 				msg("[!] %s argv[%d][%d]: %c\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", i, j, (char)current_char == 0 ? ' ' : (char)current_char);
+			
+			auto mem = triton::arch::MemoryAccess(current_argv + j * char_size, char_size);
 			if (cmdOptions.use_tainting_engine)
-				triton::api.taintMemory(triton::arch::MemoryAccess(current_argv + j*char_size, char_size, current_char));
+				api.taintMemory(mem);
 			else
 			{
 				char comment[256];
 				qsnprintf(comment, 256, "argv[%d][%d]", i, j);
 				//msg("Converting memory to symbolic " HEX_FORMAT "\n", current_argv + j);
-				triton::api.convertMemoryToSymbolicVariable(triton::arch::MemoryAccess(current_argv + j*char_size, char_size, current_char), comment);
+				api.symbolizeMemory(mem, comment);
 			}
 			j++;
 		} while (memcmp(&current_char, null_byte, char_size) != 0);
@@ -197,9 +203,10 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 	auto regs = tritonInst->getReadRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
+		//api.registers.
 		auto reg = it->first;
-		if ((cmdOptions.use_tainting_engine && triton::api.isRegisterTainted(reg)) ||
-			(cmdOptions.use_symbolic_engine && triton::api.getSymbolicRegisterId(reg) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicRegisterId(reg))->isSymbolized()))
+		if ((cmdOptions.use_tainting_engine && api.isRegisterTainted(reg)) ||
+			(cmdOptions.use_symbolic_engine && api.getSymbolicRegister(reg) != nullptr))
 			regs_controlled << reg.getName() << " ";
 	}
 	if (regs_controlled.str().size() > 0)
@@ -214,8 +221,8 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 	{
 		auto mem = it->first;
 		//For the memory we can't use the operand because they don't have yet the real value of the address
-		if ((cmdOptions.use_tainting_engine && triton::api.isMemoryTainted(mem)) ||
-			(cmdOptions.use_symbolic_engine && triton::api.getSymbolicMemoryId(mem.getAddress()) != triton::engines::symbolic::UNSET && triton::api.getSymbolicExpressionFromId(triton::api.getSymbolicMemoryId(mem.getAddress()))->isSymbolized()))
+		if ((cmdOptions.use_tainting_engine && api.isMemoryTainted(mem)) ||
+			(cmdOptions.use_symbolic_engine && api.getSymbolicMemory(mem.getAddress()) != nullptr))
 			mems_controlled << "0x" << std::hex << mem.getAddress() << " ";
 	}
 	if (mems_controlled.str().size() > 0)
