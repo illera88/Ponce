@@ -78,7 +78,7 @@ In the next example we are using the snapshot engine:
 - When a condition is evaluated we negate it, inject the solution in memory and restore the snapshot with it.
 - The solution will be "valid" so we will satisfy the existent conditions.
 
-![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/examples/animated_videos/x64_fread_test_negate_restore_inject.gif?raw=true)
+![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/media/x64_fread_test_negate_restore_inject.gif?raw=true)
 The example source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/fread_SAGE.cpp)
 
 ## Usage

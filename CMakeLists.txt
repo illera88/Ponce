@@ -6,6 +6,7 @@ cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0067 NEW)
 
 option(STATICLIB "Build a static library. Recommended when building shipping ready plugin" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 set(IDA_INSTALLED_DIR "" CACHE PATH "Path to directory where IDA is installed. If set, triton plugin will be moved there after building")
 
 set (PROJECT_NAME Ponce)
@@ -38,6 +39,24 @@ set(TRITON_LIBRARY "" CACHE FILEPATH "Path to triton library")
 
 # Look for Boost
 find_package(Boost 1.55.0 REQUIRED)
+
+
+if(BUILD_EXAMPLES)
+	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+	add_executable(crackme_hash examples/crackme_hash.cpp)
+	add_executable(crackme_xor examples/crackme_xor.cpp)
+	add_executable(fread_SAGE examples/fread_SAGE.cpp)
+	set_target_properties(crackme_hash
+		PROPERTIES
+		FOLDER "Examples")
+	set_target_properties(crackme_xor
+		PROPERTIES
+		FOLDER "Examples")
+	set_target_properties(fread_SAGE
+		PROPERTIES
+		FOLDER "Examples")
+endif()
 
 if(STATICLIB)
     # If we compile it statically we need to provide the all the libraries

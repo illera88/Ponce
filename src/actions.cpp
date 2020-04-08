@@ -814,7 +814,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		else
 		{
 			//Enabling step tracing...
-			enable_step_trace(true);
+			enable_step_trace();
 			set_step_trace_options(0);
 			ponce_runtime_status.tracing_start_time = 0;
 			//Enabling the trigger
