@@ -128,7 +128,7 @@ In this section we will list the different Ponce options as well as keyboard sho
 
 ![2016-09-15 12_07_10-](https://cloud.githubusercontent.com/assets/5193128/18563579/fc95339a-7b3c-11e6-9947-971e0510eba4.png)
 
-##Triton
+## Triton
 Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan](http://shell-storm.org/) with a rich library. We would like to thank and endorse Jonathan's work with Triton. You rock! :)
 
 ## Building
