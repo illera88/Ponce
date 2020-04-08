@@ -12,10 +12,10 @@ project(${PROJECT_NAME})
 
 
 file(GLOB PONCE_SOURCE_FILES
-    Ponce/src/*.cpp
+    src/*.cpp
 )
 file(GLOB PONCE_HEADER_FILES
-    Ponce/src/*.hpp
+    src/*.hpp
 )
 
 # ToDo add static versin
@@ -28,52 +28,51 @@ add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 # Look for IDA SDK 
 set(IDA_ROOT_DIR "" CACHE PATH "Path to directory idasdk7X where you extracted idasdk7X.zip")
 
-set(IDA_INCLUDE_DIR PATH ${IDA_ROOT_DIR}/include)
-set(IDA_LIBRARIES PATH ${IDA_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDA_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
+set(IDA_INCLUDE_DIR ${IDA_ROOT_DIR}/include)
+set(IDA_LIBRARIES ${IDA_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDA_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
 
-message( ${IDA_INCLUDE_DIR})
 # Find Triton
 set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
 set(TRITON_LIBRARY "" CACHE FILEPATH "Path to triton library")
 
 # Look for Boost
-#find_package(Boost 1.55.0 COMPONENTS multiprecision numeric-conversion REQUIRED)
-
-if(NOT (TRITON_INCLUDE_DIR AND TRITON_LIBRARY))
-		message(FATAL_ERROR "Missing TRITON_INCLUDE_DIR and/or TRITON_LIBRARY")
-	endif()
+find_package(Boost 1.55.0 REQUIRED)
 
 if(STATICLIB)
     # If we compile it statically we need to provide the all the libraries
 	# Find Capstone
+	find_package(Capstone REQUIRED)
+	find_package(PkgConfig REQUIRED)
+	#pkg_check_modules (CAPSTONE REQUIRED capstone)
+	
+	find_package(z3 CONFIG REQUIRED)
+	
 	set(CAPSTONE_LIBRARY "" CACHE FILEPATH "Path to capstone library")
 
-	if(NOT (IDA_ROOT_DIR))
-		message(FATAL_ERROR "Path required for IDA_ROOT_DIR (idasdk7X where you extracted idasdk7X.zip)")
-	endif()
 
-	if(NOT (CAPSTONE_LIBRARY))
-		message(FATAL_ERROR "Missing CAPSTONE_LIBRARY")
-	endif()
-
-	# Find Boost
-	set(BOOST_ROOT "" CACHE PATH "Path to Boost root directory")
-
-	if(NOT (BOOST_ROOT))
-		message(FATAL_ERROR "Missing BOOST_ROOT")
-	endif()
-
+	target_link_libraries(
+		${PROJECT_NAME}
+		PRIVATE
+		${CAPSTONE_LIBRARY}
+		z3::libz3
+	)
 endif()
-# Now we create the project
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} )
+
+# Now we create the project
+target_include_directories(${PROJECT_NAME} PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
 target_link_libraries(
     ${PROJECT_NAME}
-    ${CAPSTONE_LIBRARY}
+	PRIVATE
     ${TRITON_LIBRARY}
 	${IDA_LIBRARIES}
 )
+
+
+if(MSVC)
+  add_definitions(/MP)
+endif()
 
 # Set preprocessor definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE __IDP__)
@@ -92,19 +91,3 @@ else()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __X86__)
 endif()
 
-if(STATICLIB_RR)
-	
-	set(IDA_ROOT_DIR "" CACHE PATH "Path to directory idasdk7X where you extracted idasdk7X.zip")
-
-	if(NOT (IDA_ROOT_DIR))
-		message(FATAL_ERROR "Path required for IDA_ROOT_DIR (idasdk7X where you extracted idasdk7X.zip)")
-	endif()
-
-	# Look for z3
-
-	# Look for Capstone
-	include(FindPkgConfig)
-	pkg_check_modules (CAPSTONE REQUIRED capstone)
-	# Use CAPSTONE_FOUND, CAPSTONE_LIBRARIES, CAPSTONE_INCLUDE_DIRS vars
-	target_link_libraries(${PROJECT_NAME} ${CAPSTONE_LIBRARIES})
-endif()
