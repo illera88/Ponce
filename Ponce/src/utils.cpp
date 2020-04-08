@@ -497,113 +497,117 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 The bound is an index in the myPathConstrains vector*/
 Input * solve_formula(ea_t pc, uint bound)
 {
-	// Triton API has changed a lot. Commenting for now
-	//auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
-	//if (path_constraint.conditionAddr == pc)
-	//{
-	//	std::vector <triton::ast::AbstractNode *> expr;
-	//	//First we add to the expresion all the previous path constrains
-	//	unsigned int j;
-	//	for (j = 0; j < bound; j++)
-	//	{
-	//		if (cmdOptions.showExtraDebugInfo)
-	//			msg("[+] Keeping condition %d\n", j);
-	//		triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
-	//		auto symExpr = api.unrollAstFromId(ripId);
-	//		ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+	auto ast = api.getAstContext();
 
-	//		expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
-	//	}
-	//	if (cmdOptions.showExtraDebugInfo)
-	//		msg("[+] Inverting condition %d\n", bound);
-	//	//And now we negate the selected condition
-	//	triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
-	//	auto symExpr = api.getFullAstFromId(ripId);
-	//	ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
-	//	if (cmdOptions.showExtraDebugInfo) {
-	//		if (inf.is_64bit())
-	//			msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
-	//		else
-	//			msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
-	//	}
-	//	expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(notTakenAddr, symExpr->getBitvectorSize()))));
+	auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
+	if (path_constraint.conditionAddr == pc)
+	{
+		std::vector <triton::ast::SharedAbstractNode> expr;
+		//First we add to the expresion all the previous path constrains
+		unsigned int j;
+		for (j = 0; j < bound; j++)
+		{
+			if (cmdOptions.showExtraDebugInfo)
+				msg("[+] Keeping condition %d\n", j);
+			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
+			auto symExpr = api.getSymbolicExpression(ripId)->getAst();
+			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
+			
+			//expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
+			expr.push_back(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize())));
+		}
+		if (cmdOptions.showExtraDebugInfo)
+			msg("[+] Inverting condition %d\n", bound);
+		//And now we negate the selected condition
+		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
+		auto symExpr = api.getSymbolicExpression(ripId)->getAst();
+		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
+		if (cmdOptions.showExtraDebugInfo) {
+			if (inf.is_64bit())
+				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
+			else
+				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
+		}
+		expr.push_back(ast->equal(symExpr, ast->bv(notTakenAddr, symExpr->getBitvectorSize())));
 
-	//	//Time to solve
-	//	auto final_expr = triton::ast::compound(expr);
+		//Time to solve
+		auto final_expr = ast->compound(expr);
 
-	//	if (cmdOptions.showDebugInfo)
-	//		msg("[+] Solving formula...\n");
+		if (cmdOptions.showDebugInfo)
+			msg("[+] Solving formula...\n");
 
-	//	if (cmdOptions.showExtraDebugInfo)
-	//	{
-	//		std::stringstream ss;
-	//		/*Create the full formula*/
-	//		ss << "(set-logic QF_AUFBV)\n";
-	//		/* Then, delcare all symbolic variables */
-	//		ss << api.getSymbolicEngine()->getVariablesDeclaration();
-	//		//ss << api.getVariablesDeclaration();
-	//		/* And concat the user expression */
-	//		ss << "\n\n";
-	//		ss << final_expr;
-	//		ss << "\n(check-sat)";
-	//		ss << "\n(get-model)";
-	//		msg("[+] Formula: %s\n", ss.str().c_str());
-	//	}
+		if (cmdOptions.showExtraDebugInfo)
+		{
+			std::stringstream ss;
+			/*Create the full formula*/
+			ss << "(set-logic QF_AUFBV)\n";
+			/* Then, delcare all symbolic variables */
+			for (auto it : api.getSymbolicVariables()) {
+				ss << ast->declare(ast->variable(it.second));
+				
+			}
+			/* And concat the user expression */
+			ss << "\n\n";
+			ss << final_expr;
+			ss << "\n(check-sat)";
+			ss << "\n(get-model)";
+			msg("[+] Formula: %s\n", ss.str().c_str());
+		}
 
-	//	auto model = api.getModel(final_expr);
+		auto model = api.getModel(final_expr);
 
-	//	if (model.size() > 0)
-	//	{
-	//		Input *newinput = new Input();
-	//		//Clone object 
-	//		newinput->bound = path_constraint.bound;
+		if (model.size() > 0)
+		{
+			Input *newinput = new Input();
+			//Clone object 
+			newinput->bound = path_constraint.bound;
 
-	//		msg("[+] Solution found! Values:\n");
-	//		for (auto it = model.begin(); it != model.end(); it++)
-	//		{
-	//			// ToDo: check this for loop bc I feel the conversion did not go well
-	//			auto symId = it->first;
-	//			auto model = it->second;
+			msg("[+] Solution found! Values:\n");
+			for (auto it = model.begin(); it != model.end(); it++)
+			{
+				// ToDo: check this for loop bc I feel the conversion did not go well
+				auto symId = it->first;
+				auto model = it->second;
 
-	//			triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
-	//			std::string  symbVarComment = symbVar->getComment();
-	//			triton::engines::symbolic::variable_e symbVarKind = symbVar->getType();
-	//			triton::uint512 model_value = model.getValue();
-	//			if (symbVarKind == triton::engines::symbolic::variable_e::MEMORY_VARIABLE)
-	//			{
-	//				auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
-	//				newinput->memOperand.push_back(mem);
-	//				api.setConcreteMemoryValue(mem, model_value);
-	//			}
-	//			else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE){
-	//				auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
-	//				newinput->regOperand.push_back(reg);
-	//				api.setConcreteRegisterValue(reg, model_value);
-	//			}
-	//			//We represent the number different 
-	//			switch (symbVar->getSize())
-	//			{
-	//			case 8:
-	//				msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0? ' ': model_value.convert_to<uchar>());
-	//				break;
-	//			case 16:
-	//				msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(model_value.convert_to<ushort>() >> 8));
-	//				break;
-	//			case 32:
-	//				msg(" - %s (%s):%#08x\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
-	//				break;
-	//			case 64:
-	//				msg(" - %s (%s):%#16llx\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
-	//				break;
-	//			default:
-	//				msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str());
-	//			}
-	//		}
-	//		return newinput;
-	//	}
-	//	else
-	//		msg("[!] No solution found :(\n");
-	//}
+				triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
+				std::string  symbVarComment = symbVar->getComment();
+				triton::engines::symbolic::variable_e symbVarKind = symbVar->getType();
+				triton::uint512 model_value = model.getValue();
+				if (symbVarKind == triton::engines::symbolic::variable_e::MEMORY_VARIABLE)
+				{
+					auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
+					newinput->memOperand.push_back(mem);
+					api.setConcreteMemoryValue(mem, model_value);
+				}
+				else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE){
+					auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
+					newinput->regOperand.push_back(reg);
+					api.setConcreteRegisterValue(reg, model_value);
+				}
+				//We represent the number different 
+				switch (symbVar->getSize())
+				{
+				case 8:
+					msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0? ' ': model_value.convert_to<uchar>());
+					break;
+				case 16:
+					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(model_value.convert_to<ushort>() >> 8));
+					break;
+				case 32:
+					msg(" - %s (%s):%#08x\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
+					break;
+				case 64:
+					msg(" - %s (%s):%#16llx\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
+					break;
+				default:
+					msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str());
+				}
+			}
+			return newinput;
+		}
+		else
+			msg("[!] No solution found :(\n");
+	}
 	return NULL;
 }
 
