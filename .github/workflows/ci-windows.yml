@@ -19,13 +19,15 @@ jobs:
               run: |
                   "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
                   
-            - name: Install Triton dependencies
-              run: |
-                  vcpkg install --triplet x64-windows-static capstone z3 boost-multiprecision boost-numeric-conversion
+            #- name: Install Triton dependencies
+            #  run: |
+            #      vcpkg install --triplet x64-windows-static capstone z3 boost-multiprecision boost-numeric-conversion
                   
             - name: Download and build Triton
               run: |
+                  dir
                   git clone https://github.com/JonathanSalwan/Triton
+                  dir
                   cd Triton
                   cmake -S Triton/ -BTriton/build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DZ3_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DCAPSTONE_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include
                   cmake --build build_x64 --config Release
