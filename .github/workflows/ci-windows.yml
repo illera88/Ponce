@@ -25,11 +25,11 @@ jobs:
                   
             - name: Download and build Triton
               run: |
-                  dir
+                  cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   dir
                   cd Triton
-                  cmake -S Triton/ -BTriton/build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DZ3_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DCAPSTONE_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include
+                  cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DZ3_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DCAPSTONE_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include
                   cmake --build build_x64 --config Release
                   
             - name: Download IDA SDK 7.1 and unzip
