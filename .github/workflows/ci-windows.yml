@@ -1,0 +1,93 @@
+name: Build for Windows
+on: 
+    push:
+    pull_request:
+    release:
+      types: # This configuration does not affect the page_build event above
+        - created
+
+jobs:
+    build:
+        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+        runs-on: windows-2019
+        steps:           
+            - uses: actions/checkout@v1
+              with:
+                  submodules: true
+                    
+            - name: Update vcpkg triplet to only build release
+              run: |
+                  "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
+                  
+            - name: Install Triton dependencies
+              run: |
+                  vcpkg install --triplet x64-windows-static capstone z3 boost-multiprecision boost-numeric-conversion
+                  
+            - name: Download and build Triton
+              run: |
+                  git clone https://github.com/JonathanSalwan/Triton
+                  cd Triton
+                  cmake -S Triton/ -BTriton/build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DZ3_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include -DCAPSTONE_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include
+                  cmake --build build_x64 --config Release
+                  
+            - name: Download IDA SDK 7.1 and unzip
+              env:
+                IDA_SDK_7.1: ${{ secrets.DOWNLOAD_LINK_IDA71 }}
+              run: |
+                  mkdir IDA_SDKs
+                  powershell Invoke-WebRequest "$IDA_SDK_7.1" -OutFile IDA_SDKs\idasdk71.zip
+                  powershell Expand-Archive -Force IDA_SDKs\idasdk71.zip IDA_SDKs\idasdk71
+                
+            - name: Build Ponce x64 IDA 7.1
+              run: |
+                  cmake --build build_x64 --config Release
+                  cmake -S . -B build_x64 -DSTATICLIB=ON -DIDASDK_ROOT_DIR=IDA_SDKs\idasdk71 -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+            # - name: Create ws version
+              # run: |
+                  # cmake -S . -B build_ws -DWITH_WEBSOCKETS=ON -DC2_IP=$C2_IP -DPASSWORD_AUTH=$PASSWORD_AUTH -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+            # - name: Build CidSSH in Release mode
+              # run: |
+                  # cmake --build build_ws --config Release
+                  
+            # - uses: actions/upload-artifact@master
+              # with:
+                  # name: CidSSH_win_ssh_x64.exe
+                  # path: build/src/malware/Release/CidSSH.exe                 
+            # - uses: actions/upload-artifact@master
+              # with:
+                  # name: CidSSH_win_ws_x64.exe
+                  # path: build_ws/src/malware/Release/CidSSH.exe
+                  
+    # release:
+        # runs-on: ubuntu-latest
+        # if: github.event_name == 'release'
+        # needs: build
+        # steps:
+            # - name: Download CidSSH ssh version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ssh_x64.exe
+            
+            # - name: Upload ssh arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ssh_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ssh_x64.exe
+                  # asset_content_type: application/octet-stream
+                  
+            # - name: Download CidSSH ws version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ws_x64.exe
+            # - name: Upload ws arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ws_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ws_x64.exe
+                  # asset_content_type: application/octet-stream      

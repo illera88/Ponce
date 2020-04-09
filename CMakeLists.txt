@@ -28,10 +28,10 @@ add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 #                       # 
 
 # Look for IDA SDK 
-set(IDA_ROOT_DIR "" CACHE PATH "Path to directory idasdk7X where you extracted idasdk7X.zip")
+set(IDASDK_ROOT_DIR "" CACHE PATH "Path to directory idasdk7X where you extracted idasdk7X.zip")
 
-set(IDA_INCLUDE_DIR ${IDA_ROOT_DIR}/include)
-set(IDA_LIBRARIES ${IDA_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDA_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
+set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
+set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
 
 # Find Triton
 set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
