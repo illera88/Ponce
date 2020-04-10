@@ -40,6 +40,7 @@ jobs:
               env:
                 IDA_SDK_71: ${{ secrets.DOWNLOAD_LINK_IDA71 }}
               run: |
+                  cd ..
                   mkdir IDA_SDKs
                   cd IDA_SDKs
                   curl -O -J -L "%IDA_SDK_71%"
