@@ -35,39 +35,36 @@ jobs:
                   cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --config Release
                   
-            - name: Dowload IDA SDK
+            - name: Dowload IDA SDKs
               shell: cmd
               env:
-                IDA_SDK_71: ${{ secrets.DOWNLOAD_LINK_IDA71 }}
+                IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
               run: |
                   cd ..
-                  mkdir IDA_SDKs
-                  cd IDA_SDKs
-                  curl -O -J -L "%IDA_SDK_71%"
-                  powershell Expand-Archive -Force idasdk71.zip idasdk71
-                  dir idasdk71
-                  dir
+                  curl -O -J -L "%IDA_SDK%"
+                  powershell Expand-Archive -Force IDA_SDKs.zip IDA_SDKs
+
                 
             - name: Build Ponce x64 IDA 7.1
-              run: |                  
-                  cmake -S . -B build_x64 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\src\libtriton\includes" -DTRITON_LIBRARY="..\Triton\build_x64\src\libtriton\Release\triton.lib       "          
-                  cmake --build build_x64 --config Release
+              run: |
+                  powershell Expand-Archive -Force ..\IDA_SDKs\idasdk71.zip ..\IDA_SDKs
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\src\libtriton\includes" -DTRITON_LIBRARY="..\Triton\build_x64\src\libtriton\Release\triton.lib       "          
+                  cmake --build build_x64_7.1 --config Release
+            
+            - name: Build Ponce x64 IDA 7.4
+              run: |
+                  powershell Expand-Archive -Force ..\IDA_SDKs\idasdk74.zip ..\IDA_SDKs
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\src\libtriton\includes" -DTRITON_LIBRARY="..\Triton\build_x64\src\libtriton\Release\triton.lib       "          
+                  cmake --build build_x64_7.4 --config Release
                   
-            # - name: Create ws version
-              # run: |
-                  # cmake -S . -B build_ws -DWITH_WEBSOCKETS=ON -DC2_IP=$C2_IP -DPASSWORD_AUTH=$PASSWORD_AUTH -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
-            # - name: Build CidSSH in Release mode
-              # run: |
-                  # cmake --build build_ws --config Release
-                  
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: CidSSH_win_ssh_x64.exe
-                  # path: build/src/malware/Release/CidSSH.exe                 
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: CidSSH_win_ws_x64.exe
-                  # path: build_ws/src/malware/Release/CidSSH.exe
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.1.dll
+                  path: build_x64_7.1/Release/Ponce.dll
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.4.dll
+                  path: build_x64_7.4/Release/Ponce.dll
                   
     # release:
         # runs-on: ubuntu-latest
