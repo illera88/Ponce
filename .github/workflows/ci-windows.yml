@@ -35,14 +35,15 @@ jobs:
                   cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --config Release
                   
-            - shell: cmd
+            - name: Dowload IDA SDK
+              shell: cmd
               env:
                 IDA_SDK_71: ${{ secrets.DOWNLOAD_LINK_IDA71 }}
               run: |
-                  cd ..
                   mkdir IDA_SDKs
+                  cd IDA_SDKs
                   curl -O -J -L "%IDA_SDK_71%"
-                  powershell Expand-Archive -Force IDA_SDKs\idasdk71.zip IDA_SDKs\idasdk71
+                  powershell Expand-Archive -Force idasdk71.zip idasdk71
                 
             - name: Build Ponce x64 IDA 7.1
               run: |                  
