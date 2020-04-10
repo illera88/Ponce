@@ -30,12 +30,20 @@ add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 # Look for IDA SDK 
 set(IDASDK_ROOT_DIR "" CACHE PATH "Path to directory idasdk7X where you extracted idasdk7X.zip")
 
+if(NOT IDASDK_ROOT_DIR)
+	message(FATAL_ERROR "You should set IDASDK_ROOT_DIR to the IDA SDK path")
+endif()
+
 set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
 set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
 
 # Find Triton
 set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
 set(TRITON_LIBRARY "" CACHE FILEPATH "Path to triton library")
+
+if(NOT TRITON_INCLUDE_DIR OR NOT TRITON_LIBRARY)
+	message(FATAL_ERROR "You should set Triton libraries")
+endif()
 
 # Look for Boost
 find_package(Boost 1.55.0 REQUIRED)
@@ -59,22 +67,23 @@ if(BUILD_EXAMPLES)
 endif()
 
 if(STATICLIB)
+	# If using the static library we should use the static runtime too
+	set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
     # If we compile it statically we need to provide the all the libraries
 	# Find Capstone
-	find_package(Capstone REQUIRED)
-	find_package(PkgConfig REQUIRED)
-	#pkg_check_modules (CAPSTONE REQUIRED capstone)
+	find_library(CAPSTONE_LIBRARY capstone REQUIRED)
+	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
+	set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
 	
+	# Find z3
 	find_package(z3 CONFIG REQUIRED)
-	
-	set(CAPSTONE_LIBRARY "" CACHE FILEPATH "Path to capstone library")
-
 
 	target_link_libraries(
 		${PROJECT_NAME}
 		PRIVATE
-		${CAPSTONE_LIBRARY}
 		z3::libz3
+		${CAPSTONE_LIBRARY}
 	)
 endif()
 
