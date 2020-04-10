@@ -22,8 +22,9 @@ jobs:
                   
             - name: Build Triton dependencies with vcpkg. Boost is installed in CI
               run: |
+                  vcpkg install --triplet x86-windows-static capstone[x86] 
+                  vcpkg install --triplet x86-windows-static z3
                   vcpkg install --triplet x64-windows-static capstone[x86] z3
-#                  vcpkg install --triplet x86-windows-static capstone[x86] z3
                   
             - name: Download and build Triton x64
               run: |
