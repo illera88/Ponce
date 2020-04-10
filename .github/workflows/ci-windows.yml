@@ -24,6 +24,10 @@ jobs:
               run: |
                   vcpkg install --triplet x86-windows-static capstone[x86] z3
                   vcpkg install --triplet x64-windows-static capstone[x86] z3
+                  dir "$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include\capstone"
+                  dir "$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include\"
+                  dir "$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\"
+                  dir "$env:VCPKG_INSTALLATION_ROOT\installed\"
                   
             - name: Download and build Triton x64
               run: |
@@ -32,7 +36,10 @@ jobs:
                   cd Triton
                   cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --config Release
-                  
+            
+            - name: Download and build Triton x86
+              run: |
+                  cd ..\Triton
                   cmake -S . -B build_x86 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include\capstone"
                   cmake --build build_x86 --config Release
                        
