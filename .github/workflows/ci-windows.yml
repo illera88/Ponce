@@ -45,10 +45,12 @@ jobs:
                   cd IDA_SDKs
                   curl -O -J -L "%IDA_SDK_71%"
                   powershell Expand-Archive -Force idasdk71.zip idasdk71
+                  dir idasdk71
+                  dir
                 
             - name: Build Ponce x64 IDA 7.1
               run: |                  
-                  cmake -S . -B build_x64 -DIDASDK_ROOT_DIR=..\IDA_SDKs\idasdk71 -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR=..\Triton\src\libtriton\includes -DTRITON_LIBRARY=..\Triton\build_x64\src\libtriton\Release\triton.lib                 
+                  cmake -S . -B build_x64 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR=..\Triton\src\libtriton\includes -DTRITON_LIBRARY=..\Triton\build_x64\src\libtriton\Release\triton.lib                 
                   cmake --build build_x64 --config Release
                   
             # - name: Create ws version
