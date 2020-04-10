@@ -28,17 +28,11 @@ jobs:
               run: |
                   dir $env:VCPKG_INSTALLATION_ROOT
                   dir "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\"
-                  
+                  dir $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
-                  cmake -S . -B build_x64 \
-                  -DPYTHON_BINDINGS=OFF \
-                  -DSTATICLIB=ON \
-                  -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include \
-                  -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" \
-                  -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
-                  
+                  cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --config Release
                   
             - name: Download IDA SDK 7.1 and unzip
