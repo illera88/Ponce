@@ -22,8 +22,7 @@ jobs:
                   
             - name: Build Triton dependencies with vcpkg. Boost is installed in CI
               run: |
-                  vcpkg install --triplet x86-windows-static capstone[x86] 
-                  vcpkg install --triplet x86-windows-static z3
+                  vcpkg install --triplet x86-windows-static capstone[x86] z3
                   vcpkg install --triplet x64-windows-static capstone[x86] z3
                   
             - name: Download and build Triton x64
@@ -34,8 +33,8 @@ jobs:
                   cmake -S . -B build_x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --config Release
                   
-#                  cmake -S . -B build_x86 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include\capstone"
-#                  cmake --build build_x86 --config Release
+                  cmake -S . -B build_x86 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x86-windows-static\include\capstone"
+                  cmake --build build_x86 --config Release
                        
             
             - name: Dowload IDA SDKs
@@ -47,11 +46,11 @@ jobs:
                   curl -O -J -L "%IDA_SDK%"
                   powershell Expand-Archive -Force IDA_SDKs.zip IDA_SDKs
                 
-#            - name: Build Ponce x64 IDA 6.9
-#              run: |
-#                  powershell Expand-Archive -Force ..\IDA_SDKs\idasdk69.zip ..\IDA_SDKs
-#                  cmake -S . -B build_x86_6.9 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk69" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A Win32 -DVCPKG_TARGET_TRIPLET="x86-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\src\libtriton\includes" -DTRITON_LIBRARY="..\Triton\build_x86\src\libtriton\Release\triton.lib       "          
-#                  cmake --build build_x86_6.9 --config Release
+            - name: Build Ponce x64 IDA 6.9
+              run: |
+                  powershell Expand-Archive -Force ..\IDA_SDKs\idasdk69.zip ..\IDA_SDKs
+                  cmake -S . -B build_x86_6.9 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk69" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A Win32 -DVCPKG_TARGET_TRIPLET="x86-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\src\libtriton\includes" -DTRITON_LIBRARY="..\Triton\build_x86\src\libtriton\Release\triton.lib       "          
+                  cmake --build build_x86_6.9 --config Release
             
             - name: Build Ponce x64 IDA 7.1
               run: |
@@ -66,10 +65,10 @@ jobs:
                   cmake --build build_x64_7.4 --config Release
             
             
-#            - uses: actions/upload-artifact@master
-#              with:
-#                  name: Ponce_6.9.dll
-#                  path: build_x86_6.9/Release/Ponce.dll
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_6.9.dll
+                  path: build_x86_6.9/Release/Ponce.dll
             
             - uses: actions/upload-artifact@master
               with:
