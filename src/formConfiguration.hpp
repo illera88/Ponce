@@ -34,7 +34,7 @@ static const char form[] =
 //
 "<#Ponce will be auto initialized with IDA#Auto init and debug#Auto init Ponce with IDA:C5>\n"
 "<#Show debug info#Show debug info in the output windows:C6>\n"
-"<#Max debug verbosity#Show EXTRA debug info in the output windows:C7>>\n"
+"<#Max debug verbosity#Show EXTRA debug info in the output window:C7>>\n"
 //
 "<#Auto taint argv. Will try to find the main function and taint#Taint/Symbolic options#Taint/Symbolize argv:C8>\n"
 "<#Taint the null byte from a string to taint his lenght#- Taint/Symbolize end of string \\0:C9>\n"

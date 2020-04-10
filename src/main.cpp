@@ -42,6 +42,8 @@
 //	api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
 //}
 
+// "C:\Program Files\IDA 7.1\ida64.exe" -A "C:\Users\default.DESKTOP-Q4FDM2G\Documents\code\Ponce\build_x64\Debug\crackme_xor.exe"
+
 //--------------------------------------------------------------------------
 
 #if IDA_SDK_VERSION >=700
@@ -68,7 +70,7 @@ void idaapi run(int)
 		register_action(action_IDA_unload);
 		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
 		//Some actions needs to use the api and the api need to have the architecture set
-		if (inf.is_64bit())
+		if (_is_64())
 			api.setArchitecture(triton::arch::ARCH_X86_64);
 		else
 			api.setArchitecture(triton::arch::ARCH_X86);
@@ -132,7 +134,23 @@ int idaapi init(void)
 	//We do some checks with the versions...
 	if (get_kernel_version(version, sizeof(version)))
 	{
-#if IDA_SDK_VERSION >= 700
+#if IDA_SDK_VERSION == 740
+		//The IDA 7.1 plugin running in old IDA
+		if (strcmp(version, "7.4") != 0)
+			warning("[!] This Ponce plugin was built for IDA 7.4, you are using: %s\n", version);
+#elif IDA_SDK_VERSION == 730
+		//The IDA 7.1 plugin running in old IDA
+		if (strcmp(version, "7.3") != 0)
+			warning("[!] This Ponce plugin was built for IDA 7.3, you are using: %s\n", version);
+#elif IDA_SDK_VERSION == 720
+		//The IDA 7.1 plugin running in old IDA
+		if (strcmp(version, "7.2") != 0)
+			warning("[!] This Ponce plugin was built for IDA 7.2, you are using: %s\n", version);
+#elif IDA_SDK_VERSION == 710
+		//The IDA 7.1 plugin running in old IDA
+		if (strcmp(version, "7.1") != 0)
+			warning("[!] This Ponce plugin was built for IDA 7.1, you are using: %s\n", version);
+#elif IDA_SDK_VERSION == 700
 		//The IDA 7.0 plugin running in old IDA
 		if (strcmp(version, "7.00") != 0)
 			warning("[!] This Ponce plugin was built for IDA 7.0, you are using: %s\n", version);

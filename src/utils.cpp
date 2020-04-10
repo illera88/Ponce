@@ -280,14 +280,14 @@ short read_unicode_char_from_ida(ea_t address)
 #if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
 	}
 #else
 	if (!get_many_bytes(address, &value, sizeof(value))) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
@@ -306,14 +306,14 @@ char read_char_from_ida(ea_t address)
 #if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
 	}
 #else
 	if (!get_many_bytes(address, &value, sizeof(value))) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
@@ -331,14 +331,14 @@ ea_t read_regSize_from_ida(ea_t address)
 #if IDA_SDK_VERSION >=700
 	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
 	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
 	}
 #else
 	if (!get_many_bytes(address, &value, sizeof(value))) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[!] Error reading memory from %#llx\n", address);
 		else
 			msg("[!] Error reading memory from %#x\n", address);
@@ -523,7 +523,7 @@ Input * solve_formula(ea_t pc, uint bound)
 		auto symExpr = api.getSymbolicExpression(ripId)->getAst();
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo) {
-			if (inf.is_64bit())
+			if (_is_64())
 				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
 			else
 				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);

@@ -31,7 +31,7 @@
 void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
 	if (cmdOptions.showExtraDebugInfo) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[+] We need memory! Address: %#llx Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
 		else
 			msg("[+] We need memory! Address: %#x Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
@@ -47,7 +47,7 @@ void needConcreteRegisterValue(triton::API& api, const triton::arch::Register& r
 {
 	auto regValue = getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo) {
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[+] We need a register! Register: %s Value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 		else
 			msg("[+] We need a register! Register: %s Value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());

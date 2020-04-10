@@ -119,3 +119,5 @@ extern std::vector<std::string> *blacklkistedUserFunctions;
 extern void idaapi term(void);
 
 extern triton::API api;
+
+bool _is_64();

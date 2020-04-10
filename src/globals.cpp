@@ -39,3 +39,11 @@ ea_t popup_menu_ea;
 std::vector<std::string> *blacklkistedUserFunctions = NULL;
 
 triton::API api;
+
+bool _is_64(){
+#if IDA_SDK_VERSION >=700
+    return _is_64();
+#else
+    return inf.is_64bit();
+#endif	
+}

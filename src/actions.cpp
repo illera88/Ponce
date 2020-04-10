@@ -151,7 +151,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
 
-				if (inf.is_64bit())
+				if (_is_64())
 				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected, action_activation_ctx->cur_ea);
 				else
 					qsnprintf(comment, 256, "Reg %s at address: %#x", selected, action_activation_ctx->cur_ea);
@@ -267,7 +267,7 @@ struct ah_taint_memory_t : public action_handler_t
 			return 0;
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		ea_t selection_length = selection_ends - selection_starts + 1;
-		if (inf.is_64bit())
+		if (_is_64())
 			msg("[+] Tainting memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		else
 			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
@@ -381,14 +381,14 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts + 1;
-		if (inf.is_64bit())
+		if (_is_64())
 		    msg("[+] Symbolizing memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		else
 			msg("[+] Symbolizing memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		//Tainting all the selected memory
 		char comment[256];
-		if (inf.is_64bit())
+		if (_is_64())
             qsnprintf(comment, 256, "Mem %#llx - %#llx  at address: %#llx ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 		else
 			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
@@ -473,7 +473,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (inf.is_64bit())
+			if (_is_64())
 				msg("[+] Negating condition at %#llx\n", pc);
 			else
 				msg("[+] Negating condition at %#x\n", pc);
@@ -536,7 +536,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (inf.is_64bit())
+			if (_is_64())
 				msg("[+] Negating condition at %#llx\n", pc);
 			else
 				msg("[+] Negating condition at %#x\n", pc);
@@ -589,7 +589,7 @@ struct ah_create_snapshot_t : public action_handler_t
 		//This is the address where the popup was shown, what we need is the xip
 		//ea_t pc = ctx->cur_ea;
 		uint64 xip;
-        if (inf.is_64bit())
+        if (_is_64())
 			get_reg_val(api.registers.x86_rip.getName().c_str(), &xip);
 		else
 			get_reg_val(api.registers.x86_eip.getName().c_str(), &xip);
@@ -800,8 +800,10 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 	{
 		if (ponce_runtime_status.runtimeTrigger.getState())
 		{
+			warning("2");
 			if (ask_for_execute_native())
 			{
+				warning("3");
 				//Deleting previous snapshot
 				snapshot.resetEngine();
 				//Disabling step tracing...
@@ -820,8 +822,10 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 			//Enabling the trigger
 			ponce_runtime_status.analyzed_thread = get_current_thread();
 			ponce_runtime_status.runtimeTrigger.enable();
+			warning("va a fallar ahora %d", __LINE__);
 			//And analyzing current instruction
 			reanalize_current_instruction();
+			warning("Line is %d", __LINE__);
 			if (cmdOptions.showDebugInfo)
 				msg("Enabling step tracing\n");
 		}
