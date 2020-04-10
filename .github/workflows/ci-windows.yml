@@ -18,16 +18,17 @@ jobs:
             - name: Update vcpkg triplet to only build release
               run: |
                   echo $env:VCPKG_INSTALLATION_ROOT
-                  curl --version
                   "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
                   
-            - name: Build Triton dependencies with vcpkg
+            - name: Build Triton dependencies with vcpkg. Boost is installed in CI
               run: |
-                  vcpkg install --triplet x64-windows-static capstone[x86] z3 boost-multiprecision boost-numeric-conversion
+                  vcpkg install --triplet x64-windows-static capstone[x86] z3
                   
             - name: Download and build Triton
               run: |
-                  curl --version
+                  dir $env:VCPKG_INSTALLATION_ROOT
+                  dir "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\"
+                  
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
@@ -35,8 +36,9 @@ jobs:
                   -DPYTHON_BINDINGS=OFF \
                   -DSTATICLIB=ON \
                   -DBOOST_INCLUDEDIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include \
-                  -DZ3_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include \
-                  -DCAPSTONE_INCLUDE_DIRS=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone
+                  -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" \
+                  -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
+                  
                   cmake --build build_x64 --config Release
                   
             - name: Download IDA SDK 7.1 and unzip
@@ -45,12 +47,11 @@ jobs:
               run: |
                   cd ..
                   mkdir IDA_SDKs
-                  powershell Invoke-WebRequest "$IDA_SDK_7.1" -OutFile IDA_SDKs\idasdk71.zip
+                  curl -O -J -L "$IDA_SDK_7.1"
                   powershell Expand-Archive -Force IDA_SDKs\idasdk71.zip IDA_SDKs\idasdk71
                 
             - name: Build Ponce x64 IDA 7.1
-              run: |
-                  cmake --build build_x64 --config Release
+              run: |                  
                   cmake -S . -B build_x64 
                   -DIDASDK_ROOT_DIR=..\IDA_SDKs\idasdk71 \
                   -DSTATICLIB=ON \
@@ -61,6 +62,8 @@ jobs:
                   -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" \
                   -DTRITON_INCLUDE_DIR=..\Triton\src\libtriton\includes \
                   -DTRITON_LIBRARY=..\Triton\build_x64\src\libtriton\Release\triton.lib
+                  
+                  cmake --build build_x64 --config Release
                   
             # - name: Create ws version
               # run: |
