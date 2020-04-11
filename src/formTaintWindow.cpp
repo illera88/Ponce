@@ -35,7 +35,7 @@ const char *popup_menu_names[] = {
 
 entrylist_t *global_list;
 
-#if IDA_SDK_VERSION >=700
+
 void fill_entryList() {
 
 	//We clear the list
@@ -105,6 +105,7 @@ void fill_entryList() {
 	}
 }
 
+#if IDA_SDK_VERSION >=700
 // column widths
 struct entry_chooser_t : public chooser_t
 {
@@ -263,73 +264,6 @@ static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 	qsnprintf(arrptr[5], MAXSTR, "%s", li[n]->isSymbolized ? "true" : "false");
 	qsnprintf(arrptr[6], MAXSTR, "%s", li[n]->comment.c_str());
 	
-}
-
-void fill_entryList(){	
-
-	//We clear the list
-	global_list->clear();
-
-	if (cmdOptions.use_tainting_engine){
-		auto taintedMemoryList = api.getTaintedMemory();
-		auto taintedRegistersList = api.getTaintedRegisters();
-		
-		//Iterate over tainted memory
-		for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
-			item_t *list_entry = new item_t();
-
-			list_entry->address = *iterator;
-			list_entry->isTainted = true;
-			list_entry->value = api.getConcreteMemoryValue(*iterator);
-
-			global_list->push_back(list_entry);
-		}
-		
-		//Iterate over tainted registers
-		for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
-			item_t *list_entry = new item_t();
-
-			list_entry->register_name = (*iterator).getName();
-			list_entry->isTainted = true;
-			list_entry->value = (*iterator).getConcreteValue();
-
-			global_list->push_back(list_entry);
-		}
-	}
-	else if (cmdOptions.use_symbolic_engine){
-		auto symMemMap = api.getSymbolicMemory();
-		auto symRegMap = api.getSymbolicRegisters();
-		api.getSymbolicEngine();
-
-		//Iterate over symbolic memory
-		for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
-			auto symbExpr = iterator->second;
-			item_t *list_entry = new item_t();
-			
-			list_entry->isSymbolized = symbExpr->isSymbolized();
-			list_entry->id = symbExpr->getId();
-			list_entry->address = iterator->first;
-			list_entry->comment = symbExpr->getComment();
-			list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
-
-			global_list->push_back(list_entry);
-		}
-
-		//Iterate over symbolic registers
-		for (auto iterator = symRegMap.begin(); iterator != symRegMap.end(); iterator++) {
-			auto symbExpr = iterator->second;
-			auto reg = symbExpr->getOriginRegister();
-			item_t *list_entry = new item_t();
-			
-			list_entry->isSymbolized = symbExpr->isSymbolized();
-			list_entry->id = symbExpr->getId();
-			list_entry->register_name = reg.getName();
-			list_entry->comment = symbExpr->getComment();
-			list_entry->value = reg.getConcreteValue();
-
-			global_list->push_back(list_entry);
-		}
-	}
 }
 
 static uint32 idaapi update_cb(void *obj, uint32 n)

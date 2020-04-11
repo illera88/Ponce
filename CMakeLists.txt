@@ -35,7 +35,14 @@ if(NOT IDASDK_ROOT_DIR)
 endif()
 
 set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
-set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64 bits
+	set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    # 32 bits
+	set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x86_win_vc_32/ida.lib ${IDASDK_ROOT_DIR}/lib/x86_win_vc_32/pro.lib)
+endif()
+
 
 # Find Triton
 set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
