@@ -70,7 +70,7 @@ void idaapi run(int)
 		register_action(action_IDA_unload);
 		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
 		//Some actions needs to use the api and the api need to have the architecture set
-		if (_is_64())
+		if (inf_is_64bit())
 			api.setArchitecture(triton::arch::ARCH_X86_64);
 		else
 			api.setArchitecture(triton::arch::ARCH_X86);

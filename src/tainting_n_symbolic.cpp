@@ -83,7 +83,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 	triton::uint32 char_size = unicode? 2: 1;// "char_size" in unicode is 2
 	const void* null_byte =	unicode? "\0\0": "\0";
     uint32 reg_size = 4;
-	if (_is_64())
+	if (inf_is_64bit())
         reg_size = 8;
 
 	//We are tainting the argv[0], this is the program path, and it is something that the 
@@ -93,7 +93,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		ea_t current_argv = read_regSize_from_ida(argv + i * reg_size);
 		if (current_argv == (ea_t)-1)
 		{
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[!] Error reading mem: %#llx\n", argv + i * reg_size);
 			else
 				msg("[!] Error reading mem: %#x\n", argv + i * reg_size);
@@ -167,7 +167,7 @@ void set_automatic_taint_n_simbolic()
 			}
 		}
 		if (cmdOptions.showDebugInfo) {
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[+] main function found at %#llx\n", main_function);
 			else
 				msg("[+] main function found at %#x\n", main_function);

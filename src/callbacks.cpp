@@ -48,14 +48,14 @@ void tritonize(ea_t pc, thid_t threadID)
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 #if IDA_SDK_VERSION >=700
 	if (!can_decode(pc)) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[!] Some error decoding instruction at %#llx", pc);
 		else
 			msg("[!] Some error decoding instruction at %#x", pc);
 	}
 #else
 	if (!decode_insn(pc)) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[!] Some error decoding instruction at %#llx", pc);
 		else
 			msg("[!] Some error decoding instruction at %#x", pc);
@@ -86,7 +86,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		api.disassembly(*tritonInst);
 	}
 	catch (...) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[!] Dissasembling error at %#llx. Opcodes:", pc);
 		else
 			msg("[!] Dissasembling error at %#x. Opcodes:", pc);
@@ -97,7 +97,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		return;
 	}
 	if (cmdOptions.showExtraDebugInfo) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[+] Triton at %#llx: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 		else
 			msg("[+] Triton at %#x: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
@@ -105,7 +105,7 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	/* Process the IR and taint */
 	if (!api.buildSemantics(*tritonInst)) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 		else
 			msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
@@ -156,7 +156,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		ponce_runtime_status.total_number_symbolic_ins++;
 
 		if (cmdOptions.showDebugInfo) {
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[!] Instruction %s at %#llx \n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
 			else
 				msg("[!] Instruction %s at %#x\n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
@@ -180,7 +180,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		ea_t addr1 = (ea_t)tritonInst->getNextAddress();
 		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
 		if (cmdOptions.showDebugInfo) {
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 			else
 				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
@@ -189,7 +189,7 @@ void tritonize(ea_t pc, thid_t threadID)
 		/*triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);*/
 		// getSymbolicRegister seems not to be like getSymbolicRegisterId since it returns a SharedSymbolicExpression and not a ripId
 		triton::usize ripId = 0;
-		if (_is_64())
+		if (inf_is_64bit())
 			ripId = api.getSymbolicRegister(api.registers.x86_rip)->getId();
 		else
 			ripId = api.getSymbolicRegister(api.registers.x86_eip)->getId();
@@ -208,16 +208,16 @@ void reanalize_current_instruction()
 {
 	warning("reanalize_current_instruction %x", &api);
 	uint64 xip;
-    if (_is_64()){
-		warning("get_reg_val %s", api.registers.x86_rip.getName().c_str());
-		get_reg_val(api.registers.x86_rip.getName().c_str(), &xip);
+    if (inf_is_64bit()){
+		warning("get_reg_val %s", "rip");
+		get_reg_val("rip", &xip);
 		warning("get_reg_val");
 	}
 	else{
-        get_reg_val(api.registers.x86_eip.getName().c_str(), &xip);
+        get_reg_val("eip", &xip);
 	}
 	if (cmdOptions.showDebugInfo) {
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[+] Reanalizyng instruction at %#llx\n", (ea_t)xip);
 		else
 			msg("[+] Reanalizyng instruction at %#x\n", (ea_t)xip);
@@ -232,7 +232,7 @@ void triton_restart_engines()
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Restarting triton engines...\n");
 	//We need to set the architecture for Triton
-	if (_is_64())
+	if (inf_is_64bit())
 		api.setArchitecture(triton::arch::ARCH_X86_64);
 	else
 		api.setArchitecture(triton::arch::ARCH_X86);
@@ -318,14 +318,14 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			ea_t pc = debug_event->ea;
 #if IDA_SDK_VERSION >=700
 			if (!can_decode(pc)) {
-				if (_is_64())
+				if (inf_is_64bit())
 					msg("[!] Some error decoding instruction at %#llx", pc);
 				else
 					msg("[!] Some error decoding instruction at %#x", pc);
 			}
 #else
 			if (!decode_insn(pc)) {
-				if (_is_64())
+				if (inf_is_64bit())
 					msg("[!] Some error decoding instruction at %#llx", pc);
 				else
 					msg("[!] Some error decoding instruction at %#x", pc);
@@ -339,7 +339,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
 			{
 				if (cmdOptions.showExtraDebugInfo) {
-					if (_is_64())
+					if (inf_is_64bit())
 						msg("[+] Stepping %s: %#llx (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
 					else
 						msg("[+] Stepping %s: %#x (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
@@ -663,7 +663,7 @@ int idaapi ui_callback(void* ud, int notification_code, va_list va)
 						qsnprintf(name, 255, "%d_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
-						if (_is_64())
+						if (inf_is_64bit())
 							qsnprintf(label, 255, "%d. %#llx -> %#llx ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
 						else
 							qsnprintf(label, 255, "%d. %#x -> %#x ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);

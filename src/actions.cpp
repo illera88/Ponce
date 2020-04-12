@@ -151,7 +151,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				msg("[!] Symbolizing register %s\n", selected);
 				char comment[256];
 
-				if (_is_64())
+				if (inf_is_64bit())
 				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected, action_activation_ctx->cur_ea);
 				else
 					qsnprintf(comment, 256, "Reg %s at address: %#x", selected, action_activation_ctx->cur_ea);
@@ -267,7 +267,7 @@ struct ah_taint_memory_t : public action_handler_t
 			return 0;
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		ea_t selection_length = selection_ends - selection_starts + 1;
-		if (_is_64())
+		if (inf_is_64bit())
 			msg("[+] Tainting memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		else
 			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
@@ -381,14 +381,14 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts + 1;
-		if (_is_64())
+		if (inf_is_64bit())
 		    msg("[+] Symbolizing memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 		else
 			msg("[+] Symbolizing memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		//Tainting all the selected memory
 		char comment[256];
-		if (_is_64())
+		if (inf_is_64bit())
             qsnprintf(comment, 256, "Mem %#llx - %#llx  at address: %#llx ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 		else
 			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
@@ -473,7 +473,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[+] Negating condition at %#llx\n", pc);
 			else
 				msg("[+] Negating condition at %#x\n", pc);
@@ -536,7 +536,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 #endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (_is_64())
+			if (inf_is_64bit())
 				msg("[+] Negating condition at %#llx\n", pc);
 			else
 				msg("[+] Negating condition at %#x\n", pc);
@@ -589,10 +589,10 @@ struct ah_create_snapshot_t : public action_handler_t
 		//This is the address where the popup was shown, what we need is the xip
 		//ea_t pc = ctx->cur_ea;
 		uint64 xip;
-        if (_is_64())
-			get_reg_val(api.registers.x86_rip.getName().c_str(), &xip);
+        if (inf_is_64bit())
+			get_reg_val("rip", &xip);
 		else
-			get_reg_val(api.registers.x86_eip.getName().c_str(), &xip);
+			get_reg_val("eip", &xip);
 
 		set_cmt((ea_t)xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();

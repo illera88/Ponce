@@ -239,7 +239,7 @@ static void idaapi destroy_cb(void *obj)
 static void idaapi desc(void *obj, uint32 n, char * const *arrptr)
 {
 	char *format = NULL;
-	if (_is_64())
+	if (inf_is_64bit())
 		format = "%#llx";
 	else
 		format = "%#x";
