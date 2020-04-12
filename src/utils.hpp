@@ -17,7 +17,6 @@
 
 void start_tainting_or_symbolic_analysis();
 bool str_to_register(std::string register_name, triton::arch::Register &reg);
-void taint_all_memory(ea_t address, ea_t size);
 int ask_for_a_snapshot();
 bool already_exits_a_snapshot();
 ea_t find_function(char const* function_name);

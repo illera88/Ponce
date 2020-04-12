@@ -273,7 +273,7 @@ struct ah_taint_memory_t : public action_handler_t
 			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		//Tainting all the selected memory
-		taint_all_memory(selection_starts, selection_length);
+		api.taintMemory(triton::arch::MemoryAccess(address, size));
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//If last_instruction is not set this instruction is not analyze
@@ -588,15 +588,15 @@ struct ah_create_snapshot_t : public action_handler_t
 	{
 		//This is the address where the popup was shown, what we need is the xip
 		//ea_t pc = ctx->cur_ea;
-		uint64 xip;
-        if (inf_is_64bit())
-			get_reg_val("rip", &xip);
-		else
-			get_reg_val("eip", &xip);
+		ea_t xip;
+		if (!get_ip_val(&xip)) {
+			msg("Could not get the XIP value\n");
+			return 1;
+		}
 
-		set_cmt((ea_t)xip, "Snapshot taken here", false);
+		set_cmt(xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
-		snapshot.setAddress((ea_t)xip); // We will use this address later to delete the comment
+		snapshot.setAddress(xip); // We will use this address later to delete the comment
 		msg("Snapshot Taken\n");
 		return 0;
 	}

@@ -203,27 +203,26 @@ void tritonize(ea_t pc, thid_t threadID)
 	//instructions_executed_map[pc].push_back(tritonInst);
 }
 
-/*This function is called when we taint a register that is used in the current instruction*/
-void reanalize_current_instruction()
+/*This function is called when we taint a register that is used in the current instruction. Returns 0 if OK and 1 if error*/
+int reanalize_current_instruction()
 {
 	warning("reanalize_current_instruction %x", &api);
-	uint64 xip;
-    if (inf_is_64bit()){
-		warning("get_reg_val %s", "rip");
-		get_reg_val("rip", &xip);
-		warning("get_reg_val");
+	ea_t xip;
+	if (!get_ip_val(&xip)) {
+		msg("Could not get the XIP value\n");
+		return 1;
 	}
-	else{
-        get_reg_val("eip", &xip);
-	}
+
 	if (cmdOptions.showDebugInfo) {
 		if (inf_is_64bit())
-			msg("[+] Reanalizyng instruction at %#llx\n", (ea_t)xip);
+			msg("[+] Reanalizyng instruction at %#llx\n", xip);
 		else
-			msg("[+] Reanalizyng instruction at %#x\n", (ea_t)xip);
+			msg("[+] Reanalizyng instruction at %#x\n", xip);
 	}
 	
 	tritonize((ea_t)xip, get_current_thread());
+
+	return 0;
 }
 
 /*This functions is called every time a new debugger session starts*/

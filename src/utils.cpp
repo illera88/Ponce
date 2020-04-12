@@ -71,14 +71,6 @@ bool str_to_register(std::string register_name, triton::arch::Register &reg)
 	return false;
 }
 
-/*We need this helper because triton doesn't allow to taint memory regions unalinged, so we taint every byte*/
-void taint_all_memory(ea_t address, ea_t size)
-{
-	for (unsigned int i = 0; i < size; i++)
-	{
-		api.taintMemory(address + i);
-	}
-}
 
 /*This function ask to the user to take a snapshot.
 It returns:

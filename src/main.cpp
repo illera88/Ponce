@@ -134,33 +134,35 @@ int idaapi init(void)
 	//We do some checks with the versions...
 	if (get_kernel_version(version, sizeof(version)))
 	{
-#if IDA_SDK_VERSION == 740
+#if IDA_SDK_VERSION >= 740		
+		warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+#elif IDA_SDK_VERSION == 740
 		//The IDA 7.1 plugin running in old IDA
 		if (strcmp(version, "7.4") != 0)
-			warning("[!] This Ponce plugin was built for IDA 7.4, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 730
 		//The IDA 7.1 plugin running in old IDA
 		if (strcmp(version, "7.3") != 0)
-			warning("[!] This Ponce plugin was built for IDA 7.3, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 720
 		//The IDA 7.1 plugin running in old IDA
 		if (strcmp(version, "7.2") != 0)
-			warning("[!] This Ponce plugin was built for IDA 7.2, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 710
 		//The IDA 7.1 plugin running in old IDA
 		if (strcmp(version, "7.1") != 0)
-			warning("[!] This Ponce plugin was built for IDA 7.1, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 700
 		//The IDA 7.0 plugin running in old IDA
 		if (strcmp(version, "7.00") != 0)
-			warning("[!] This Ponce plugin was built for IDA 7.0, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 680
 		//The IDA 6.8 plugin running in IDA 6.9x
 		if (strcmp(version, "6.8") != 0)
-			warning("[!] This plugin was built for IDA 6.8, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 690		//The IDA 6.9x plugin running in IDA 6.8
 		if (strcmp(version, "6.8") == 0)
-			warning("[!] This plugin was built for IDA 6.9x, you are using: %s\n", version);
+			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #else
 #error // not supported
 #endif
