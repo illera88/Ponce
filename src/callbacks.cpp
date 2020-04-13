@@ -212,20 +212,21 @@ int reanalize_current_instruction()
 		return 0;
 	}
 #else
+	regval_t xip_regval;
 	if (inf.is_64bit()) {
-		if (!get_reg_val("rip", &xip)) {
+		if (!get_reg_val("rip", &xip_regval)) {
 			msg("Could not get the XIP value\n This should never happen");
 			return 0;
 		}
 	}
 	else {
-		if (!get_reg_val("eip", &xip)) {
+		if (!get_reg_val("eip", &xip_regval)) {
 			msg("Could not get the XIP value\n This should never happen");
 			return 0;
 		}
 	}
+	xip = (ea_t)xip_regval.ival;
 #endif
-
 
 	if (cmdOptions.showDebugInfo) {
 		if (inf_is_64bit())
