@@ -273,7 +273,7 @@ struct ah_taint_memory_t : public action_handler_t
 			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		//Tainting all the selected memory
-		api.taintMemory(triton::arch::MemoryAccess(address, size));
+		api.taintMemory(triton::arch::MemoryAccess(selection_starts, selection_length));
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//If last_instruction is not set this instruction is not analyze
@@ -299,6 +299,7 @@ struct ah_taint_memory_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
+		return AST_DISABLE;
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
@@ -380,6 +381,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 			return 0;
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
+		// ToDo: why do we do +1 here??
 		auto selection_length = selection_ends - selection_starts + 1;
 		if (inf_is_64bit())
 		    msg("[+] Symbolizing memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
@@ -393,7 +395,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		else
 			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
 
-		api.symbolizeMemory(triton::arch::MemoryAccess(selection_starts, selection_length), comment);
+		symbolize_all_memory(selection_starts, selection_length, comment);
 
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
@@ -420,6 +422,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
+		return AST_ENABLE;
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
@@ -590,8 +593,8 @@ struct ah_create_snapshot_t : public action_handler_t
 		//ea_t pc = ctx->cur_ea;
 		ea_t xip;
 		if (!get_ip_val(&xip)) {
-			msg("Could not get the XIP value\n");
-			return 1;
+			msg("Could not get the XIP value\n This should never happen");
+			return 0;
 		}
 
 		set_cmt(xip, "Snapshot taken here", false);
@@ -800,10 +803,8 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 	{
 		if (ponce_runtime_status.runtimeTrigger.getState())
 		{
-			warning("2");
 			if (ask_for_execute_native())
 			{
-				warning("3");
 				//Deleting previous snapshot
 				snapshot.resetEngine();
 				//Disabling step tracing...
@@ -822,10 +823,8 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 			//Enabling the trigger
 			ponce_runtime_status.analyzed_thread = get_current_thread();
 			ponce_runtime_status.runtimeTrigger.enable();
-			warning("va a fallar ahora %d", __LINE__);
 			//And analyzing current instruction
 			reanalize_current_instruction();
-			warning("Line is %d", __LINE__);
 			if (cmdOptions.showDebugInfo)
 				msg("Enabling step tracing\n");
 		}

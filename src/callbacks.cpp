@@ -33,7 +33,6 @@ std::list<breakpoint_pending_action> breakpoint_pending_actions;
 /*This function will create and fill the Triton object for every instruction*/
 void tritonize(ea_t pc, thid_t threadID)
 {
-	warning("Line is %d tritonize", __LINE__);
 	/*Check that the runtime Trigger is on just in case*/
 	if (!ponce_runtime_status.runtimeTrigger.getState())
 		return;
@@ -44,7 +43,7 @@ void tritonize(ea_t pc, thid_t threadID)
 
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
 	ponce_runtime_status.last_triton_instruction = tritonInst;
-	warning("Line is %d", __LINE__);
+
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 #if IDA_SDK_VERSION >=700
 	if (!can_decode(pc)) {
@@ -73,8 +72,6 @@ void tritonize(ea_t pc, thid_t threadID)
 	item_size = cmd.size;
 	get_many_bytes(pc, opcodes, item_size);
 #endif
-
-	warning("Line is %d", __LINE__);
 
 	/* Setup Triton information */
 	tritonInst->clear();
@@ -207,11 +204,14 @@ void tritonize(ea_t pc, thid_t threadID)
 int reanalize_current_instruction()
 {
 	warning("reanalize_current_instruction %x", &api);
-	ea_t xip;
+
+
+	ea_t xip= 0;
 	if (!get_ip_val(&xip)) {
-		msg("Could not get the XIP value\n");
-		return 1;
+		warning("Error get_ip_val at reanalize_current_instruction(). Is debugger running?");
+		return 0;
 	}
+
 
 	if (cmdOptions.showDebugInfo) {
 		if (inf_is_64bit())
@@ -220,7 +220,7 @@ int reanalize_current_instruction()
 			msg("[+] Reanalizyng instruction at %#x\n", xip);
 	}
 	
-	tritonize((ea_t)xip, get_current_thread());
+	tritonize(xip, get_current_thread());
 
 	return 0;
 }

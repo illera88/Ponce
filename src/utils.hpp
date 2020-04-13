@@ -40,3 +40,4 @@ void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
 void concretizeAndUntaintVolatileRegisters();
 short read_unicode_char_from_ida(ea_t address);
+void symbolize_all_memory(ea_t address, ea_t size, char* comment);

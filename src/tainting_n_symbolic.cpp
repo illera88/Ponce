@@ -49,15 +49,19 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 #else
 		triton::arch::Register reg;
 #ifdef __NT__ 
-		reg = triton::arch::x86::x86_reg_rcx;
+		reg = api.registers.x86_rcx;
 #elif __LINUX__ || __MAC__
-		reg = triton::arch::x86::x86_reg_rdi;
+		reg = api.registers.x86_rdi;
 #endif
-		reg.setConcreteValue(argc);
-		if (cmdOptions.use_tainting_engine)
+		api.setConcreteRegisterValue(reg, argc);
+
+		if (cmdOptions.use_tainting_engine){
 			api.taintRegister(reg);
-		else
-			api.convertRegisterToSymbolicVariable(reg, "argc");
+		}
+		else {
+			api.setConcreteRegisterValue(reg, api.getConcreteRegisterValue(reg, true));
+			api.symbolizeRegister(reg, std::string("argc"));
+		}
 
 		if (cmdOptions.showDebugInfo)
 			msg("[!] argc (%s) %s\n", reg.getName().c_str(), cmdOptions.use_tainting_engine ? "Tainted" : "Symbolized");

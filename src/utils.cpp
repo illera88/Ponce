@@ -61,7 +61,7 @@ bool str_to_register(std::string register_name, triton::arch::Register &reg)
 	auto regs = api.getAllRegisters();
 	for (auto it = regs.begin(); it != regs.end(); it++)
 	{
-		triton::arch::Register r = it->second;
+		const triton::arch::Register& r = it->second;
 		if (r.getName() == register_name)
 		{
 			reg = r;
@@ -189,12 +189,12 @@ ea_t get_args(int argument_number, bool skip_ret)
 	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
 	switch (argument_number)
 	{
-	case 0: return getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
-	case 1: return getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
-	case 2: return getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
-	case 3: return getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	case 0: return getCurrentRegisterValue(api.registers.x86_rcx).convert_to<ea_t>();
+	case 1: return getCurrentRegisterValue(api.registers.x86_rdx).convert_to<ea_t>();
+	case 2: return getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
+	case 3: return getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
 	default:
-		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
+		ea_t esp = (ea_t)getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
 		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
 		return get_qword(arg);
 	}
@@ -239,7 +239,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	case 2: 
 	case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
 	default:
-		ea_t esp = (ea_t)getCurrentRegisterValue(TRITON_X86_REG_RSP).convert_to<ea_t>();
+		ea_t esp = (ea_t)getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
 		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
 		return arg;
 	}
@@ -994,5 +994,16 @@ void concretizeAndUntaintVolatileRegisters()
 			}
 		}
 
+	}
+}
+
+
+
+/*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
+void symbolize_all_memory(ea_t address, ea_t size, char* comment)
+{
+	for (unsigned int i = 0; i < size; i++)
+	{
+		api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
 	}
 }

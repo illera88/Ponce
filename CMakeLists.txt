@@ -126,7 +126,7 @@ endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(PLUGIN_ARCH 64)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __EA64__)
 else()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __X86__)
 endif()
