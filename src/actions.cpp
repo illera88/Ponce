@@ -589,14 +589,26 @@ struct ah_create_snapshot_t : public action_handler_t
 {
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
-		//This is the address where the popup was shown, what we need is the xip
-		//ea_t pc = ctx->cur_ea;
 		ea_t xip;
+#if IDA_SDK_VERSION >=700
 		if (!get_ip_val(&xip)) {
 			msg("Could not get the XIP value\n This should never happen");
 			return 0;
 		}
-
+#else
+		if (inf.is_64bit()) {
+			if (!get_reg_val("rip", &xip)) {
+				msg("Could not get the XIP value\n This should never happen");
+				return 0;
+			}
+		}
+		else {
+			if (!get_reg_val("eip", &xip)) {
+				msg("Could not get the XIP value\n This should never happen");
+				return 0;
+			}
+		}
+#endif
 		set_cmt(xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
 		snapshot.setAddress(xip); // We will use this address later to delete the comment

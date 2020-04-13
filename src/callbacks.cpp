@@ -205,12 +205,26 @@ int reanalize_current_instruction()
 {
 	warning("reanalize_current_instruction %x", &api);
 
-
-	ea_t xip= 0;
+	ea_t xip = 0;
+#if IDA_SDK_VERSION >=700
 	if (!get_ip_val(&xip)) {
-		warning("Error get_ip_val at reanalize_current_instruction(). Is debugger running?");
+		msg("Could not get the XIP value\n This should never happen");
 		return 0;
 	}
+#else
+	if (inf.is_64bit()) {
+		if (!get_reg_val("rip", &xip)) {
+			msg("Could not get the XIP value\n This should never happen");
+			return 0;
+		}
+	}
+	else {
+		if (!get_reg_val("eip", &xip)) {
+			msg("Could not get the XIP value\n This should never happen");
+			return 0;
+		}
+	}
+#endif
 
 
 	if (cmdOptions.showDebugInfo) {
