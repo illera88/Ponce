@@ -67,9 +67,11 @@ void tritonize(ea_t pc, thid_t threadID)
 	insn_t ins;
 	decode_insn(&ins, pc);
 	item_size = ins.size;
+	assert(item_size < sizeof(opcodes));
 	get_bytes(&opcodes, item_size, pc, GMB_READALL, NULL);
 #else
 	item_size = cmd.size;
+	assert(item_size < sizeof (opcodes));
 	get_many_bytes(pc, opcodes, item_size);
 #endif
 
@@ -203,8 +205,6 @@ void tritonize(ea_t pc, thid_t threadID)
 /*This function is called when we taint a register that is used in the current instruction. Returns 0 if OK and 1 if error*/
 int reanalize_current_instruction()
 {
-	warning("reanalize_current_instruction %x", &api);
-
 	ea_t xip = 0;
 #if IDA_SDK_VERSION >=700
 	if (!get_ip_val(&xip)) {
@@ -315,6 +315,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_into:
 		case dbg_step_over:
 		{
+			// ToDo: remove this part so analysis only happens in dbg_trace
 			if (ponce_runtime_status.ignore_wow64_switching_step)
 			{
 				ponce_runtime_status.ignore_wow64_switching_step = false;
@@ -343,7 +344,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 					msg("[!] Some error decoding instruction at %#llx", pc);
 				else
 					msg("[!] Some error decoding instruction at %#x", pc);
-
 			}
 #endif
 			
@@ -387,7 +387,9 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			// We do this to blacklist API that does not change the tainted input
 			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
 			{
-				qstring callee = get_callee_name(pc);
+				//qstring callee = get_callee_name(pc);
+				qstring callee;
+				auto callee_lenght = get_func_name(&callee, pc);
 				std::vector<std::string> *black_func_pointer;
 
 				//Let's check if the user provided any blacklist file or we sholuld use the built in one

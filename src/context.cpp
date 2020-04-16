@@ -30,13 +30,13 @@
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
+	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf_is_64bit())
-			msg("[+] We need memory! Address: %#llx Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
+			msg("[+] Triton asking IDA for memory address: %#llx Size: %u. IDA returns value: %016llX\n", (ea_t)mem.getAddress(), mem.getSize(), memValue);
 		else
-			msg("[+] We need memory! Address: %#x Size: %u\n", (ea_t)mem.getAddress(), mem.getSize());
-	}
-	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
+			msg("[+] We need memory! Address: %#x Size: %u. IDA returns value: %016llX\n", (ea_t)mem.getAddress(), mem.getSize(), memValue);
+	}	
 	api.setConcreteMemoryValue(mem, memValue);
 	/*mem.setConcreteValue(memValue);
 	api.setConcreteMemoryValue(mem);*/
@@ -48,15 +48,16 @@ void needConcreteRegisterValue(triton::API& api, const triton::arch::Register& r
 	auto regValue = getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf_is_64bit())
-			msg("[+] We need a register! Register: %s Value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 		else
-			msg("[+] We need a register! Register: %s Value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
-	}
+			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+	}	
 	api.setConcreteRegisterValue(reg, regValue);
 	/*reg.setConcreteValue(regValue);
 	api.setConcreteRegisterValue(reg);*/
 }
 
+/* Get a reg value from IDA debugger*/
 triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
 {
 	regval_t reg_value;
@@ -74,17 +75,17 @@ triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
 	else
 		syncReg = api.getRegister(reg.getParent());
 
-	api.setConcreteRegisterValue(syncReg, value);
 	/* Returns the good casted value */
 	return api.getConcreteRegisterValue(reg, false);
 }
 
 
+/* Get a memory value from IDA debugger*/
 triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
 {
 	if (size > 16)
 	{
-		warning("[!] Error, size can't be larger than 16\n");
+		warning("[!] getCurrentMemoryValue() error, size can't be larger than 16\n");
 		return -1;
 	}
 	triton::uint8 buffer[16] = {0};
