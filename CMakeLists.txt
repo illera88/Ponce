@@ -92,6 +92,8 @@ if(STATICLIB)
 		z3::libz3
 		${CAPSTONE_LIBRARY}
 	)
+	
+	target_include_directories(${PROJECT_NAME} PRIVATE ${Capstone_INCLUDE_DIR})
 endif()
 
 
