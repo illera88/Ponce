@@ -22,6 +22,7 @@
 #include "formTaintSymbolizeInput.hpp"
 #include "actions.hpp"
 #include "formTaintWindow.hpp"
+#include "blacklist.hpp"
 
 //Triton
 #include "triton/api.hpp"
@@ -34,23 +35,15 @@ struct ah_taint_register_t : public action_handler_t
 	{
 		// Get the address range selected, or return false if there was no selection
 		bool res = false;
-#if IDA_SDK_VERSION >=700
 		qstring selected;
 		uint32 flags;
 		res = get_highlight(&selected, get_current_viewer(), &flags);
-#else
-		char selected[20];
-		res = get_highlighted_identifier(selected, 20, 0);
-#endif
 
 		if (res)
 		{
 			triton::arch::Register register_to_taint;
-#if IDA_SDK_VERSION >=700
 			res = str_to_register(std::string(selected.c_str()), register_to_taint);
-#else
-			res = str_to_register(std::string(selected), register_to_taint);
-#endif
+
 			if (res)
 			{
 				msg("[!] Tainting register %s\n", selected);
@@ -91,7 +84,6 @@ struct ah_taint_register_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#if IDA_SDK_VERSION >=700
 			qstring selected;
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
@@ -100,15 +92,6 @@ struct ah_taint_register_t : public action_handler_t
 				if (str_to_register(std::string(selected.c_str()), register_to_taint))
 					return AST_ENABLE;
 			}
-#else
-			char selected[20];
-			if (get_highlighted_identifier(selected, 20, 0))
-			{
-				triton::arch::Register register_to_taint;
-				if (str_to_register(std::string(selected), register_to_taint))
-					return AST_ENABLE;
-			}
-#endif
 		}
 		return AST_DISABLE;
 	}
@@ -130,22 +113,15 @@ struct ah_symbolize_register_t : public action_handler_t
 	{
 		bool res = false;
 		// Get the address range selected, or return false if there was no selection
-#if IDA_SDK_VERSION >=700
 		qstring selected;
 		uint32 flags;
 		res = get_highlight(&selected, get_current_viewer(), &flags);
-#else
-		char selected[20];
-		res = get_highlighted_identifier(selected, 20, 0);
-#endif
+
 		if (res)
 		{
 			triton::arch::Register register_to_symbolize;
-#if IDA_SDK_VERSION >=700
 			res = str_to_register(std::string(selected.c_str()), register_to_symbolize);
-#else
-			res = str_to_register(std::string(selected), register_to_symbolize);
-#endif
+
 			if (res)
 			{
 				msg("[!] Symbolizing register %s\n", selected);
@@ -191,7 +167,6 @@ struct ah_symbolize_register_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#if IDA_SDK_VERSION >=700
 			qstring selected;
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
@@ -200,15 +175,6 @@ struct ah_symbolize_register_t : public action_handler_t
 				if (str_to_register(std::string(selected.c_str()), register_to_symbolize))
 					return AST_ENABLE;
 			}
-#else
-			char selected[20];
-			if (get_highlighted_identifier(selected, 20, 0))
-			{
-				triton::arch::Register register_to_symbolize;
-				if (str_to_register(std::string(selected), register_to_symbolize))
-					return AST_ENABLE;
-			}
-#endif
 		}
 		return AST_DISABLE;
 	}
@@ -230,37 +196,14 @@ struct ah_taint_memory_t : public action_handler_t
 	{
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
-		//If we are in the hex view windows we use the selected bytes
-#if IDA_SDK_VERSION >=700
-		if (action_activation_ctx->widget_type == BWN_DUMP)
-#else
-		if (action_activation_ctx->form_type == BWN_DUMP)
-#endif
-		{
-//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifdef __IDA68__
-			return 0;
-#else
-			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
-			{
-				return 0;
-			}
-			//We get the selection bounds from the action activation context
-			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
-			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
-#endif
-		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-#if IDA_SDK_VERSION >=700
-		else if (action_activation_ctx->widget_type == BWN_DISASM)
-#else
-		else if (action_activation_ctx->form_type == BWN_DISASM)
-#endif
+		if (action_activation_ctx->widget_type == BWN_DISASM)
 		{
 			//We don't know how to do this :( 
 			//msg("[!] Disassembly windows no supported for memory tainting...yet\n");
 			//So we ask to the user for the memory and the size
-			if (!prompt_window_taint_symbolize(0, &selection_starts, &selection_ends))
+			// this is just a hint for the user. they can change the filled value
+			if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
 				return 0;
 		}
 		else
@@ -304,11 +247,7 @@ struct ah_taint_memory_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#if IDA_SDK_VERSION >=700
 			if (action_update_ctx_t->widget_type == BWN_DUMP)
-#else
-			if (action_update_ctx_t->form_type == BWN_DUMP)
-#endif
 			{
 //This menu is only enable in the HEX DUMP view in IDA 6.9x
 #ifdef __IDA68__
@@ -350,32 +289,19 @@ struct ah_symbolize_memory_t : public action_handler_t
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
 		//If we are in the hex view windows we use the selected bytes
-#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DUMP)
-#else
-		if (action_activation_ctx->form_type == BWN_DUMP)
-#endif
 		{
-			//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifdef __IDA68__
-			return 0;
-#else
 			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
 				return 0;
 			//We get the selection bounds from the action activation context
 			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
 			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
-#endif
 		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-#if IDA_SDK_VERSION >=700
 		else if (action_activation_ctx->widget_type == BWN_DISASM)
-#else
-		else if (action_activation_ctx->form_type == BWN_DISASM)
-#endif
 		{
 			//We ask to the user for the memory and the size
-			if (!prompt_window_taint_symbolize(0, &selection_starts, &selection_ends))
+			if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
 				return 0;
 		}
 		else
@@ -402,6 +328,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 		//If last_instruction is not set this instruction is not analyze
 		if (ponce_runtime_status.last_triton_instruction == NULL)
 		{
+			// ToDo: What happens if Triton is enable when at a blacklisted function (printf, fgets...)?
+			// It wont be blacklisted. We should change t
 			reanalize_current_instruction();
 			return 0;
 		}
@@ -425,16 +353,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 		//Only if process is being debugged
 		if (get_process_state() != DSTATE_NOTASK)
 		{
-#if IDA_SDK_VERSION >=700
 			if (action_update_ctx_t->widget_type == BWN_DUMP)
-#else
-			if (action_update_ctx_t->form_type == BWN_DUMP)
-#endif
 			{
-				//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifdef __IDA68__
-				return AST_DISABLE;
-#else
 				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
 				{
 					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
@@ -443,7 +363,6 @@ struct ah_symbolize_memory_t : public action_handler_t
 					if (diff >= 0)
 						return AST_ENABLE;
 				}
-#endif
 			}
 			else
 			{
@@ -468,11 +387,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
 		//This is only working from the disassembly windows
-#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DISASM)
-#else
-		if (action_activation_ctx->form_type == BWN_DISASM)
-#endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (inf_is_64bit())
@@ -531,11 +446,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *action_activation_ctx)
 	{
 		//This is only working from the disassembly windows
-#if IDA_SDK_VERSION >=700
 		if (action_activation_ctx->widget_type == BWN_DISASM)
-#else
-		if (action_activation_ctx->form_type == BWN_DISASM)
-#endif
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
 			if (inf_is_64bit())
@@ -589,27 +500,10 @@ struct ah_create_snapshot_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
 		ea_t xip;
-#if IDA_SDK_VERSION >=700
 		if (!get_ip_val(&xip)) {
 			msg("Could not get the XIP value\n This should never happen");
 			return 0;
 		}
-#else
-		regval_t xip_regval;
-		if (inf.is_64bit()) {
-			if (!get_reg_val("rip", &xip_regval)) {
-				msg("Could not get the XIP value\n This should never happen");
-				return 0;
-			}
-		}
-		else {
-			if (!get_reg_val("eip", &xip_regval)) {
-				msg("Could not get the XIP value\n This should never happen");
-				return 0;
-			}
-		}
-		xip = (ea_t)xip_regval.ival;
-#endif
 		set_cmt(xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
 		snapshot.setAddress(xip); // We will use this address later to delete the comment
@@ -720,19 +614,11 @@ struct ah_show_taintWindow_t : public action_handler_t
 	virtual int idaapi activate(action_activation_ctx_t *ctx)
 	{
 		//So we don't reopen twice the same window
-#if IDA_SDK_VERSION >=700
 		auto form = find_widget("Taint Window");
-#else
-		auto form = find_tform("Taint Window");
-#endif
 		if (form != NULL){
 			//let's update it and change to it
 			fill_entryList();
-#if IDA_SDK_VERSION >=700
 			activate_widget(form, true);
-#else
-			switchto_tform(form, true);
-#endif
 		}
 		
 		else

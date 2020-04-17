@@ -15,26 +15,9 @@
 
 #include "globals.hpp"
 
-//This struct is used to define a pending action when a breakpoint is triggered
-typedef struct
-{
-	//The address where the breakpoint was set
-	ea_t address;
-	//If we found a previous breakpoint in the same address we should ignore it
-	bool ignore_breakpoint;
-	//This is the callback will be executed when this breakpoint is reached
-	void(*callback)(ea_t);
-} breakpoint_pending_action;
-
-extern std::list<breakpoint_pending_action> breakpoint_pending_actions;
-
-#if IDA_SDK_VERSION >=700
 ssize_t idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
 ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
-#else
-int idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
-int idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
-#endif
-void tritonize(va_list va);
+
+void tritonize(ea_t pc, thid_t threadID = 0);
 int reanalize_current_instruction();
 void set_SMT_results(Input* input_ptr);

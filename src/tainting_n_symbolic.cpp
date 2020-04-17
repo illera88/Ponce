@@ -12,6 +12,7 @@
 #include "callbacks.hpp"
 #include "globals.hpp"
 #include "utils.hpp"
+#include "blacklist.hpp"
 
 //IDA
 #include <ida.hpp>
@@ -209,8 +210,9 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 	{
 		//api.registers.
 		auto reg = it->first;
+
 		if ((cmdOptions.use_tainting_engine && api.isRegisterTainted(reg)) ||
-			(cmdOptions.use_symbolic_engine && api.getSymbolicRegister(reg) != nullptr))
+			(cmdOptions.use_symbolic_engine && api.isRegisterSymbolized(reg)))
 			regs_controlled << reg.getName() << " ";
 	}
 	if (regs_controlled.str().size() > 0)
@@ -224,9 +226,10 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 	for (auto it = accesses.begin(); it != accesses.end(); it++)
 	{
 		auto mem = it->first;
+
 		//For the memory we can't use the operand because they don't have yet the real value of the address
 		if ((cmdOptions.use_tainting_engine && api.isMemoryTainted(mem)) ||
-			(cmdOptions.use_symbolic_engine && api.getSymbolicMemory(mem.getAddress()) != nullptr))
+			(cmdOptions.use_symbolic_engine && api.isMemorySymbolized(mem)))
 			mems_controlled << "0x" << std::hex << mem.getAddress() << " ";
 	}
 	if (mems_controlled.str().size() > 0)

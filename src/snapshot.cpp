@@ -111,11 +111,7 @@ void Snapshot::restoreSnapshot() {
 
 	/* 1 - Restore all memory modification. */
 	for (auto i = this->memory.begin(); i != this->memory.end(); ++i){
-#if IDA_SDK_VERSION >=700
 		put_bytes(i->first, &i->second, 1);
-#else
-		put_many_bytes(i->first, &i->second, 1);
-#endif
 	}
 	this->memory.clear();
 

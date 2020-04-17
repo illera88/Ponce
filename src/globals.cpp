@@ -38,6 +38,6 @@ Snapshot snapshot = Snapshot();
 ea_t popup_menu_ea;
 
 //Used to point to the vector of blacklisted user functions
-std::vector<std::string> *blacklkistedUserFunctions = NULL;
+std::vector<std::string> *blacklkistedUserFunctions = nullptr;
 
 triton::API api;

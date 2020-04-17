@@ -27,19 +27,34 @@
 //Ponce
 #include "globals.hpp"
 
+/* Get a memory value from IDA debugger*/
+triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
+{
+	if (size > 16)
+	{
+		warning("[!] getCurrentMemoryValue() error, size can't be larger than 16\n");
+		return -1;
+	}
+	triton::uint8 buffer[16] = { 0 };
+	//This is the way to force IDA to read the value from the debugger
+	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+	invalidate_dbgmem_contents(addr, size);
+	get_bytes(&buffer, size, addr, GMB_READALL, NULL);
+
+	return triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer));
+}
+
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
 	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf_is_64bit())
-			msg("[+] Triton asking IDA for memory address: %#llx Size: %u. IDA returns value: %016llX\n", (ea_t)mem.getAddress(), mem.getSize(), memValue);
+			msg("[+] Triton asking IDA for memory address: %#llx Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
 		else
-			msg("[+] We need memory! Address: %#x Size: %u. IDA returns value: %016llX\n", (ea_t)mem.getAddress(), mem.getSize(), memValue);
+			msg("[+] We need memory! Address: %#x Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
 	}	
 	api.setConcreteMemoryValue(mem, memValue);
-	/*mem.setConcreteValue(memValue);
-	api.setConcreteMemoryValue(mem);*/
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
@@ -52,9 +67,6 @@ void needConcreteRegisterValue(triton::API& api, const triton::arch::Register& r
 		else
 			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 	}	
-	api.setConcreteRegisterValue(reg, regValue);
-	/*reg.setConcreteValue(regValue);
-	api.setConcreteRegisterValue(reg);*/
 }
 
 /* Get a reg value from IDA debugger*/
@@ -75,27 +87,9 @@ triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
 	else
 		syncReg = api.getRegister(reg.getParent());
 
+	api.setConcreteRegisterValue(syncReg, value);
 	/* Returns the good casted value */
 	return api.getConcreteRegisterValue(reg, false);
 }
 
 
-/* Get a memory value from IDA debugger*/
-triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size) 
-{
-	if (size > 16)
-	{
-		warning("[!] getCurrentMemoryValue() error, size can't be larger than 16\n");
-		return -1;
-	}
-	triton::uint8 buffer[16] = {0};
-	//This is the way to force IDA to read the value from the debugger
-	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(addr, size);
-#if IDA_SDK_VERSION >=700
-	get_bytes(&buffer, size, addr,GMB_READALL, NULL);
-#else
-	get_many_bytes(addr, &buffer, size);
-#endif
-	return triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer));
-}

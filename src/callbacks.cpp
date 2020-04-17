@@ -15,7 +15,7 @@
 #include "context.hpp"
 #include "utils.hpp"
 #include "tainting_n_symbolic.hpp"
-#include "blacklisted.hpp"
+#include "blacklist.hpp"
 #include "actions.hpp"
 
 //IDA
@@ -37,6 +37,8 @@ void tritonize(ea_t pc, thid_t threadID)
 	if (!ponce_runtime_status.runtimeTrigger.getState())
 		return;
 
+	threadID = threadID ? threadID : get_current_thread();
+
 	//We delete the last_instruction
 	if (ponce_runtime_status.last_triton_instruction != NULL)
 		delete ponce_runtime_status.last_triton_instruction;
@@ -45,40 +47,27 @@ void tritonize(ea_t pc, thid_t threadID)
 	ponce_runtime_status.last_triton_instruction = tritonInst;
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
-#if IDA_SDK_VERSION >=700
 	if (!can_decode(pc)) {
 		if (inf_is_64bit())
 			msg("[!] Some error decoding instruction at %#llx", pc);
 		else
 			msg("[!] Some error decoding instruction at %#x", pc);
 	}
-#else
-	if (!decode_insn(pc)) {
-		if (inf_is_64bit())
-			msg("[!] Some error decoding instruction at %#llx", pc);
-		else
-			msg("[!] Some error decoding instruction at %#x", pc);
-	}
-#endif
 	
 	unsigned char opcodes[15];
 	ssize_t item_size = 0x0;
-#if IDA_SDK_VERSION >=700
+
 	insn_t ins;
 	decode_insn(&ins, pc);
 	item_size = ins.size;
 	assert(item_size < sizeof(opcodes));
 	get_bytes(&opcodes, item_size, pc, GMB_READALL, NULL);
-#else
-	item_size = cmd.size;
-	assert(item_size < sizeof (opcodes));
-	get_many_bytes(pc, opcodes, item_size);
-#endif
 
 	/* Setup Triton information */
 	tritonInst->clear();
 	tritonInst->setOpcode((triton::uint8*)opcodes, item_size);
 	tritonInst->setAddress(pc);
+	tritonInst->setThreadId(threadID);
 
 	/* Disassemble the instruction */
 	try{
@@ -125,11 +114,8 @@ void tritonize(ea_t pc, thid_t threadID)
 			{
 				triton::uint128 value = 0;
 				//We get the memory readed
-#if IDA_SDK_VERSION >=700
 				get_bytes(&value, 1, (ea_t)addr+i, GMB_READALL, NULL);
-#else
-				get_many_bytes((ea_t)addr+i, &value, 1);
-#endif
+
 				//We add a meomory modification to the snapshot engine
 				snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
 			}
@@ -206,27 +192,10 @@ void tritonize(ea_t pc, thid_t threadID)
 int reanalize_current_instruction()
 {
 	ea_t xip = 0;
-#if IDA_SDK_VERSION >=700
 	if (!get_ip_val(&xip)) {
 		msg("Could not get the XIP value\n This should never happen");
 		return 0;
 	}
-#else
-	regval_t xip_regval;
-	if (inf.is_64bit()) {
-		if (!get_reg_val("rip", &xip_regval)) {
-			msg("Could not get the XIP value\n This should never happen");
-			return 0;
-		}
-	}
-	else {
-		if (!get_reg_val("eip", &xip_regval)) {
-			msg("Could not get the XIP value\n This should never happen");
-			return 0;
-		}
-	}
-	xip = (ea_t)xip_regval.ival;
-#endif
 
 	if (cmdOptions.showDebugInfo) {
 		if (inf_is_64bit())
@@ -261,25 +230,25 @@ void triton_restart_engines()
 	api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
 	// This optimization is veeery good for the size of the formulas
 	//api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
-	api.setMode(triton::modes::ALIGNED_MEMORY, true);
+	//api.setMode(triton::modes::ALIGNED_MEMORY, true);
 
 	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
-	if (cmdOptions.only_on_optimization)
-	{
-		if (cmdOptions.use_symbolic_engine)
-		{
-			api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
-			/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true); // seems not to exist any more
-			api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);*/
-		}
-		if (cmdOptions.use_tainting_engine)
-		{
-			//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
-			api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true); 
-			/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
-			api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
-		}
-	}
+	//if (cmdOptions.only_on_optimization)
+	//{
+	//	if (cmdOptions.use_symbolic_engine)
+	//	{
+	//		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+	//		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true); // seems not to exist any more
+	//		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);*/
+	//	}
+	//	if (cmdOptions.use_tainting_engine)
+	//	{
+	//		//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
+	//		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true); 
+	//		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
+	//		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
+	//	}
+	//}
 	//triton::api.getSymbolicEngine()->enable(true);
 	ponce_runtime_status.runtimeTrigger.disable();
 	ponce_runtime_status.is_something_tainted_or_symbolize = false;
@@ -293,11 +262,9 @@ void triton_restart_engines()
 	set_automatic_taint_n_simbolic();
 	ponce_runtime_status.myPathConstraints.clear();
 }
-#if IDA_SDK_VERSION >=700
+
+
 ssize_t idaapi tracer_callback(void *user_data, int notification_code, va_list va)
-#else
-int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
-#endif
 {
 	if (cmdOptions.showExtraDebugInfo)
 		msg("[+] Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
@@ -315,51 +282,6 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 		case dbg_step_into:
 		case dbg_step_over:
 		{
-			// ToDo: remove this part so analysis only happens in dbg_trace
-			if (ponce_runtime_status.ignore_wow64_switching_step)
-			{
-				ponce_runtime_status.ignore_wow64_switching_step = false;
-				break;
-			}
-			//We only want to analyze the thread being analyzed
-			if (ponce_runtime_status.analyzed_thread != get_current_thread())
-				break;
-			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
-			if (!ponce_runtime_status.runtimeTrigger.getState())
-				break;
-			//We want to enable the user to do step into/over, so he could choose whitch functions skip and with conditions negate
-			debug_event_t* debug_event = va_arg(va, debug_event_t*);
-			thid_t tid = debug_event->tid;
-			ea_t pc = debug_event->ea;
-#if IDA_SDK_VERSION >=700
-			if (!can_decode(pc)) {
-				if (inf_is_64bit())
-					msg("[!] Some error decoding instruction at %#llx", pc);
-				else
-					msg("[!] Some error decoding instruction at %#x", pc);
-			}
-#else
-			if (!decode_insn(pc)) {
-				if (inf_is_64bit())
-					msg("[!] Some error decoding instruction at %#llx", pc);
-				else
-					msg("[!] Some error decoding instruction at %#x", pc);
-			}
-#endif
-			
-			//We need to check if the instruction has been analyzed already. This happens when we are stepping into/over and 
-			//we find a breakpoint we set (main, recv, fread), we are receiving two events: dbg_bpt and dbg_step_into for the 
-			//same instruction. And we want to tritonize in dbg_bpt for example when we put bp in main and we execute the program
-			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc)
-			{
-				if (cmdOptions.showExtraDebugInfo) {
-					if (inf_is_64bit())
-						msg("[+] Stepping %s: %#llx (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
-					else
-						msg("[+] Stepping %s: %#x (Tid: %d)\n", notification_code == dbg_step_into ? "into" : "over", pc, tid);
-				}
-				tritonize(pc, tid);
-			}
 			ponce_runtime_status.tracing_start_time = 0;
 			break;
 		}
@@ -377,60 +299,11 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Sometimes the cmd structure doesn't correspond with the traced instruction
 			//With this we are filling cmd with the instruction at the address specified
 
-#if IDA_SDK_VERSION >=700
-			insn_t cmd;
-			decode_insn(&cmd, pc);
-#else
-			decode_insn(pc);
-#endif
-
-			// We do this to blacklist API that does not change the tainted input
-			if (cmd.itype == NN_call || cmd.itype == NN_callfi || cmd.itype == NN_callni)
-			{
-				//qstring callee = get_callee_name(pc);
-				qstring callee;
-				auto callee_lenght = get_func_name(&callee, pc);
-				std::vector<std::string> *black_func_pointer;
-
-				//Let's check if the user provided any blacklist file or we sholuld use the built in one
-				if (cmdOptions.blacklist_path[0] == '\0'){
-					black_func_pointer = &black_func;
-				}
-				else{//We need to use the user provided file
-					black_func_pointer = blacklkistedUserFunctions;
-				}
-				
-				for (auto it = black_func_pointer->begin(); it != black_func_pointer->end(); ++it)
-				{
-					if (strcmp(callee.c_str(), (*it).c_str()) == 0)
-					{
-						//We are in a call to a blacklisted function.
-						/*We should set a BP in the next instruction right after the
-						blacklisted callback to enable tracing again*/
-						ea_t next_ea = next_head(pc, BADADDR);
-						add_bpt(next_ea, 1, BPT_EXEC);
-						//We set a comment so the user know why there is a new bp there
-						set_cmt(next_ea, "Temporal bp set by ponce for blacklisting\n", false);
-
-						breakpoint_pending_action bpa;
-						bpa.address = next_ea;
-						bpa.ignore_breakpoint = false;
-						bpa.callback = enableTrigger_and_concretize_registers; // We will enable back the trigger when this bp get's reached
-						
-						//We add the action to the list
-						breakpoint_pending_actions.push_back(bpa);
-
-						//Disabling step tracing...
-						disable_step_trace();
-						
-						//We want to tritonize the call, so the memory write for the ret address in the stack will be restore by the snapshot
-						tritonize(pc, tid);
-						ponce_runtime_status.runtimeTrigger.disable();
-
-						return 0;
-					}
-				}
+			if (should_blacklist(pc, tid)) {
+				// We have blacklisted this call so we should not keep going 
+				return 0;
 			}
+			
 			//If the instruciton is not a blacklisted call we analyze the instruction
 			//We don't want to reanalize instructions. p.e. if we put a bp we receive two events, the bp and this one
 			if (ponce_runtime_status.last_triton_instruction == NULL || (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc))
@@ -462,11 +335,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 			//Check if the limit instructions limit was reached
 			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
 			{
-#if IDA_SDK_VERSION >=700
 				int answer = ask_yn(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
-#else
-				int answer = askyn_c(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
-#endif
 				if (answer == 0 || answer == -1) //No or Cancel
 				{
 					// stop the trace mode and suspend the process
@@ -490,11 +359,7 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 				}
 				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
 				{
-#if IDA_SDK_VERSION >=700
 					int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
-#else
-					int answer = askyn_c(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
-#endif
 					if (answer == 0 || answer == -1) //No or Cancel
 					{
 						// stop the trace mode and suspend the process
@@ -586,33 +451,17 @@ int idaapi tracer_callback(void *user_data, int notification_code, va_list va)
 
 //---------------------------------------------------------------------------
 // Callback for ui notifications
-#if IDA_SDK_VERSION >=700
 ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
-#else
-int idaapi ui_callback(void* ud, int notification_code, va_list va)
-#endif
 {
 	switch (notification_code)
 	{
 		// Called when IDA is preparing a context menu for a view
 		// Here dynamic context-depending user menu items can be added.
-#if IDA_SDK_VERSION >=700
 		case ui_populating_widget_popup:
-#else
-		case ui_populating_tform_popup:
-#endif
 		{
-#if IDA_SDK_VERSION >=700
 			TWidget *form = va_arg(va, TWidget *);
-#else
-			TForm *form = va_arg(va, TForm *);
-#endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
-#if IDA_SDK_VERSION >=700
 			int view_type = get_widget_type(form);
-#else
-			int view_type = get_tform_type(form);
-#endif
 
 			//Adding a separator
 			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
@@ -644,25 +493,14 @@ int idaapi ui_callback(void* ud, int notification_code, va_list va)
 			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 			break;
 		}
-#if IDA_SDK_VERSION >=700
 		case ui_finish_populating_widget_popup:
-#else
-		case ui_finish_populating_tform_popup:
-#endif
 		{
 			//This event is call after all the Ponce menus have been added and updated
 			//It is the perfect point to add the multiple condition solve submenus
-#if IDA_SDK_VERSION >=700
 			TWidget *form = va_arg(va, TWidget *);
-#else
-			TForm *form = va_arg(va, TForm *);
-#endif
 			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
-#if IDA_SDK_VERSION >=700
 			int view_type = get_widget_type(form);
-#else
-			int view_type = get_tform_type(form);
-#endif
+
 			//We get the ea form a global variable that is set in the update event
 			//This is not very elegant but I don't know how to do it from here
 			ea_t cur_ea = popup_menu_ea;
@@ -714,11 +552,8 @@ void set_SMT_results(Input *input_ptr){
 	{
 		auto concreteValue = api.getConcreteMemoryValue(*it, false);
 		//auto concreteValue=it->getConcreteValue();
-#if IDA_SDK_VERSION >=700
 		put_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
-#else
-		put_many_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
-#endif
+
 		api.setConcreteMemoryValue(*it, concreteValue);
 		//We concretize the memory we set
 		api.concretizeMemory(*it);

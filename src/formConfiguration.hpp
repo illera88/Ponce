@@ -14,11 +14,7 @@
 #include "globals.hpp"
 
 int idaapi modcb(int fid, form_actions_t &fa);
-#if IDA_SDK_VERSION >=700
 void idaapi btn_cb(TWidget *[], int);
-#else
-void idaapi btn_cb(TView *[], int);
-#endif
 void prompt_conf_window(void);
 
 static const char form[] =
