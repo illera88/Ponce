@@ -176,8 +176,6 @@ int tritonize(ea_t pc, thid_t threadID)
 				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 
 		}
-		/*triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);*/
-		// getSymbolicRegister seems not to be like getSymbolicRegisterId since it returns a SharedSymbolicExpression and not a ripId
 		triton::usize ripId = 0;
 		if (inf_is_64bit())
 			ripId = api.getSymbolicRegister(api.registers.x86_rip)->getId();

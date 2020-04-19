@@ -190,14 +190,14 @@ ea_t get_args(int argument_number, bool skip_ret)
 	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
 	switch (argument_number)
 	{
-	case 0: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<ea_t>();
-	case 1: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<ea_t>();
-	case 2: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
-	case 3: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
-	case 4: return IDA_getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
-	case 5: return IDA_getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
+	case 0: return IDA_getCurrentRegisterValue(api.registers.x86_rdi).convert_to<ea_t>();
+	case 1: return IDA_getCurrentRegisterValue(api.registers.x86_rsi).convert_to<ea_t>();
+	case 2: return IDA_getCurrentRegisterValue(api.registers.x86_rdx).convert_to<ea_t>();
+	case 3: return IDA_getCurrentRegisterValue(api.registers.x86_rcx).convert_to<ea_t>();
+	case 4: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
+	case 5: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
 	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(TRITON_X86_REG_RSP);
+		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
 		return get_qword(arg);
 	}
@@ -242,7 +242,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	case 4: 
 	case 5:error("[!] In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
 	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(TRITON_X86_REG_RSP);
+		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
 		return arg;
 	}

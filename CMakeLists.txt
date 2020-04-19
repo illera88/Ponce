@@ -35,14 +35,20 @@ if(NOT IDASDK_ROOT_DIR)
 endif()
 
 set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    # 64 bits
-	set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib ${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/pro.lib)
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    # 32 bits
-	set(IDA_LIBRARIES ${IDASDK_ROOT_DIR}/lib/x86_win_vc_32/ida.lib ${IDASDK_ROOT_DIR}/lib/x86_win_vc_32/pro.lib)
-endif()
 
+# IDA SDK libs.
+if(WIN32)
+	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_32/ida.lib")
+	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib")
+elseif(APPLE)
+	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_32/libida.dylib")
+	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
+elseif(UNIX) # APPLE is also UNIX, so it MUST be before this elseif().
+	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
+	set(IDA_LIBRARIES "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
+else()
+	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
+endif()
 
 # Find Triton
 set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
@@ -74,24 +80,42 @@ if(BUILD_EXAMPLES)
 endif()
 
 if(STATICLIB)
-	# If using the static library we should use the static runtime too
-	set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    # If we compile it statically we need to provide the all the libraries
+	# If we compile it statically we need to provide the all the libraries
 	# Find Capstone
 	find_library(CAPSTONE_LIBRARY capstone REQUIRED)
 	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
-	set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
-	
-	# Find z3
-	find_package(z3 CONFIG REQUIRED)
 
-	target_link_libraries(
-		${PROJECT_NAME}
-		PRIVATE
-		z3::libz3
-		${CAPSTONE_LIBRARY}
-	)
+	if(NOT MSVC)
+		set(Z3_LIBRARY "" CACHE FILEPATH "Path to Z3 library")
+		if(NOT Z3_LIBRARY)
+			message(FATAL_ERROR "You should set z3 libraries")
+		endif()
+		
+		target_link_libraries(
+			${PROJECT_NAME}
+			PRIVATE
+			${Z3_LIBRARY}
+			${CAPSTONE_LIBRARY}
+		)
+
+	else()
+		  # If using the static library we should use the static runtime too
+		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+		# Using Capstone from vcpkg has this caveat
+		set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
+		
+		# Find z3
+		find_package(z3 CONFIG REQUIRED)
+
+		target_link_libraries(
+			${PROJECT_NAME}
+			PRIVATE
+			z3::libz3
+			${CAPSTONE_LIBRARY}
+		)
+	endif()
+	
 	
 	target_include_directories(${PROJECT_NAME} PRIVATE ${Capstone_INCLUDE_DIR})
 endif()
@@ -123,6 +147,7 @@ elseif (APPLE)
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DANGEROUS_FUNCTIONS)
 	set(PLUGIN_EXTENSION so)
 endif()
 
