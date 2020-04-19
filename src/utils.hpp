@@ -16,7 +16,7 @@
 #include "globals.hpp"
 
 void start_tainting_or_symbolic_analysis();
-bool str_to_register(std::string register_name, triton::arch::Register &reg);
+const triton::arch::Register* str_to_register(qstring register_name);
 int ask_for_a_snapshot();
 bool already_exits_a_snapshot();
 ea_t find_function(char const* function_name);
@@ -40,5 +40,5 @@ void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
 void concretizeAndUntaintVolatileRegisters();
 short read_unicode_char_from_ida(ea_t address);
-void symbolize_all_memory(ea_t address, ea_t size, char* comment);
+void symbolize_all_memory(ea_t address, ea_t size);
 ea_t current_instruction();

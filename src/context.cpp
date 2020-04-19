@@ -62,9 +62,10 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
 {
 	regval_t reg_value;
 	triton::uint512 value = 0;
+	auto reg_name = reg.getName();
 	//We need to invalidate the registers. If not IDA uses the last value when program was stopped
 	invalidate_dbg_state(DBGINV_REGS);
-	get_reg_val(reg.getName().c_str(), &reg_value);
+	get_reg_val(reg_name.c_str(), &reg_value);
 	value = reg_value.ival;
 	/* Sync with the libTriton */
 	triton::arch::Register syncReg;
@@ -75,9 +76,10 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
 	else
 		syncReg = api.getRegister(reg.getParent());
 
-	api.setConcreteRegisterValue(syncReg, value);
-	/* Returns the good casted value */
-	return api.getConcreteRegisterValue(reg, false);
+	return value;
+	//api.setConcreteRegisterValue(syncReg, value);
+	///* Returns the good casted value */
+	//return api.getConcreteRegisterValue(reg, false);
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
@@ -90,7 +92,7 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
 		else
 			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 	}
-	api.concretizeRegister(reg);
+	api.setConcreteRegisterValue(reg, regValue);
 }
 
 

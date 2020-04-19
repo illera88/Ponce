@@ -41,17 +41,12 @@ struct ah_taint_register_t : public action_handler_t
 
 		if (res)
 		{
-			triton::arch::Register register_to_taint;
-			res = str_to_register(std::string(selected.c_str()), register_to_taint);
+			const triton::arch::Register* register_to_taint = str_to_register(selected);
 
-			if (res)
+			if (register_to_taint)
 			{
 				msg("[!] Tainting register %s\n", selected);
-				/*register_to_taint.setConcreteValue(api.getConcreteRegisterValue(register_to_taint, true));
-				api.taintRegister(register_to_taint);*/
-				api.setConcreteRegisterValue(register_to_taint, api.getConcreteRegisterValue(register_to_taint, true));
-				api.taintRegister(register_to_taint);
-
+				api.taintRegister(*register_to_taint);
 
 				//When the user taints something for the first time we should enable step_tracing
 				start_tainting_or_symbolic_analysis();
@@ -68,7 +63,7 @@ struct ah_taint_register_t : public action_handler_t
 				{
 					auto reg = it->first;
 					//msg("Register read: %s\n", reg.getName().c_str());
-					if (reg.getId() == register_to_taint.getId())
+					if (reg.getId() == register_to_taint->getId())
 					{
 						tritonize(current_instruction());
 						break;
@@ -88,8 +83,7 @@ struct ah_taint_register_t : public action_handler_t
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
 			{
-				triton::arch::Register register_to_taint;
-				if (str_to_register(std::string(selected.c_str()), register_to_taint))
+				if (str_to_register(selected))
 					return AST_ENABLE;
 			}
 		}
@@ -119,23 +113,19 @@ struct ah_symbolize_register_t : public action_handler_t
 
 		if (res)
 		{
-			triton::arch::Register register_to_symbolize;
-			res = str_to_register(std::string(selected.c_str()), register_to_symbolize);
+			const triton::arch::Register* register_to_symbolize = str_to_register(selected);
 
-			if (res)
+			if (register_to_symbolize)
 			{
-				msg("[!] Symbolizing register %s\n", selected);
+				msg("[!] Symbolizing register %s\n", selected.c_str());
 				char comment[256];
 
 				if (inf_is_64bit())
-				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected, action_activation_ctx->cur_ea);
+				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected.c_str(), action_activation_ctx->cur_ea);
 				else
-					qsnprintf(comment, 256, "Reg %s at address: %#x", selected, action_activation_ctx->cur_ea);
+					qsnprintf(comment, 256, "Reg %s at address: %#x", selected.c_str(), action_activation_ctx->cur_ea);
 
-				/*register_to_symbolize.setConcreteValue(api.getConcreteRegisterValue(register_to_symbolize, true));
-				api.convertRegisterToSymbolicVariable(register_to_symbolize, std::string(comment));*/
-				api.setConcreteRegisterValue(register_to_symbolize, api.getConcreteRegisterValue(register_to_symbolize, true));
-				api.symbolizeRegister(register_to_symbolize, std::string(comment));
+				api.symbolizeRegister(*register_to_symbolize, std::string(comment));
 
 				/*When the user symbolize something for the first time we should enable step_tracing*/
 				start_tainting_or_symbolic_analysis();
@@ -151,7 +141,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
 				{
 					auto reg = it->first;
-					if (reg.getId() == register_to_symbolize.getId())
+					if (reg.getId() == register_to_symbolize->getId())
 					{
 						tritonize(current_instruction());
 						break;
@@ -171,8 +161,7 @@ struct ah_symbolize_register_t : public action_handler_t
 			uint32 flags;
 			if (get_highlight(&selected, get_current_viewer(), &flags))
 			{
-				triton::arch::Register register_to_symbolize;
-				if (str_to_register(std::string(selected.c_str()), register_to_symbolize))
+				if (str_to_register(selected))
 					return AST_ENABLE;
 			}
 		}
@@ -305,19 +294,13 @@ struct ah_symbolize_memory_t : public action_handler_t
 		else
 			msg("[+] Symbolizing memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
-		//Tainting all the selected memory
-		char comment[256];
-		if (inf_is_64bit())
-            qsnprintf(comment, 256, "Mem %#llx - %#llx  at address: %#llx ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
-		else
-			qsnprintf(comment, 256, "Mem %#x - %#x  at address: %#x ", selection_starts, selection_starts + selection_length, action_activation_ctx->cur_ea);
-
-		symbolize_all_memory(selection_starts, selection_length, comment);
+		// Symbolizing all the selected memory
+		symbolize_all_memory(selection_starts, selection_length);
 
 		/*When the user taints something for the first time we should enable step_tracing*/
 		start_tainting_or_symbolic_analysis();
 		//If last_instruction is not set this instruction is not analyze
-		if (ponce_runtime_status.last_triton_instruction == NULL)
+		if (ponce_runtime_status.last_triton_instruction == nullptr)
 		{
 			// ToDo: What happens if Triton is enable when at a blacklisted function (printf, fgets...)?
 			// It wont be blacklisted. We should change t

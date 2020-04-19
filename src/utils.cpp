@@ -55,21 +55,24 @@ void start_tainting_or_symbolic_analysis()
 	}
 }
 
-/*This functions gets a string and return the triton register assign or NULL
+/*This functions gets a string and return the triton register assign or nullptr
 This is using the triton current architecture so it is more generic.*/
-bool str_to_register(std::string register_name, triton::arch::Register &reg)
+const triton::arch::Register* str_to_register(qstring register_name)
 {
 	auto regs = api.getAllRegisters();
-	for (auto it = regs.begin(); it != regs.end(); it++)
+	//for (auto it = regs.begin(); it != regs.end(); it++)
+	for (auto& pair : regs)
 	{
-		const triton::arch::Register& r = it->second;
-		if (r.getName() == register_name)
+		auto reg = pair.second;
+		//const triton::arch::Register a = it->second;
+		//auto b = &a;
+		//triton::arch::Register r = it->second;
+		if (strcmp(reg.getName().c_str(), register_name.c_str()) == 0)
 		{
-			reg = r;
-			return true;
+			return &regs[pair.first];
 		}
 	}
-	return false;
+	return nullptr;
 }
 
 
@@ -876,12 +879,15 @@ std::uint64_t GetTimeMs64(void)
 }
 
 /*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(ea_t address, ea_t size, char* comment)
+void symbolize_all_memory(ea_t address, ea_t size)
 {
+	// ToDo: add a proper comment on each symbolized memory
 	for (unsigned int i = 0; i < size; i++)
-	{
+	{		
 		//api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
-		api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
+		auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
+		auto var_name = symVar->getName();
+		set_cmt(address + i, var_name.c_str(), true);
 	}
 }
 
