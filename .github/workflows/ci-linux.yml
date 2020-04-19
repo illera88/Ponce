@@ -17,8 +17,8 @@ jobs:
             
             - name: Build casptone
               run: |
-                  vcpkg install casptone
                   vcpkg install z3
+                  vcpkg install casptone
                     
             - name: Build casptone
               run: |
