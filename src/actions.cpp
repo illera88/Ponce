@@ -77,7 +77,7 @@ struct ah_taint_register_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if(is_debugger_on())
 		{
 			qstring selected;
 			uint32 flags;
@@ -155,7 +155,7 @@ struct ah_symbolize_register_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if (is_debugger_on())
 		{
 			qstring selected;
 			uint32 flags;
@@ -233,31 +233,6 @@ struct ah_taint_memory_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		return AST_DISABLE;
-		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
-		{
-			if (action_update_ctx_t->widget_type == BWN_DUMP)
-			{
-//This menu is only enable in the HEX DUMP view in IDA 6.9x
-#ifdef __IDA68__
-				return AST_DISABLE;
-#else
-				if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
-				{
-					auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
-					auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-					int diff = (int)(selection_ends - selection_starts);
-					if (diff >= 0)
-						return AST_ENABLE;
-				}
-#endif
-			}
-			else
-			{
-				return AST_ENABLE;
-			}
-		}
-		return AST_DISABLE;
 	}
 };
 static ah_taint_memory_t ah_taint_memory;
@@ -325,7 +300,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if (is_debugger_on())
 		{
 			if (action_update_ctx_t->widget_type == BWN_DUMP)
 			{
@@ -396,7 +371,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if (is_debugger_on())
 		{
 			//If we are in runtime and it is the last instruction we test if it is symbolize
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
@@ -658,7 +633,7 @@ struct ah_execute_native_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if (is_debugger_on())
 		{
 			return AST_ENABLE;
 		}
@@ -712,7 +687,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK)
+		if (is_debugger_on())
 		{
 			//We are using this event to change the text of the action
 			if (ponce_runtime_status.runtimeTrigger.getState())
