@@ -8,899 +8,561 @@
 **  This program is under the terms of the BSD License.
 */
 
-//C++
-#include <stdio.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-//Used in GetTimeMs64
-#ifdef _WIN32
-	#include <Windows.h>
-#else
-	#include <sys/time.h>
-	#include <ctime>
-#endif
-
-
-//Triton
-#include <triton/api.hpp>
-#include <triton/x86Specifications.hpp>
-
-//IDA
-#include <idp.hpp>
-#include <loader.hpp>
-#include <dbg.hpp>
-#include <name.hpp>
-#include <bytes.hpp>
-
-//Ponce
-#include "utils.hpp"
+#include <list>
+// Ponce
+#include "callbacks.hpp"
 #include "globals.hpp"
 #include "context.hpp"
+#include "utils.hpp"
+#include "tainting_n_symbolic.hpp"
 #include "blacklist.hpp"
+#include "actions.hpp"
 
+//IDA
+#include <ida.hpp>
+#include <dbg.hpp>
+#include <loader.hpp>
+#include <intel.hpp>
+#include <bytes.hpp>
+//Triton
+#include "triton/api.hpp"
+#include "triton/x86Specifications.hpp"
 
+std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
-/*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
-void start_tainting_or_symbolic_analysis()
+/*This function will create and fill the Triton object for every instruction
+	Returns:
+	0 instruction tritonized
+	1 trigger is not activated
+	2 other error*/
+int tritonize(ea_t pc, thid_t threadID)
 {
-	if (!ponce_runtime_status.is_something_tainted_or_symbolize)
-	{
-		ponce_runtime_status.runtimeTrigger.enable();
-		ponce_runtime_status.analyzed_thread = get_current_thread();
-		ponce_runtime_status.is_something_tainted_or_symbolize = true;
-		enable_step_trace(true);
-		set_step_trace_options(0);
-		ponce_runtime_status.tracing_start_time = 0;
+	/*Check that the runtime Trigger is on just in case*/
+	if (!ponce_runtime_status.runtimeTrigger.getState())
+		return 1;
+
+	threadID = threadID ? threadID : get_current_thread();
+
+	if (pc == 0) {
+		msg("[!] Some error at tritonize since pc is 0");
+		return 2;
 	}
-}
 
-/*This functions gets a string and return the triton register assign or nullptr
-This is using the triton current architecture so it is more generic.*/
-const triton::arch::Register* str_to_register(qstring register_name)
-{
-	auto regs = api.getAllRegisters();
-	//for (auto it = regs.begin(); it != regs.end(); it++)
-	for (auto& pair : regs)
-	{
-		auto reg = pair.second;
-		//const triton::arch::Register a = it->second;
-		//auto b = &a;
-		//triton::arch::Register r = it->second;
-		if (strcmp(reg.getName().c_str(), register_name.c_str()) == 0)
-		{
-			return &regs[pair.first];
+	//We delete the last_instruction
+	if (ponce_runtime_status.last_triton_instruction != nullptr){
+		delete ponce_runtime_status.last_triton_instruction;
+		ponce_runtime_status.last_triton_instruction = nullptr;
+	}
+
+	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
+	ponce_runtime_status.last_triton_instruction = tritonInst;
+
+	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
+	if (!can_decode(pc)) {
+		if (inf_is_64bit())
+			msg("[!] Some error decoding instruction at %#llx", pc);
+		else
+			msg("[!] Some error decoding instruction at %#x", pc);
+	}
+	
+	unsigned char opcodes[15];
+	ssize_t item_size = 0x0;
+
+	insn_t ins;
+	decode_insn(&ins, pc);
+	item_size = ins.size;
+	assert(item_size < sizeof(opcodes));
+	get_bytes(&opcodes, item_size, pc, GMB_READALL, NULL);
+
+	/* Setup Triton information */
+	tritonInst->clear(); // ToDo: I think this is not necesary
+	tritonInst->setOpcode((triton::uint8*)opcodes, item_size);
+	tritonInst->setAddress(pc);
+	tritonInst->setThreadId(threadID);
+
+	try {
+		if (!api.processing(*tritonInst)) {
+			if (inf_is_64bit())
+				msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+			else
+				msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+			return 2;
 		}
 	}
-	return nullptr;
-}
-
-
-/*This function ask to the user to take a snapshot.
-It returns:
-1: yes
-0: No
--1: Cancel execution of script*/
-int ask_for_a_snapshot()
-{
-	//We don't want to ask the user all the times if he wants to take a snapshot or not...
-	if (already_exits_a_snapshot())
-		return 1;
-	while (true)
-	{
-		int answer = ask_yn(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
-		if (answer == 1) //Yes
-		{
-			snapshot_t snapshot;
-			qstrncpy(snapshot.desc, SNAPSHOT_DESCRIPTION, MAX_DATABASE_DESCRIPTION);
-			qstring errmsg;
-			bool success = take_database_snapshot(&snapshot, &errmsg);
-			return 1;
-		}
-		else if (answer == 0) //No
-			return 0;
-		else //Cancel
-			return -1;
+	catch (const triton::exceptions::Exception& e) {
+		if (inf_is_64bit())
+			msg("[!] Error: %s. Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
+		else
+			msg("[!] Error: %s. Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
+		return 2;
 	}
+
+	if (cmdOptions.showExtraDebugInfo) {
+		if (inf_is_64bit())
+			msg("[+] Triton at %#llx: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+		else
+			msg("[+] Triton at %#x: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+	}
+
+	/*In the case that the snapshot engine is in use we should track every memory write access*/
+	if (snapshot.exists())
+	{
+		auto store_access_list = tritonInst->getStoreAccess();
+		for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
+		{
+			triton::arch::MemoryAccess memory_access = it->first;
+			auto addr = memory_access.getAddress();
+			//This is the way to force IDA to read the value from the debugger
+			//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
+			invalidate_dbgmem_contents((ea_t)addr, memory_access.getSize()); //ToDo: Do I have to call this for every byte in memory I want to read?
+			for (unsigned int i = 0; i < memory_access.getSize(); i++)
+			{
+				triton::uint128 value = 0;
+				//We get the memory readed
+				get_bytes(&value, 1, (ea_t)addr+i, GMB_READALL, NULL);
+
+				//We add a meomory modification to the snapshot engine
+				snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
+			}
+		}
+	}
+
+	if (cmdOptions.addCommentsControlledOperands)
+		get_controlled_operands_and_add_comment(tritonInst, pc);
+
+	if (cmdOptions.addCommentsSymbolicExpresions)
+		add_symbolic_expressions(tritonInst, pc);
+
+	if (cmdOptions.paintExecutedInstructions)
+	{
+		//We only paint the executed instructions if they don't have a previous color
+		if (get_item_color(pc) == 0xffffffff)
+			set_item_color(pc, cmdOptions.color_executed_instruction);
+	}
+
+	for (auto& symreg : api.getSymbolicRegisters()) {
+		msg ("Reg %s has value %#llx", symreg.second->getOriginRegister().getName().c_str(), api.getConcreteRegisterValue(symreg.second->getOriginRegister(), false));
+	}
+
+	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
+	if (tritonInst->isTainted() || tritonInst->isSymbolized())
+	{
+		ponce_runtime_status.total_number_symbolic_ins++;
+
+		if (cmdOptions.showDebugInfo) {
+			if (inf_is_64bit())
+				msg("[!] Instruction %s at %#llx \n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
+			else
+				msg("[!] Instruction %s at %#x\n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
+		}
+		if (cmdOptions.RenameTaintedFunctionNames)
+			rename_tainted_function(pc);
+		// Check if it is a conditional jump
+		// We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
+		if (tritonInst->isBranch())
+		{
+			ponce_runtime_status.total_number_symbolic_conditions++;
+			if (cmdOptions.use_symbolic_engine)
+				set_item_color(pc, cmdOptions.color_tainted_condition);
+			else
+				set_item_color(pc, cmdOptions.color_tainted);
+		}
+	}
+
+	if (tritonInst->isBranch() && tritonInst->isSymbolized())
+	{
+		ea_t addr1 = (ea_t)tritonInst->getNextAddress();
+		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
+		if (cmdOptions.showDebugInfo) {
+			if (inf_is_64bit())
+				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+			else
+				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
+
+		}
+		/*triton::usize ripId = triton::api.getSymbolicRegisterId(TRITON_X86_REG_PC);*/
+		// getSymbolicRegister seems not to be like getSymbolicRegisterId since it returns a SharedSymbolicExpression and not a ripId
+		triton::usize ripId = 0;
+		if (inf_is_64bit())
+			ripId = api.getSymbolicRegister(api.registers.x86_rip)->getId();
+		else
+			ripId = api.getSymbolicRegister(api.registers.x86_eip)->getId();
+
+		if (tritonInst->isConditionTaken())
+			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
+		else
+			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));
+	}
+	return 0;
+	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
+	//instructions_executed_map[pc].push_back(tritonInst);
 }
 
-/*This functions is a helper for already_exits_a_snapshot. This is call for every snapshot found. 
-The user data, ud, containt a pointer to a boolean to enable if we find the snapshot.*/
-int __stdcall snapshot_visitor(snapshot_t *ss, void *ud)
+/*This functions is called every time a new debugger session starts*/
+void triton_restart_engines()
 {
-	if (strcmp(ss->desc, SNAPSHOT_DESCRIPTION) == 0)
+	if (cmdOptions.showDebugInfo)
+		msg("[+] Restarting triton engines...\n");
+	//We need to set the architecture for Triton
+	if (inf_is_64bit())
+		api.setArchitecture(triton::arch::ARCH_X86_64);
+	else
+		api.setArchitecture(triton::arch::ARCH_X86);
+	//We reset everything at the beginning
+	api.reset();
+	// Memory access callback
+	api.addCallback(needConcreteMemoryValue_cb);
+	// Register access callback
+	api.addCallback(needConcreteRegisterValue_cb);
+	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
+	api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
+	api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
+	if (ponce_runtime_status.last_triton_instruction) {
+		delete ponce_runtime_status.last_triton_instruction;
+		ponce_runtime_status.last_triton_instruction = nullptr;
+	}
+	// This optimization is veeery good for the size of the formulas
+	//api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
+	//api.setMode(triton::modes::ALIGNED_MEMORY, true);
+
+	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
+	//if (cmdOptions.only_on_optimization)
+	//{
+	//	if (cmdOptions.use_symbolic_engine)
+	//	{
+	//		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+	//		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true); // seems not to exist any more
+	//		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);*/
+	//	}
+	//	if (cmdOptions.use_tainting_engine)
+	//	{
+	//		//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
+	//		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true); 
+	//		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
+	//		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
+	//	}
+	//}
+	//triton::api.getSymbolicEngine()->enable(true);
+	ponce_runtime_status.runtimeTrigger.disable();
+	ponce_runtime_status.is_something_tainted_or_symbolize = false;
+	ponce_runtime_status.tainted_functions_index = 0;
+	//Reset instruction counter
+	ponce_runtime_status.total_number_traced_ins = 0;
+	ponce_runtime_status.total_number_symbolic_ins = 0;
+	ponce_runtime_status.total_number_symbolic_conditions  = 0;
+	ponce_runtime_status.current_trace_counter = 0;
+	breakpoint_pending_actions.clear();
+	set_automatic_taint_n_simbolic();
+	ponce_runtime_status.myPathConstraints.clear();
+}
+
+
+ssize_t idaapi tracer_callback(void *user_data, int notification_code, va_list va)
+{
+	if (cmdOptions.showExtraDebugInfo)
+		msg("[+] Notification code: %d str: %s\n",notification_code, notification_code_to_string(notification_code).c_str());
+	switch (notification_code)
 	{
-		bool *exists = (bool *)ud;
-		*exists = true;
-		return 1;
+		case dbg_process_start:
+		case dbg_process_attach:
+		{
+			if (cmdOptions.showDebugInfo)
+				msg("[+] Starting the debugged process. Reseting all the engines.\n");
+			triton_restart_engines();
+			clear_requests_queue();
+			break;
+		}
+		case dbg_step_into:
+		case dbg_step_over:
+		{
+			ponce_runtime_status.tracing_start_time = 0;
+			break;
+		}
+		case dbg_trace:
+		{
+			//We only want to analyze the thread being analyzed
+			if (ponce_runtime_status.analyzed_thread != get_current_thread())
+				break;
+			//If the trigger is disbaled then the user is manually stepping with the ponce tracing disabled
+			if (!ponce_runtime_status.runtimeTrigger.getState())
+				break;
+
+			thid_t tid = va_arg(va, thid_t);
+			ea_t pc = va_arg(va, ea_t);
+			//Sometimes the cmd structure doesn't correspond with the traced instruction
+			//With this we are filling cmd with the instruction at the address specified
+
+			if (should_blacklist(pc, tid)) {
+				// We have blacklisted this call so we should not keep going 
+				return 0;
+			}
+			
+			//If the instruciton is not a blacklisted call we analyze the instruction
+			//We don't want to reanalize instructions. p.e. if we put a bp we receive two events, the bp and this one
+			if (ponce_runtime_status.last_triton_instruction == NULL || (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() != pc))
+				tritonize(pc, tid);
+
+			ponce_runtime_status.current_trace_counter++;
+			ponce_runtime_status.total_number_traced_ins++;
+			//Every 1000 traced instructions we show with debug that info in the output
+			if (cmdOptions.showDebugInfo && ponce_runtime_status.total_number_traced_ins % 1000 == 0)
+				msg("Instructions traced: %d Symbolic instructions: %d Symbolic conditions: %d Time: %lld secs\n", ponce_runtime_status.total_number_traced_ins, ponce_runtime_status.total_number_symbolic_ins, ponce_runtime_status.total_number_symbolic_conditions, GetTimeMs64() - ponce_runtime_status.tracing_start_time);
+				//msg("[+] Instructions traced: %d\n", ponce_runtime_status.total_number_traced_ins);
+
+			//This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
+			if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
+			{
+				if (cmdOptions.showExtraDebugInfo)
+					msg("[+] Wow64 switching! Requesting a step_over\n");
+				//And now we need to stop the tracing, do step over and reenable the tracing...
+				//disable_step_trace();
+				suspend_process();
+				//We don't want to do a real step over (it would reset the timer)
+				ponce_runtime_status.ignore_wow64_switching_step = true;
+				request_step_over();
+				request_continue_process();
+				run_requests();
+				break;
+			}
+
+			//Check if the limit instructions limit was reached
+			if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
+			{
+				int answer = ask_yn(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
+				if (answer == 0 || answer == -1) //No or Cancel
+				{
+					// stop the trace mode and suspend the process
+					disable_step_trace();
+					suspend_process();
+					msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
+				}
+				else
+				{
+					ponce_runtime_status.current_trace_counter = 0;
+				}
+			}
+			
+			//Check if the time limit for tracing was reached
+			if (cmdOptions.limitTime != 0)
+			{
+				//This is the first time we start the tracer
+				if (ponce_runtime_status.tracing_start_time == 0)
+				{
+					ponce_runtime_status.tracing_start_time = GetTimeMs64();
+				}
+				else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
+				{
+					int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
+					if (answer == 0 || answer == -1) //No or Cancel
+					{
+						// stop the trace mode and suspend the process
+						disable_step_trace();
+						suspend_process();
+						msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
+					}
+					else
+					{
+						ponce_runtime_status.tracing_start_time = GetTimeMs64();
+					}
+				}
+			}
+			break;
+		}
+		case dbg_bpt:
+		{
+			//We only want to analyze the thread being analyzed
+			if (ponce_runtime_status.analyzed_thread != get_current_thread())
+				break;
+			msg("BP Instructions traced: %d Symbolic instructions: %d Symbolic conditions: %d Time: %lld secs\n", ponce_runtime_status.total_number_traced_ins, ponce_runtime_status.total_number_symbolic_ins, ponce_runtime_status.total_number_symbolic_conditions, GetTimeMs64() - ponce_runtime_status.tracing_start_time);
+
+			thid_t tid = va_arg(va, thid_t);
+			ea_t pc = va_arg(va, ea_t);
+			int *warn = va_arg(va, int *);
+			//This variable defines if a breakpoint is a user-defined breakpoint or not
+			bool user_bp = true;
+			//We look if there is a pending action for this breakpoint
+			for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
+			{
+				breakpoint_pending_action bpa = *it;
+				//If we find a pendign action we execute the callback
+				if (pc == bpa.address)
+				{
+					bpa.callback(pc);
+					tritonize(pc, tid);
+					
+					//The pending breakpoints are used for enable the tracing so we consider this instruction tracing too
+					ponce_runtime_status.current_trace_counter++;
+					ponce_runtime_status.total_number_traced_ins++;
+					//If there is a user-defined bp in the same address we should respect it and dont continue the exec
+					if (!bpa.ignore_breakpoint)
+					{
+						//If it's a breakpoint the plugin set not a user-defined bp
+						user_bp = false;
+						//If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
+						del_bpt(pc);
+						enable_step_trace(true);
+						//We dont want to skip library funcions or debug segments
+						set_step_trace_options(0);
+						continue_process();
+						//We delete the comment
+						set_cmt(pc, "", false);
+						breakpoint_pending_actions.erase(it);
+					}
+					break;
+				}
+			}
+			//If it is a user break point we enable again the step tracing if it was enabled previously...
+			//The idea is if the user uses Execute native til next bp, and IDA reachs the next bp we reenable the tracing
+			if (user_bp)
+			{
+				ponce_runtime_status.tracing_start_time = 0;
+				//request_suspend_process();
+				//run_requests();
+				//disable_step_trace();
+				//request_enable_step_trace();
+				//If the trigger is disabled then the user is manually stepping with the ponce tracing disabled
+				//if (ponce_runtime_status.runtimeTrigger.getState())
+				//enable_step_trace(ponce_runtime_status.runtimeTrigger.getState());
+			}
+			break;
+		}
+		case dbg_process_exit:
+		{
+			if (cmdOptions.showDebugInfo)
+				msg("[!] Process_exiting...\n");
+			//Do we want to unhook this event? I don't think so we want to be hooked for future sessions
+			//unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
+			ponce_runtime_status.runtimeTrigger.disable();
+			//Removing snapshot if it exists
+			if (snapshot.exists())
+				snapshot.resetEngine();
+			break;
+		}
 	}
 	return 0;
 }
 
-/*This functions check if it exists already a snapshot made by the plugin.
-So we don't ask to the user every time he runs the plugin.*/
-bool already_exits_a_snapshot()
-{
-	snapshot_t root;
-	bool result = build_snapshot_tree(&root);
-	if (!result)
-		return false;
-	bool exists = false;
-	visit_snapshot_tree(&root, &snapshot_visitor, &exists);
-	return exists;
-}
-
-/*This function is a helper to find a function having its name.
-It is likely IDA SDK has another API to do this but I can't find it.
-Source: http://www.openrce.org/reference_library/files/ida/idapw.pdf */
-ea_t find_function(char const *function_name)
-{
-	// get_func_qty() returns the number of functions in file(s) loaded.
-	for (unsigned int f = 0; f < get_func_qty(); f++) {
-		// getn_func() returns a func_t struct for the function number supplied
-		func_t *curFunc = getn_func(f);
-		qstring funcName;
-		ssize_t size_read = 0;
-		// get_func_name2 gets the name of a function and stored it in funcName
-		size_read = get_func_name(&funcName, curFunc->start_ea);
-		if (size_read > 0) { // if found
-			if (strcmp(funcName.c_str(), function_name) == 0) {
-				return curFunc->start_ea;
-			}
-			//We need to ignore our prefix when the function is tainted
-			//If the function name starts with our prefix, fix for #51
-			if (strstr(funcName.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) == funcName.c_str() && funcName.size() > RENAME_TAINTED_FUNCTIONS_PATTERN_LEN) {
-				//Then we ignore the prefix and compare the rest of the function name
-				if (strcmp(funcName.c_str() + RENAME_TAINTED_FUNCTIONS_PATTERN_LEN, function_name) == 0) {
-					return curFunc->start_ea;
-				}
-			}
-		}
-	}
-	return -1;
-}
-
-//This function return the real value of the argument.
-ea_t get_args(int argument_number, bool skip_ret)
-{
-#if !defined(__EA64__)
-	ea_t memprogram = get_args_pointer(argument_number, skip_ret);
-	//We first get the pointer and then we dereference it
-	ea_t value = 0;
-	value = read_regSize_from_ida(memprogram);
-	return value;
-
-#else
-	int skip_ret_index = skip_ret ? 1 : 0;
-	//Not converted to IDA we should use get_reg_val
-#ifdef __NT__ // note the underscore: without it, it's not msdn official!
-	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
-	switch (argument_number)
-	{
-	case 0: return IDA_getCurrentRegisterValue(api.registers.x86_rcx).convert_to<ea_t>();
-	case 1: return IDA_getCurrentRegisterValue(api.registers.x86_rdx).convert_to<ea_t>();
-	case 2: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
-	case 3: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
-	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
-		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
-		return get_qword(arg);
-	}
-#elif __LINUX__ || __MAC__ // IDA macros https://www.hex-rays.com/products/ida/support/sdkdoc/pro_8h.html
-	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
-	switch (argument_number)
-	{
-	case 0: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RDI).convert_to<ea_t>();
-	case 1: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RSI).convert_to<ea_t>();
-	case 2: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RDX).convert_to<ea_t>();
-	case 3: return IDA_getCurrentRegisterValue(TRITON_X86_REG_RCX).convert_to<ea_t>();
-	case 4: return IDA_getCurrentRegisterValue(TRITON_X86_REG_R8).convert_to<ea_t>();
-	case 5: return IDA_getCurrentRegisterValue(TRITON_X86_REG_R9).convert_to<ea_t>();
-	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(TRITON_X86_REG_RSP);
-		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
-		return get_qword(arg);
-	}
-#endif
-#endif
-}
-
-// Return the argument at the "argument_number" position. It is independant of the architecture and the OS.
-// We suppossed the function is using the default call convention, stdcall or cdelc in x86, no fastcall and fastcall in x64
-ea_t get_args_pointer(int argument_number, bool skip_ret)
-{
-	int skip_ret_index = skip_ret ? 1 : 0;
-#if !defined(__EA64__)
-	regval_t esp_value;
-	invalidate_dbg_state(DBGINV_REGS);
-	get_reg_val("esp", &esp_value);
-	ea_t arg = (ea_t)esp_value.ival + (argument_number + skip_ret_index) * 4;
-	return arg;
-#else
-	//Not converted to IDA we should use get_reg_val
-#ifdef __NT__ // note the underscore: without it, it's not msdn official!
-	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
-	switch (argument_number)
-	{
-	case 0: 
-	case 1: 
-	case 2: 
-	case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
-	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
-		ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
-		return arg;
-	}
-#elif __LINUX__ || __MAC__ // IDA macros https://www.hex-rays.com/products/ida/support/sdkdoc/pro_8h.html
-	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
-	switch (argument_number)
-	{
-	case 0: 
-	case 1: 
-	case 2: 
-	case 3: 
-	case 4: 
-	case 5:error("[!] In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
-	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(TRITON_X86_REG_RSP);
-		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
-		return arg;
-	}
-#endif
-#endif
-}
-
-//Use templates??
-short read_unicode_char_from_ida(ea_t address)
-{
-	short value;
-	//This is the way to force IDA to read the value from the debugger
-	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(address, sizeof(value));
-	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf_is_64bit())
-			msg("[!] Error reading memory from %#llx\n", address);
-		else
-			msg("[!] Error reading memory from %#x\n", address);
-	}
-	return value;
-}
-
-//Use templates??
-char read_char_from_ida(ea_t address)
-{
-	char value;
-	//This is the way to force IDA to read the value from the debugger
-	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(address, sizeof(value));
-	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf_is_64bit())
-			msg("[!] Error reading memory from %#llx\n", address);
-		else
-			msg("[!] Error reading memory from %#x\n", address);
-	}
-	return value;
-}
-
-ea_t read_regSize_from_ida(ea_t address)
-{
-	ea_t value;
-	//This is the way to force IDA to read the value from the debugger
-	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
-	invalidate_dbgmem_contents(address, sizeof(value));
-	ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
-	if (bytes_read == 0 || bytes_read == -1) {
-		if (inf_is_64bit())
-			msg("[!] Error reading memory from %#llx\n", address);
-		else
-			msg("[!] Error reading memory from %#x\n", address);
-	}
-
-	return value;
-}
-
-/*This function renames a tainted function with the prefix RENAME_TAINTED_FUNCTIONS_PATTERN, by default "T%03d_"*/
-void rename_tainted_function(ea_t address)
-{
-	qstring func_name;
-	ssize_t size = 0x0;
-	//First we get the current function name
-	size = get_func_name(&func_name, address);
-
-	if (size > 0)
-	{
-		//If the function isn't already renamed
-		if (strstr(func_name.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) != func_name.c_str())
-		{
-			char new_func_name[MAXSTR];
-			//This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
-			qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PATTERN"%s", ponce_runtime_status.tainted_functions_index, func_name.c_str());
-			//We need the start of the function we can have that info with our function find_function
-			set_name(find_function(func_name.c_str()), new_func_name);
-			if (cmdOptions.showDebugInfo)
-				msg("[+] Renaming function %s -> %s\n", func_name.c_str(), new_func_name);
-			ponce_runtime_status.tainted_functions_index += 1;
-		}
-	}
-}
-
-void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
-{
-	for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++) 
-	{
-		auto expr = tritonInst->symbolicExpressions[exp_index];
-		std::ostringstream oss;
-		oss << expr;
-		add_extra_cmt(address, false, "%s", oss.str().c_str());
-	}
-}
-
-std::string notification_code_to_string(int notification_code)
+//---------------------------------------------------------------------------
+// Callback for ui notifications
+ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 {
 	switch (notification_code)
 	{
-		case 0:
-			return std::string("dbg_null");
-		case 1:
-			return std::string("dbg_process_start");
-		case 2:
-			return std::string("dbg_process_exit");
-		case 3:
-			return std::string("dbg_process_attach");
-		case 4:
-			return std::string("dbg_process_detach");
-		case 5:
-			return std::string("dbg_thread_start");
-		case 6:
-			return std::string("dbg_thread_exit");
-		case 7:
-			return std::string("dbg_library_load");
-		case 8:
-			return std::string("dbg_library_unload");
-		case 9:
-			return std::string("dbg_information");
-		case 10:
-			return std::string("dbg_exception");
-		case 11:
-			return std::string("dbg_suspend_process");
-		case 12:
-			return std::string("dbg_bpt");
-		case 13:
-			return std::string("dbg_trace");
-		case 14:
-			return std::string("dbg_request_error");
-		case 15:
-			return std::string("dbg_step_into");
-		case 16:
-			return std::string("dbg_step_over");
-		case 17:
-			return std::string("dbg_run_to");
-		case 18:
-			return std::string("dbg_step_until_ret");
-		case 19:
-			return std::string("dbg_bpt_changed");
-		case 20:
-			return std::string("dbg_last");
-		default:
-			return std::string("Not defined");
-	}
-}
-
-/*This function loads the options from the config file.
-It returns true if it reads the config false, if there is any error.*/
-bool load_options(struct cmdOptionStruct *cmdOptions)
-{
-	std::ifstream config_file;
-	config_file.open("Ponce.cfg", std::ios::in | std::ios::binary);
-	if (!config_file.is_open())
-	{
-		msg("[!] Config file %s not found\n", "Ponce.cfg");
-		return false;
-	}
-	auto begin = config_file.tellg();
-	config_file.seekg(0, std::ios::end);
-	auto end = config_file.tellg();
-	config_file.seekg(0, std::ios::beg);
-	if ((end - begin) != sizeof(struct cmdOptionStruct))
-		return false;
-	config_file.read((char *)cmdOptions, sizeof(struct cmdOptionStruct));
-	config_file.close();
-
-	//Check if we need to reload the custom blacklisted functions
-	if (cmdOptions->blacklist_path[0] != '\0'){
-		//Means that the user set a path for custom blacklisted functions
-		if (blacklkistedUserFunctions != NULL){
-			//Check if we had a previous custom blacklist and if so we delete it
-			blacklkistedUserFunctions->clear();
-			delete blacklkistedUserFunctions;
-			blacklkistedUserFunctions = NULL;
-		}
-		readBlacklistfile(cmdOptions->blacklist_path);
-	}
-
-	return true;
-}
-
-/*This function loads the options from the config file.
-It returns true if it reads the config false, if there is any error.*/
-bool save_options(struct cmdOptionStruct *cmdOptions)
-{
-	std::ofstream config_file;
-	config_file.open("Ponce.cfg", std::ios::out | std::ios::binary);
-	if (!config_file.is_open())
-	{
-		msg("[!] Error opening config file %s\n", "Ponce.cfg");
-		return false;
-	}
-	config_file.write((char *)cmdOptions, sizeof(struct cmdOptionStruct));
-	config_file.close();
-	return true;
-}
-
-
-/*Solve a formula and returns the solution as an input.
-The bound is an index in the myPathConstrains vector*/
-Input * solve_formula(ea_t pc, uint bound)
-{
-	auto ast = api.getAstContext();
-
-	auto path_constraint = ponce_runtime_status.myPathConstraints[bound];
-	if (path_constraint.conditionAddr == pc)
-	{
-		std::vector <triton::ast::SharedAbstractNode> expr;
-		//First we add to the expresion all the previous path constrains
-		unsigned int j;
-		for (j = 0; j < bound; j++)
+		// Called when IDA is preparing a context menu for a view
+		// Here dynamic context-depending user menu items can be added.
+		case ui_populating_widget_popup:
 		{
-			if (cmdOptions.showExtraDebugInfo)
-				msg("[+] Keeping condition %d\n", j);
-			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
-			auto symExpr = api.getSymbolicExpression(ripId)->getAst();
-			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
-			
-			//expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
-			expr.push_back(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize())));
-		}
-		if (cmdOptions.showExtraDebugInfo)
-			msg("[+] Inverting condition %d\n", bound);
-		//And now we negate the selected condition
-		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
-		auto symExpr = api.getSymbolicExpression(ripId)->getAst();
-		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
-		if (cmdOptions.showExtraDebugInfo) {
-			if (inf_is_64bit())
-				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
-			else
-				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
-		}
-		expr.push_back(ast->equal(symExpr, ast->bv(notTakenAddr, symExpr->getBitvectorSize())));
+			TWidget *form = va_arg(va, TWidget *);
+			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
+			int view_type = get_widget_type(form);
 
-		//Time to solve
-		auto final_expr = ast->compound(expr);
+			//Adding a separator
+			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
-		if (cmdOptions.showDebugInfo)
-			msg("[+] Solving formula...\n");
-
-		if (cmdOptions.showExtraDebugInfo)
-		{
-			std::stringstream ss;
-			/*Create the full formula*/
-			ss << "(set-logic QF_AUFBV)\n";
-			/* Then, delcare all symbolic variables */
-			for (auto it : api.getSymbolicVariables()) {
-				ss << ast->declare(ast->variable(it.second));
-				
-			}
-			/* And concat the user expression */
-			ss << "\n\n";
-			ss << final_expr;
-			ss << "\n(check-sat)";
-			ss << "\n(get-model)";
-			msg("[+] Formula: %s\n", ss.str().c_str());
-		}
-
-		auto model = api.getModel(final_expr);
-
-		if (model.size() > 0)
-		{
-			Input *newinput = new Input();
-			//Clone object 
-			newinput->bound = path_constraint.bound;
-
-			msg("[+] Solution found! Values:\n");
-			for (auto it = model.begin(); it != model.end(); it++)
+			/*Iterate over all the actions*/			
+			for (int i = 0;; i++)
 			{
-				// ToDo: check this for loop bc I feel the conversion did not go well
-				auto symId = it->first;
-				auto model = it->second;
+				if (action_list[i].action_decs == NULL)
+					break;
+			
+				/*Iterate over the view types of every action*/
+				for (int j=0;; j++)
+				{
+					if (action_list[i].view_type[j] == __END__){
+						break;
+					}
+					if (action_list[i].view_type[j] == view_type)
+					{
+						//We only attach to the popup if the action makes sense with the current configuration
+						if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic)
+						{
+							attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
+						}
+					}
+				}	
+			}
 
-				triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
-				std::string  symbVarComment = symbVar->getComment();
-				triton::engines::symbolic::variable_e symbVarKind = symbVar->getType();
-				triton::uint512 model_value = model.getValue();
-				if (symbVarKind == triton::engines::symbolic::variable_e::MEMORY_VARIABLE)
+			//Adding a separator
+			attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
+			break;
+		}
+		case ui_finish_populating_widget_popup:
+		{
+			//This event is call after all the Ponce menus have been added and updated
+			//It is the perfect point to add the multiple condition solve submenus
+			TWidget *form = va_arg(va, TWidget *);
+			TPopupMenu *popup_handle = va_arg(va, TPopupMenu *);
+			int view_type = get_widget_type(form);
+
+			//We get the ea form a global variable that is set in the update event
+			//This is not very elegant but I don't know how to do it from here
+			ea_t cur_ea = popup_menu_ea;
+			if (view_type == BWN_DISASM)
+			{
+				//Adding submenus for solve with all the conditions executed in the same address
+				for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
 				{
-					auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
-					newinput->memOperand.push_back(mem);
-					api.setConcreteMemoryValue(mem, model_value);
-				}
-				else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE){
-					auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
-					newinput->regOperand.push_back(reg);
-					api.setConcreteRegisterValue(reg, model_value);
-					//ToDo: add concretizeRegister()??
-				}
-				//We represent the number different 
-				switch (symbVar->getSize())
-				{
-				case 8:
-					msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0? ' ': model_value.convert_to<uchar>());
-					break;
-				case 16:
-					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(model_value.convert_to<ushort>() >> 8));
-					break;
-				case 32:
-					msg(" - %s (%s):%#08x\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
-					break;
-				case 64:
-					msg(" - %s (%s):%#16llx\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
-					break;
-				default:
-					msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str());
+					//We should filter here for the ea
+					if (cur_ea == ponce_runtime_status.myPathConstraints[i].conditionAddr)
+					{
+						char name[256];
+						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
+						qsnprintf(name, 255, "%d_Ponce:solve_formula_sub", i);
+						action_IDA_solve_formula_sub.name = name;
+						char label[256];
+						if (inf_is_64bit())
+							qsnprintf(label, 255, "%d. %#llx -> %#llx ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						else
+							qsnprintf(label, 255, "%d. %#x -> %#x ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						
+						action_IDA_solve_formula_sub.label = label;
+						bool success = register_action(action_IDA_solve_formula_sub);
+						//If the submenu is already registered, we should unregister it and re-register it
+						if (!success)
+						{
+							unregister_action(action_IDA_solve_formula_sub.name);
+							success = register_action(action_IDA_solve_formula_sub);
+						}
+						success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
+					}
 				}
 			}
-			return newinput;
+			break;
 		}
-		else
-			msg("[!] No solution found :(\n");
+		case dbg_process_exit:
+		{
+			unhook_from_notification_point(HT_DBG, ui_callback, NULL);
+			break;
+		}
 	}
-	return NULL;
+	return 0;
 }
 
+/*We set the memory to the results we got and do the analysis from there*/
+void set_SMT_results(Input *input_ptr){
+	/*To set the memory types*/
+	for (auto it = input_ptr->memOperand.begin(); it != input_ptr->memOperand.end(); it++)
+	{
+		auto concreteValue = api.getConcreteMemoryValue(*it, false);
+		//auto concreteValue=it->getConcreteValue();
+		put_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
 
-
-/*This function identify the type of condition jmp and negate the flags to negate the jmp.
-Probably it is possible to do this with the solver, adding more variable to the formula to 
-identify the flag of the conditions and get the values. But for now we are doing it in this way.*/
-void negate_flag_condition(triton::arch::Instruction *triton_instruction)
-{
-	switch (triton_instruction->getType())
-	{
-	case triton::arch::x86::ID_INS_JA:
-	{
-		uint64 cf;
-		get_reg_val("CF", &cf);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (cf == 0 && zf == 0)
-		{
-			cf = 1;
-			zf = 1;
-		}
-		else
-		{
-			cf = 0;
-			zf = 0;
-		}
-		set_reg_val("ZF", zf);
-		set_reg_val("CF", cf);
-		break;
+		api.setConcreteMemoryValue(*it, concreteValue);
+		//We concretize the memory we set
+		api.concretizeMemory(*it);
 	}
-	case triton::arch::x86::ID_INS_JAE:
-	{
-		uint64 cf;
-		get_reg_val("CF", &cf);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (cf == 0 || zf == 0)
-		{
-			cf = 1;
-			zf = 1;
-		}
-		else
-		{
-			cf = 0;
-			zf = 0;
-		}
-		set_reg_val("ZF", zf);
-		set_reg_val("CF", cf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JB:
-	{
-		uint64 cf;
-		get_reg_val("CF", &cf);
-		cf = !cf;
-		set_reg_val("CF", cf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JBE:
-	{
-		uint64 cf;
-		get_reg_val("CF", &cf);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (cf == 1 || zf == 1)
-		{
-			cf = 0;
-			zf = 0;
-		}
-		else
-		{
-			cf = 1;
-			zf = 1;
-		}
-		set_reg_val("ZF", zf);
-		set_reg_val("CF", cf);
-		break;
-	}
-	/*	ToDo: Check this one
-		case triton::arch::x86::ID_INS_JCXZ:
-		{
-		break;
-		}*/
-	case triton::arch::x86::ID_INS_JE:
-	case triton::arch::x86::ID_INS_JNE:
-	{
-		uint64 zf;
-		auto old_value = get_reg_val("ZF", &zf);
-		zf = !zf;
-		set_reg_val("ZF", zf);
-		break;
-	}
-	//case triton::arch::x86::ID_INS_JRCXZ:
-	//case triton::arch::x86::ID_INS_JECXZ:
-	case triton::arch::x86::ID_INS_JG:
-	{
-		uint64 sf;
-		get_reg_val("SF", &sf);
-		uint64 of;
-		get_reg_val("OF", &of);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (sf == of && zf == 0)
-		{
-			sf = !of;
-			zf = 1;
-		}
-		else
-		{
-			sf = of;
-			zf = 0;
-		}
-		set_reg_val("SF", sf);
-		set_reg_val("OF", of);
-		set_reg_val("ZF", zf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JGE:
-	{
-		uint64 sf;
-		get_reg_val("SF", &sf);
-		uint64 of;
-		get_reg_val("OF", &of);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (sf == of || zf == 1)
-		{
-			sf = !of;
-			zf = 0;
-		}
-		else
-		{
-			sf = of;
-			zf = 1;
-		}
-		set_reg_val("SF", sf);
-		set_reg_val("OF", of);
-		set_reg_val("ZF", zf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JL:
-	{
-		uint64 sf;
-		get_reg_val("SF", &sf);
-		uint64 of;
-		get_reg_val("OF", &of);
-		if (sf == of)
-		{
-			sf = !of;
-		}
-		else
-		{
-			sf = of;
-		}
-		set_reg_val("SF", sf);
-		set_reg_val("OF", of);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JLE:
-	{
-		uint64 sf;
-		get_reg_val("SF", &sf);
-		uint64 of;
-		get_reg_val("OF", &of);
-		uint64 zf;
-		get_reg_val("ZF", &zf);
-		if (sf != of || zf == 1)
-		{
-			sf = of;
-			zf = 0;
-		}
-		else
-		{
-			sf = !of;
-			zf = 1;
-		}
-		set_reg_val("SF", sf);
-		set_reg_val("OF", of);
-		set_reg_val("ZF", zf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JNO:
-	case triton::arch::x86::ID_INS_JO:
-	{
-		uint64 of;
-		get_reg_val("OF", &of);
-		of = !of;
-		set_reg_val("OF", of);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JNP:
-	case triton::arch::x86::ID_INS_JP:
-	{
-		uint64 pf;
-		get_reg_val("PF", &pf);
-		pf = !pf;
-		set_reg_val("PF", pf);
-		break;
-	}
-	case triton::arch::x86::ID_INS_JNS:
-	case triton::arch::x86::ID_INS_JS:
-	{
-		uint64 sf;
-		get_reg_val("SF", &sf);
-		sf = !sf;
-		set_reg_val("SF", sf);
-		break;
-	}
-	}
-}
-
-/*Ask to the user if he really want to execute native code even if he has a snapshot.
-Returns true if the user say yes.*/
-bool ask_for_execute_native()
-{
-	//Is there any snapshot?
-	if (!snapshot.exists())
-		return true;
-	//If so we should say to the user that he cannot execute native code and expect the snapshot to work
-	int answer = ask_yn(1, "[?] If you execute native code (without tracing) Ponce cannot trace all the memory modifications so the execution snapshot will be deleted. Do you still want to do it? (Y/n):");
-	if (answer == 1) //Yes
-		return true;
-	else // No or Cancel
-		return false;
-}
-
-/*This function deletes the prefixes and sufixes that IDA adds*/
-qstring clean_function_name(qstring name){
-	if (name.substr(0, 7) == "__imp__")
-		return clean_function_name(name.substr(7));
-	else if (name.substr(0, 4) == "imp_")
-		return clean_function_name(name.substr(4));
-	else if (name.substr(0, 3) == "cs:" || name.substr(0, 3) == "ds:")
-		return clean_function_name(name.substr(3));
-	else if (name.substr(0, 2) == "j_")
-		return clean_function_name(name.substr(2));
-	else if (name.substr(0, 1) == "_" || name.substr(0, 1) == "@" || name.substr(0, 1) == "?")
-		return clean_function_name(name.substr(1));
-	else if (name.find('@', 0) != -1)
-		return clean_function_name(name.substr(0, name.find('@', 0)));
-	else if (name.at(name.length() - 2) == '_' && isdigit(name.at(name.length() - 1))) //name_1
-		return clean_function_name(name.substr(0, name.length() - 2));
-	return name;
-}
-
-qstring get_callee_name(ea_t address) {
-	qstring name;
-	char buf[100] = {0};
-	static const char * nname = "$ vmm functions";
-	netnode n(nname);
-	auto fun = n.altval(address) - 1;
-	if (fun == -1) {
-		qstring buf_op;
-		if (is_code(get_flags(address)))
-			print_operand(&buf_op, address, 0);
-		qstring buf_tag;
-		tag_remove(&buf_tag, buf_op);
-		name = clean_function_name(buf_tag);
-	}
-	else {
-		get_ea_name(&name, fun); // 00C5101A call    edi ; __imp__malloc style
 		
-		if (name.empty()) {
-			qstring buf_op;
-			if (is_code(get_flags(address)))
-				print_operand(&buf_op, address, 0);
-			qstring buf_tag;
-			tag_remove(&buf_tag, buf_op);
-			name = clean_function_name(buf_tag);
-		}
-		else {
-			name = clean_function_name(name);
-		}
+	/*To set the register types*/
+	for (auto it = input_ptr->regOperand.begin(); it != input_ptr->regOperand.end(); it++)
+	{
+		auto concreteRegValue = api.getConcreteRegisterValue(*it, false);
+		set_reg_val(it->getName().c_str(), concreteRegValue.convert_to<uint64>());
+		api.setConcreteRegisterValue(*it, concreteRegValue);
+		//We concretize the register we set
+		api.concretizeRegister(*it);
 	}
-	return name;	
+		
+	if (cmdOptions.showDebugInfo)
+		msg("[+] Memory/Registers set with the SMT results\n");
 }
 
-regval_t ida_get_reg_val_invalidate(char *reg_name)
-{
-	regval_t reg_value;
-	invalidate_dbg_state(DBGINV_REGS);
-	get_reg_val(reg_name, &reg_value);
-	return reg_value;
-}
-
-std::uint64_t GetTimeMs64(void)
-{
-#ifdef _WIN32
-	/* Windows */
-	FILETIME ft;
-	LARGE_INTEGER li;
-
-	/* Get the amount of 100 nano seconds intervals elapsed since January 1, 1601 (UTC) and copy it
-	* to a LARGE_INTEGER structure. */
-	GetSystemTimeAsFileTime(&ft);
-	li.LowPart = ft.dwLowDateTime;
-	li.HighPart = ft.dwHighDateTime;
-
-	std::uint64_t ret = li.QuadPart;
-	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
-	ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
-
-	return ret;
-#else
-	/* Linux */
-	struct timeval tv;
-
-	gettimeofday(&tv, NULL);
-
-	triton::uint64 ret = tv.tv_usec;
-	/* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
-	ret /= 1000;
-
-	/* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
-	ret += (tv.tv_sec * 1000);
-
-	return ret;
-#endif
-}
-
-/*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(ea_t address, ea_t size)
-{
-	// ToDo: add a proper comment on each symbolized memory
-	for (unsigned int i = 0; i < size; i++)
-	{		
-		//api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
-		auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
-		auto var_name = symVar->getName();
-		set_cmt(address + i, var_name.c_str(), true);
-	}
-}
-
-/* Gets current instruction. Only possible if */
-ea_t current_instruction()
-{
-	if (!is_debugger_on()) {
-		return 0;
-	}
-	ea_t xip = 0;
-	if (!get_ip_val(&xip)) {
-		msg("Could not get the XIP value\n This should never happen");
-		return 0;
-	}
-	return xip;
-}
