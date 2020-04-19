@@ -13,27 +13,36 @@ jobs:
         steps:           
             - uses: actions/checkout@v1
               with:
-                  submodules: true
+                  submodules: true                   
+            
+            - name: Build casptone
+              run: |
+                  vcpkg install casptone
+                  vcpkg install z3
                     
-            - name: Update vcpkg triplet to only build release
+            - name: Build casptone
               run: |
-                 echo "(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
-                 cat $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
+                  cd ..
+                  wget https://github.com/aquynh/capstone/archive/4.0.1.tar.gz
+                  tar -xf ./4.0.1.tar.gz
+                  cd ./capstone-4.0.1
+                  bash ./make.sh
+                  sudo make install
+            
+            
+            - name: Download z3
+              run: |
+                  cd ..
+                  wget https://github.com/Z3Prover/z3/releases/download/z3-4.8.7/z3-4.8.7-x64-ubuntu-16.04.zip
+                  unzip z3-4.8.7-x64-ubuntu-16.04.zip
                   
-            - name: Build Triton dependencies with vcpkg for x64. Boost is installed in CI
-              run: |
-                  pwd
-                  ls -la
-                  ls -la /
-                  sudo apt install -y libz3-dev libcapstone-dev
-#                  vcpkg install capstone[x86] z3 --triplet x64-linux
                   
             - name: Download and build Triton x64
               run: |
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
-                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS=../z3-4.8.7-x64-ubuntu-16.04/include -DZ3_LIBRARIES=../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a
                   cmake --build build_x64 --target install --config Release
                       
             - name: Dowload IDA SDKs
