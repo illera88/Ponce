@@ -25,7 +25,7 @@ jobs:
                   pwd
                   ls -la
                   ls -la /
-                  apt install -y libz3-dev libcapstone-dev
+                  sudo apt install -y libz3-dev libcapstone-dev
 #                  vcpkg install capstone[x86] z3 --triplet x64-linux
                   
             - name: Download and build Triton x64
