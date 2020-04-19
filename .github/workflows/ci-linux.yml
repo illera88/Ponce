@@ -15,6 +15,10 @@ jobs:
               with:
                   submodules: true
                     
+            - name: Install Boost
+              run: |
+                 sudo apt-get install -y libboost-dev
+                 
             - name: Download z3
               run: |
                  cd ..

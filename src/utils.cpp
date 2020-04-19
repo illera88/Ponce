@@ -15,10 +15,10 @@
 #include <fstream>
 //Used in GetTimeMs64
 #ifdef _WIN32
-	#include <Windows.h>
+#include <Windows.h>
 #else
-	#include <sys/time.h>
-	#include <ctime>
+#include <sys/time.h>
+#include <ctime>
 #endif
 
 
@@ -104,13 +104,13 @@ int ask_for_a_snapshot()
 	}
 }
 
-/*This functions is a helper for already_exits_a_snapshot. This is call for every snapshot found. 
+/*This functions is a helper for already_exits_a_snapshot. This is call for every snapshot found.
 The user data, ud, containt a pointer to a boolean to enable if we find the snapshot.*/
-int __stdcall snapshot_visitor(snapshot_t *ss, void *ud)
+int __stdcall snapshot_visitor(snapshot_t* ss, void* ud)
 {
 	if (strcmp(ss->desc, SNAPSHOT_DESCRIPTION) == 0)
 	{
-		bool *exists = (bool *)ud;
+		bool* exists = (bool*)ud;
 		*exists = true;
 		return 1;
 	}
@@ -133,12 +133,12 @@ bool already_exits_a_snapshot()
 /*This function is a helper to find a function having its name.
 It is likely IDA SDK has another API to do this but I can't find it.
 Source: http://www.openrce.org/reference_library/files/ida/idapw.pdf */
-ea_t find_function(char const *function_name)
+ea_t find_function(char const* function_name)
 {
 	// get_func_qty() returns the number of functions in file(s) loaded.
 	for (unsigned int f = 0; f < get_func_qty(); f++) {
 		// getn_func() returns a func_t struct for the function number supplied
-		func_t *curFunc = getn_func(f);
+		func_t* curFunc = getn_func(f);
 		qstring funcName;
 		ssize_t size_read = 0;
 		// get_func_name2 gets the name of a function and stored it in funcName
@@ -197,7 +197,7 @@ ea_t get_args(int argument_number, bool skip_ret)
 	case 4: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
 	case 5: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
 	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
+		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(Tapi.registers.x86_rsp);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
 		return get_qword(arg);
 	}
@@ -222,9 +222,9 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	// On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
 	switch (argument_number)
 	{
-	case 0: 
-	case 1: 
-	case 2: 
+	case 0:
+	case 1:
+	case 2:
 	case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
@@ -235,11 +235,11 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
 	//On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
 	switch (argument_number)
 	{
-	case 0: 
-	case 1: 
-	case 2: 
-	case 3: 
-	case 4: 
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
 	case 5:error("[!] In Linux/OsX 64 bits you can't get a pointer to the five first\n arguments since they are registers");
 	default:
 		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
@@ -328,7 +328,7 @@ void rename_tainted_function(ea_t address)
 
 void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
 {
-	for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++) 
+	for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++)
 	{
 		auto expr = tritonInst->symbolicExpressions[exp_index];
 		std::ostringstream oss;
@@ -341,56 +341,56 @@ std::string notification_code_to_string(int notification_code)
 {
 	switch (notification_code)
 	{
-		case 0:
-			return std::string("dbg_null");
-		case 1:
-			return std::string("dbg_process_start");
-		case 2:
-			return std::string("dbg_process_exit");
-		case 3:
-			return std::string("dbg_process_attach");
-		case 4:
-			return std::string("dbg_process_detach");
-		case 5:
-			return std::string("dbg_thread_start");
-		case 6:
-			return std::string("dbg_thread_exit");
-		case 7:
-			return std::string("dbg_library_load");
-		case 8:
-			return std::string("dbg_library_unload");
-		case 9:
-			return std::string("dbg_information");
-		case 10:
-			return std::string("dbg_exception");
-		case 11:
-			return std::string("dbg_suspend_process");
-		case 12:
-			return std::string("dbg_bpt");
-		case 13:
-			return std::string("dbg_trace");
-		case 14:
-			return std::string("dbg_request_error");
-		case 15:
-			return std::string("dbg_step_into");
-		case 16:
-			return std::string("dbg_step_over");
-		case 17:
-			return std::string("dbg_run_to");
-		case 18:
-			return std::string("dbg_step_until_ret");
-		case 19:
-			return std::string("dbg_bpt_changed");
-		case 20:
-			return std::string("dbg_last");
-		default:
-			return std::string("Not defined");
+	case 0:
+		return std::string("dbg_null");
+	case 1:
+		return std::string("dbg_process_start");
+	case 2:
+		return std::string("dbg_process_exit");
+	case 3:
+		return std::string("dbg_process_attach");
+	case 4:
+		return std::string("dbg_process_detach");
+	case 5:
+		return std::string("dbg_thread_start");
+	case 6:
+		return std::string("dbg_thread_exit");
+	case 7:
+		return std::string("dbg_library_load");
+	case 8:
+		return std::string("dbg_library_unload");
+	case 9:
+		return std::string("dbg_information");
+	case 10:
+		return std::string("dbg_exception");
+	case 11:
+		return std::string("dbg_suspend_process");
+	case 12:
+		return std::string("dbg_bpt");
+	case 13:
+		return std::string("dbg_trace");
+	case 14:
+		return std::string("dbg_request_error");
+	case 15:
+		return std::string("dbg_step_into");
+	case 16:
+		return std::string("dbg_step_over");
+	case 17:
+		return std::string("dbg_run_to");
+	case 18:
+		return std::string("dbg_step_until_ret");
+	case 19:
+		return std::string("dbg_bpt_changed");
+	case 20:
+		return std::string("dbg_last");
+	default:
+		return std::string("Not defined");
 	}
 }
 
 /*This function loads the options from the config file.
 It returns true if it reads the config false, if there is any error.*/
-bool load_options(struct cmdOptionStruct *cmdOptions)
+bool load_options(struct cmdOptionStruct* cmdOptions)
 {
 	std::ifstream config_file;
 	config_file.open("Ponce.cfg", std::ios::in | std::ios::binary);
@@ -405,13 +405,13 @@ bool load_options(struct cmdOptionStruct *cmdOptions)
 	config_file.seekg(0, std::ios::beg);
 	if ((end - begin) != sizeof(struct cmdOptionStruct))
 		return false;
-	config_file.read((char *)cmdOptions, sizeof(struct cmdOptionStruct));
+	config_file.read((char*)cmdOptions, sizeof(struct cmdOptionStruct));
 	config_file.close();
 
 	//Check if we need to reload the custom blacklisted functions
-	if (cmdOptions->blacklist_path[0] != '\0'){
+	if (cmdOptions->blacklist_path[0] != '\0') {
 		//Means that the user set a path for custom blacklisted functions
-		if (blacklkistedUserFunctions != NULL){
+		if (blacklkistedUserFunctions != NULL) {
 			//Check if we had a previous custom blacklist and if so we delete it
 			blacklkistedUserFunctions->clear();
 			delete blacklkistedUserFunctions;
@@ -425,7 +425,7 @@ bool load_options(struct cmdOptionStruct *cmdOptions)
 
 /*This function loads the options from the config file.
 It returns true if it reads the config false, if there is any error.*/
-bool save_options(struct cmdOptionStruct *cmdOptions)
+bool save_options(struct cmdOptionStruct* cmdOptions)
 {
 	std::ofstream config_file;
 	config_file.open("Ponce.cfg", std::ios::out | std::ios::binary);
@@ -434,7 +434,7 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 		msg("[!] Error opening config file %s\n", "Ponce.cfg");
 		return false;
 	}
-	config_file.write((char *)cmdOptions, sizeof(struct cmdOptionStruct));
+	config_file.write((char*)cmdOptions, sizeof(struct cmdOptionStruct));
 	config_file.close();
 	return true;
 }
@@ -442,7 +442,7 @@ bool save_options(struct cmdOptionStruct *cmdOptions)
 
 /*Solve a formula and returns the solution as an input.
 The bound is an index in the myPathConstrains vector*/
-Input * solve_formula(ea_t pc, uint bound)
+Input* solve_formula(ea_t pc, uint bound)
 {
 	auto ast = api.getAstContext();
 
@@ -459,7 +459,7 @@ Input * solve_formula(ea_t pc, uint bound)
 			triton::usize ripId = ponce_runtime_status.myPathConstraints[j].conditionRipId;
 			auto symExpr = api.getSymbolicExpression(ripId)->getAst();
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
-			
+
 			//expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
 			expr.push_back(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize())));
 		}
@@ -491,7 +491,7 @@ Input * solve_formula(ea_t pc, uint bound)
 			/* Then, delcare all symbolic variables */
 			for (auto it : api.getSymbolicVariables()) {
 				ss << ast->declare(ast->variable(it.second));
-				
+
 			}
 			/* And concat the user expression */
 			ss << "\n\n";
@@ -505,7 +505,7 @@ Input * solve_formula(ea_t pc, uint bound)
 
 		if (model.size() > 0)
 		{
-			Input *newinput = new Input();
+			Input* newinput = new Input();
 			//Clone object 
 			newinput->bound = path_constraint.bound;
 
@@ -526,7 +526,7 @@ Input * solve_formula(ea_t pc, uint bound)
 					newinput->memOperand.push_back(mem);
 					api.setConcreteMemoryValue(mem, model_value);
 				}
-				else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE){
+				else if (symbVarKind == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
 					auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
 					newinput->regOperand.push_back(reg);
 					api.setConcreteRegisterValue(reg, model_value);
@@ -536,10 +536,10 @@ Input * solve_formula(ea_t pc, uint bound)
 				switch (symbVar->getSize())
 				{
 				case 8:
-					msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0? ' ': model_value.convert_to<uchar>());
+					msg(" - %s (%s):%#02x (%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
 					break;
 				case 16:
-					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ': (unsigned char)(model_value.convert_to<ushort>() >> 8));
+					msg(" - %s (%s):%#04x (%c%c)\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
 					break;
 				case 32:
 					msg(" - %s (%s):%#08x\n", it->second.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
@@ -562,9 +562,9 @@ Input * solve_formula(ea_t pc, uint bound)
 
 
 /*This function identify the type of condition jmp and negate the flags to negate the jmp.
-Probably it is possible to do this with the solver, adding more variable to the formula to 
+Probably it is possible to do this with the solver, adding more variable to the formula to
 identify the flag of the conditions and get the values. But for now we are doing it in this way.*/
-void negate_flag_condition(triton::arch::Instruction *triton_instruction)
+void negate_flag_condition(triton::arch::Instruction* triton_instruction)
 {
 	switch (triton_instruction->getType())
 	{
@@ -785,7 +785,7 @@ bool ask_for_execute_native()
 }
 
 /*This function deletes the prefixes and sufixes that IDA adds*/
-qstring clean_function_name(qstring name){
+qstring clean_function_name(qstring name) {
 	if (name.substr(0, 7) == "__imp__")
 		return clean_function_name(name.substr(7));
 	else if (name.substr(0, 4) == "imp_")
@@ -805,8 +805,8 @@ qstring clean_function_name(qstring name){
 
 qstring get_callee_name(ea_t address) {
 	qstring name;
-	char buf[100] = {0};
-	static const char * nname = "$ vmm functions";
+	char buf[100] = { 0 };
+	static const char* nname = "$ vmm functions";
 	netnode n(nname);
 	auto fun = n.altval(address) - 1;
 	if (fun == -1) {
@@ -819,7 +819,7 @@ qstring get_callee_name(ea_t address) {
 	}
 	else {
 		get_ea_name(&name, fun); // 00C5101A call    edi ; __imp__malloc style
-		
+
 		if (name.empty()) {
 			qstring buf_op;
 			if (is_code(get_flags(address)))
@@ -832,10 +832,10 @@ qstring get_callee_name(ea_t address) {
 			name = clean_function_name(name);
 		}
 	}
-	return name;	
+	return name;
 }
 
-regval_t ida_get_reg_val_invalidate(char *reg_name)
+regval_t ida_get_reg_val_invalidate(char* reg_name)
 {
 	regval_t reg_value;
 	invalidate_dbg_state(DBGINV_REGS);
@@ -883,7 +883,7 @@ void symbolize_all_memory(ea_t address, ea_t size)
 {
 	// ToDo: add a proper comment on each symbolized memory
 	for (unsigned int i = 0; i < size; i++)
-	{		
+	{
 		//api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
 		auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
 		auto var_name = symVar->getName();
