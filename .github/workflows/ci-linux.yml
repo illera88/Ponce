@@ -17,11 +17,8 @@ jobs:
                     
             - name: Update vcpkg triplet to only build release
               run: |
-                 pwd
-                 ls -la
-                 ls -la /
-                 env
-                 echo $VCPKG_INSTALLATION_ROOT
+                 ls $VCPKG_INSTALLATION_ROOT/triplets/
+                 cat $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
                  echo (VCPKG_BUILD_TYPE release) >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
                   
             - name: Build Triton dependencies with vcpkg for x64. Boost is installed in CI
