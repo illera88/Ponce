@@ -45,7 +45,7 @@ elseif(APPLE)
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
 elseif(UNIX) # APPLE is also UNIX, so it MUST be before this elseif().
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
-	set(IDA_LIBRARIES "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
+	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
 else()
 	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -100,7 +100,7 @@ if(STATICLIB)
 
 	else()
 		  # If using the static library we should use the static runtime too
-		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 		# Using Capstone from vcpkg has this caveat
 		set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
@@ -128,7 +128,6 @@ target_link_libraries(
     ${PROJECT_NAME}
 	PRIVATE
     ${TRITON_LIBRARY}
-	${IDA_LIBRARIES}
 )
 
 
@@ -154,8 +153,20 @@ endif()
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(PLUGIN_ARCH 64)
     target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __EA64__)
+	target_link_libraries(
+    ${PROJECT_NAME}
+	PRIVATE
+    ${idasdk_ea64}
+)
+
 else()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __X86__)
+	target_link_libraries(
+    ${PROJECT_NAME}
+	PRIVATE
+    ${idasdk_ea32}
+)
+
 endif()
 
 

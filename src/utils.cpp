@@ -197,7 +197,7 @@ ea_t get_args(int argument_number, bool skip_ret)
 	case 4: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
 	case 5: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
 	default:
-		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(Tapi.registers.x86_rsp);
+		ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
 		ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
 		return get_qword(arg);
 	}
