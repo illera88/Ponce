@@ -30,18 +30,29 @@
 
 std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
-/*This function will create and fill the Triton object for every instruction*/
-void tritonize(ea_t pc, thid_t threadID)
+/*This function will create and fill the Triton object for every instruction
+	Returns:
+	0 instruction tritonized
+	1 trigger is not activated
+	2 other error*/
+int tritonize(ea_t pc, thid_t threadID)
 {
 	/*Check that the runtime Trigger is on just in case*/
 	if (!ponce_runtime_status.runtimeTrigger.getState())
-		return;
+		return 1;
 
 	threadID = threadID ? threadID : get_current_thread();
 
+	if (pc == 0) {
+		msg("[!] Some error at tritonize since pc is 0");
+		return 2;
+	}
+
 	//We delete the last_instruction
-	if (ponce_runtime_status.last_triton_instruction != NULL)
+	if (ponce_runtime_status.last_triton_instruction != nullptr){
 		delete ponce_runtime_status.last_triton_instruction;
+		ponce_runtime_status.last_triton_instruction = nullptr;
+	}
 
 	triton::arch::Instruction* tritonInst = new triton::arch::Instruction();
 	ponce_runtime_status.last_triton_instruction = tritonInst;
@@ -64,39 +75,33 @@ void tritonize(ea_t pc, thid_t threadID)
 	get_bytes(&opcodes, item_size, pc, GMB_READALL, NULL);
 
 	/* Setup Triton information */
-	tritonInst->clear();
+	tritonInst->clear(); // ToDo: I think this is not necesary
 	tritonInst->setOpcode((triton::uint8*)opcodes, item_size);
 	tritonInst->setAddress(pc);
 	tritonInst->setThreadId(threadID);
 
-	/* Disassemble the instruction */
-	try{
-		api.disassembly(*tritonInst);
+	try {
+		if (!api.processing(*tritonInst)) {
+			if (inf_is_64bit())
+				msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+			else
+				msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+			return 2;
+		}
 	}
-	catch (...) {
+	catch (const triton::exceptions::Exception& e) {
 		if (inf_is_64bit())
-			msg("[!] Dissasembling error at %#llx. Opcodes:", pc);
+			msg("[!] Error: %s. Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
 		else
-			msg("[!] Dissasembling error at %#x. Opcodes:", pc);
-
-		for (auto i = 0; i < item_size; i++)
-			msg("%2x ", *(unsigned char*)(opcodes + i));
-		msg("\n");
-		return;
+			msg("[!] Error: %s. Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
+		return 2;
 	}
+
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf_is_64bit())
 			msg("[+] Triton at %#llx: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 		else
 			msg("[+] Triton at %#x: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-	}
-
-	/* Process the IR and taint */
-	if (!api.buildSemantics(*tritonInst)) {
-		if (inf_is_64bit())
-			msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-		else
-			msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 	}
 
 	/*In the case that the snapshot engine is in use we should track every memory write access*/
@@ -184,29 +189,9 @@ void tritonize(ea_t pc, thid_t threadID)
 		else
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));
 	}
+	return 0;
 	//We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
 	//instructions_executed_map[pc].push_back(tritonInst);
-}
-
-/*This function is called when we taint a register that is used in the current instruction. Returns 0 if OK and 1 if error*/
-int reanalize_current_instruction()
-{
-	ea_t xip = 0;
-	if (!get_ip_val(&xip)) {
-		msg("Could not get the XIP value\n This should never happen");
-		return 0;
-	}
-
-	if (cmdOptions.showDebugInfo) {
-		if (inf_is_64bit())
-			msg("[+] Reanalizyng instruction at %#llx\n", xip);
-		else
-			msg("[+] Reanalizyng instruction at %#x\n", xip);
-	}
-	
-	tritonize(xip, get_current_thread());
-
-	return 0;
 }
 
 /*This functions is called every time a new debugger session starts*/
@@ -222,12 +207,16 @@ void triton_restart_engines()
 	//We reset everything at the beginning
 	api.reset();
 	// Memory access callback
-	api.addCallback(needConcreteMemoryValue);
+	api.addCallback(needConcreteMemoryValue_cb);
 	// Register access callback
-	api.addCallback(needConcreteRegisterValue);
+	api.addCallback(needConcreteRegisterValue_cb);
 	//If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
 	api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
 	api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
+	if (ponce_runtime_status.last_triton_instruction) {
+		delete ponce_runtime_status.last_triton_instruction;
+		ponce_runtime_status.last_triton_instruction = nullptr;
+	}
 	// This optimization is veeery good for the size of the formulas
 	//api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
 	//api.setMode(triton::modes::ALIGNED_MEMORY, true);

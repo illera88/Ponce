@@ -28,7 +28,7 @@
 #include "globals.hpp"
 
 /* Get a memory value from IDA debugger*/
-triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
+triton::uint128 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 {
 	if (size > 16)
 	{
@@ -45,9 +45,9 @@ triton::uint128 getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 }
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
-void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess& mem)
+void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
-	auto memValue = getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
+	auto memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	if (cmdOptions.showExtraDebugInfo) {
 		if (inf_is_64bit())
 			msg("[+] Triton asking IDA for memory address: %#llx Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
@@ -57,20 +57,8 @@ void needConcreteMemoryValue(triton::API& api, const triton::arch::MemoryAccess&
 	api.setConcreteMemoryValue(mem, memValue);
 }
 
-/*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
-void needConcreteRegisterValue(triton::API& api, const triton::arch::Register& reg)
-{
-	auto regValue = getCurrentRegisterValue(reg);
-	if (cmdOptions.showExtraDebugInfo) {
-		if (inf_is_64bit())
-			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
-		else
-			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
-	}	
-}
-
 /* Get a reg value from IDA debugger*/
-triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
+triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
 {
 	regval_t reg_value;
 	triton::uint512 value = 0;
@@ -91,5 +79,20 @@ triton::uint512 getCurrentRegisterValue(const triton::arch::Register& reg)
 	/* Returns the good casted value */
 	return api.getConcreteRegisterValue(reg, false);
 }
+
+/*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
+void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register& reg)
+{
+	auto regValue = IDA_getCurrentRegisterValue(reg);
+	if (cmdOptions.showExtraDebugInfo) {
+		if (inf_is_64bit())
+			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+		else
+			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+	}
+	api.concretizeRegister(reg);
+}
+
+
 
 

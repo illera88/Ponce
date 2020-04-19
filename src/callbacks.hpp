@@ -18,6 +18,5 @@
 ssize_t idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
 ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
 
-void tritonize(ea_t pc, thid_t threadID = 0);
-int reanalize_current_instruction();
+int tritonize(ea_t pc, thid_t threadID = 0);
 void set_SMT_results(Input* input_ptr);

@@ -58,7 +58,7 @@ struct ah_taint_register_t : public action_handler_t
 				//If last_instruction is not set this instruction is not analyze
 				if (ponce_runtime_status.last_triton_instruction == NULL)
 				{
-					reanalize_current_instruction();
+					tritonize(current_instruction());
 					return 0;
 				}
 				//If the register tainted is a source for the instruction then we need to reanalize the instruction
@@ -70,7 +70,7 @@ struct ah_taint_register_t : public action_handler_t
 					//msg("Register read: %s\n", reg.getName().c_str());
 					if (reg.getId() == register_to_taint.getId())
 					{
-						reanalize_current_instruction();
+						tritonize(current_instruction());
 						break;
 					}
 				}
@@ -142,7 +142,7 @@ struct ah_symbolize_register_t : public action_handler_t
 				//If last_instruction is not set this instruction is not analyze
 				if (ponce_runtime_status.last_triton_instruction == NULL)
 				{
-					reanalize_current_instruction();
+					tritonize(current_instruction());
 					return 0;
 				}
 				//If the register symbolize is a source for the instruction then we need to reanalize the instruction
@@ -153,7 +153,7 @@ struct ah_symbolize_register_t : public action_handler_t
 					auto reg = it->first;
 					if (reg.getId() == register_to_symbolize.getId())
 					{
-						reanalize_current_instruction();
+						tritonize(current_instruction());
 						break;
 					}
 				}
@@ -223,7 +223,7 @@ struct ah_taint_memory_t : public action_handler_t
 		//If last_instruction is not set this instruction is not analyze
 		if (ponce_runtime_status.last_triton_instruction == NULL)
 		{
-			reanalize_current_instruction();
+			tritonize(current_instruction());
 			return 0;
 		}
 		//We reanalyse the instruction where the pc is right now
@@ -234,7 +234,7 @@ struct ah_taint_memory_t : public action_handler_t
 			//If the address is inside the range just tainted, then reanalize
 			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
 			{
-				reanalize_current_instruction();
+				tritonize(current_instruction());
 				break;
 			}
 		}
@@ -288,17 +288,8 @@ struct ah_symbolize_memory_t : public action_handler_t
 	{
 		ea_t selection_starts = 0;
 		ea_t selection_ends = 0;
-		//If we are in the hex view windows we use the selected bytes
-		if (action_activation_ctx->widget_type == BWN_DUMP)
-		{
-			if (action_activation_ctx->cur_sel.from.at == NULL || action_activation_ctx->cur_sel.to.at == NULL)
-				return 0;
-			//We get the selection bounds from the action activation context
-			selection_starts = action_activation_ctx->cur_sel.from.at->toea();
-			selection_ends = action_activation_ctx->cur_sel.to.at->toea();
-		}
 		//In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-		else if (action_activation_ctx->widget_type == BWN_DISASM)
+		if (action_activation_ctx->widget_type == BWN_DISASM)
 		{
 			//We ask to the user for the memory and the size
 			if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
@@ -330,7 +321,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 		{
 			// ToDo: What happens if Triton is enable when at a blacklisted function (printf, fgets...)?
 			// It wont be blacklisted. We should change t
-			reanalize_current_instruction();
+			tritonize(current_instruction());
 			return 0;
 		}
 		//We reanalyse the instruction where the pc is right now if the instruction was reading the memory that was just symbolized
@@ -341,7 +332,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 			//If the address is inside the range just symbolized, then reanalize
 			if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
 			{
-				reanalize_current_instruction();
+				tritonize(current_instruction());
 				break;
 			}
 		}
@@ -728,7 +719,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 			ponce_runtime_status.analyzed_thread = get_current_thread();
 			ponce_runtime_status.runtimeTrigger.enable();
 			//And analyzing current instruction
-			reanalize_current_instruction();
+			tritonize(current_instruction());
 			if (cmdOptions.showDebugInfo)
 				msg("Enabling step tracing\n");
 		}
