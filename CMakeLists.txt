@@ -99,6 +99,7 @@ if(STATICLIB)
 		)
 
 	else()
+		add_definitions(/MP)
 		  # If using the static library we should use the static runtime too
 		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
@@ -130,11 +131,6 @@ target_link_libraries(
     ${TRITON_LIBRARY}
 )
 
-
-if(MSVC)
-  add_definitions(/MP)
-endif()
-
 # Set preprocessor definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE __IDP__)
 if(WIN32)
@@ -157,7 +153,7 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     ${PROJECT_NAME}
 	PRIVATE
     ${idasdk_ea64}
-)
+	)
 
 else()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __X86__)
@@ -165,7 +161,7 @@ else()
     ${PROJECT_NAME}
 	PRIVATE
     ${idasdk_ea32}
-)
+	)
 
 endif()
 
