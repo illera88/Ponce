@@ -48,7 +48,7 @@ jobs:
                 IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
               run: |
                   cd ..
-                  curl -O -J -L "%IDA_SDK%"
+                  curl -O -J -L "$IDA_SDK"
                   unzip IDA_SDKs.zip -d IDA_SDKs              
             
             - name: Build Ponce x64 IDA 7.0
