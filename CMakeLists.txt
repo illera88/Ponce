@@ -139,6 +139,7 @@ if(WIN32)
     # for Windows operating system in general
 elseif (APPLE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DANGEROUS_FUNCTIONS)
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__)
