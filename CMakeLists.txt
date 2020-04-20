@@ -16,6 +16,10 @@ set (PROJECT_NAME Ponce)
 project(${PROJECT_NAME})
 
 
+if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message(FATAL_ERROR "IDA plugins >7.0 can't be built as 32 bits modules")
+endif()
+
 file(GLOB PONCE_SOURCE_FILES
     src/*.cpp
 )
@@ -23,8 +27,8 @@ file(GLOB PONCE_HEADER_FILES
     src/*.hpp
 )
 
-# ToDo add static versin
-add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+add_library(${PROJECT_NAME}_ea32 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+add_library(${PROJECT_NAME}_ea64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 
 #                       #
 # Look for dependencies #
@@ -88,99 +92,101 @@ if(STATICLIB)
 	find_library(CAPSTONE_LIBRARY capstone REQUIRED)
 	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
 
-	if(NOT MSVC)
-		set(Z3_LIBRARY "" CACHE FILEPATH "Path to Z3 library")
-		if(NOT Z3_LIBRARY)
-			message(FATAL_ERROR "You should set z3 libraries")
-		endif()
-		
-		target_link_libraries(
-			${PROJECT_NAME}
-			PRIVATE
-			${Z3_LIBRARY}
-			${CAPSTONE_LIBRARY}
-		)
+	# Find z3
+	find_package(z3 CONFIG REQUIRED)
 
-	else()
+	target_link_libraries(
+		${PROJECT_NAME}_ea32
+		PRIVATE
+		z3::libz3
+		${CAPSTONE_LIBRARY}
+	)
+	
+	target_link_libraries(
+		${PROJECT_NAME}_ea64
+		PRIVATE
+		z3::libz3
+		${CAPSTONE_LIBRARY}
+	)
+		
+	if(WIN32)
 		add_definitions(/MP)
 		  # If using the static library we should use the static runtime too
-		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+		set_property(TARGET ${PROJECT_NAME}_ea32 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+		set_property(TARGET ${PROJECT_NAME}_ea64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-		# Using Capstone from vcpkg has this caveat
+		# Using Capstone in Windows from vcpkg has this caveat
 		set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
+	endif()	
 		
-		# Find z3
-		find_package(z3 CONFIG REQUIRED)
-
-		target_link_libraries(
-			${PROJECT_NAME}
-			PRIVATE
-			z3::libz3
-			${CAPSTONE_LIBRARY}
-		)
-	endif()
-	
-	
-	target_include_directories(${PROJECT_NAME} PRIVATE ${Capstone_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${Capstone_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${Capstone_INCLUDE_DIR})
 endif()
 
 
 # Now we create the project
-target_include_directories(${PROJECT_NAME} PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
 target_link_libraries(
-    ${PROJECT_NAME}
+    ${PROJECT_NAME}_ea32
 	PRIVATE
     ${TRITON_LIBRARY}
+	${idasdk_ea32}
 )
 
+target_link_libraries(
+    ${PROJECT_NAME}_ea64
+	PRIVATE
+    ${TRITON_LIBRARY}
+	${idasdk_ea64}
+)
+
+target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __X64__)
+target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __X64__ __EA64__)
+
 # Set preprocessor definitions
-target_compile_definitions(${PROJECT_NAME} PRIVATE __IDP__)
+target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __IDP__)
+target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __IDP__)
+
 if(WIN32)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __NT__)
+	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __NT__)
+	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __NT__)
 	set(PLUGIN_EXTENSION dll)
     # for Windows operating system in general
 elseif (APPLE)
-	# by default in osx c++11 is not used and Triton needs it
-	set(CMAKE_CXX_STANDARD 11)
-	set(CMAKE_CXX_STANDARD_REQUIRED ON)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DANGEROUS_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	set(PLUGIN_EXTENSION so)
-endif()
-
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(PLUGIN_ARCH 64)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __EA64__)
-	target_link_libraries(
-    ${PROJECT_NAME}
-	PRIVATE
-    ${idasdk_ea64}
-	)
-
-else()
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __X86__)
-	target_link_libraries(
-    ${PROJECT_NAME}
-	PRIVATE
-    ${idasdk_ea32}
-	)
-
 endif()
 
 
 if(IDA_INSTALLED_DIR)
 	message(STATUS "[-] Ponce built plugin and pdb file will be moved to '${IDA_INSTALLED_DIR}/plugins/'. The build system should have permisions to write there or it will error.")
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}${PLUGIN_ARCH}.${PLUGIN_EXTENSION}
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
+	add_custom_command(TARGET ${PROJECT_NAME}_ea32 POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}_ea32> ${IDA_INSTALLED_DIR}/plugins/Ponce.${PLUGIN_EXTENSION}
+		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea32.${PLUGIN_EXTENSION}"
 	)
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}.pdb ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.pdb
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
-	)
+	
+	add_custom_command(TARGET ${PROJECT_NAME}_ea64 POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}_ea64> ${IDA_INSTALLED_DIR}/plugins/Ponce64.${PLUGIN_EXTENSION}
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea64.${PLUGIN_EXTENSION}"
+		)
+
+	# Move symbols for debugging in Windows
+	if(WIN32)
+		add_custom_command(TARGET ${PROJECT_NAME}_ea32 POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}_ea32.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce.pdb
+		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea32.${PLUGIN_EXTENSION}"
+		)
+		
+		add_custom_command(TARGET ${PROJECT_NAME}_ea64 POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}_ea64.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce64.pdb
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea64.${PLUGIN_EXTENSION}"
+		)
+	endif()
 endif()
