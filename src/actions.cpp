@@ -45,7 +45,7 @@ struct ah_taint_register_t : public action_handler_t
 
 			if (register_to_taint)
 			{
-				msg("[!] Tainting register %s\n", selected);
+				msg("[!] Tainting register %s\n", selected.c_str());
 				api.taintRegister(*register_to_taint);
 
 				//When the user taints something for the first time we should enable step_tracing
