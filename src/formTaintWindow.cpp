@@ -190,11 +190,11 @@ void idaapi entry_chooser_t::get_row(qstrvec_t *cols_, int *, chooser_item_attrs
 		cols[1].sprnt("%s", "");
 	else
 		cols[1].sprnt("0x%x", li->address);
-	cols[2].sprnt("%s", li->register_name);
+	cols[2].sprnt("%s", li->register_name.c_str());
 	cols[3].sprnt("0x%x", li->value.convert_to<ea_t>());
 	cols[4].sprnt("%s", li->isTainted ? "true" : "false");
 	cols[5].sprnt("%s", li->isSymbolized ? "true" : "false");
-	cols[6].sprnt("%s", li->comment);
+	cols[6].sprnt("%s", li->comment.c_str());
 
 }
 
