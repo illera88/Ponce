@@ -471,9 +471,9 @@ Input* solve_formula(ea_t pc, uint bound)
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo) {
 			if (inf_is_64bit())
-				msg("[+] ripId: %d notTakenAddr: %#llx\n", ripId, notTakenAddr);
+				msg("[+] ripId: %lu notTakenAddr: %#llx\n", ripId, notTakenAddr);
 			else
-				msg("[+] ripId: %d notTakenAddr: %#x\n", ripId, notTakenAddr);
+				msg("[+] ripId: %lu notTakenAddr: %#x\n", ripId, notTakenAddr);
 		}
 		expr.push_back(ast->equal(symExpr, ast->bv(notTakenAddr, symExpr->getBitvectorSize())));
 

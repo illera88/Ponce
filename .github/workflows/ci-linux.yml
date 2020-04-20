@@ -17,6 +17,9 @@ jobs:
                     
             - name: Install Boost
               run: |
+                 cat /usr/local/share/vcpkg/buildtrees/0.vcpkg_tags.cmake
+                 vcpkg install capstone
+                 /usr/local/share/vcpkg/buildtrees/0.vcpkg_tags.cmake
                  sudo apt-get install -y libboost-dev
                  
             - name: Download z3

@@ -32,6 +32,7 @@ jobs:
                   tar -xf ./4.0.1.tar.gz
                   cd ./capstone-4.0.1
                   bash ./make.sh
+                  ls -lha
                   sudo make install
                   
             - name: Download and build Triton x64
