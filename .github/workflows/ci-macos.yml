@@ -43,7 +43,7 @@ jobs:
                   cmake --build build_x64 --target install --config Release
                       
             - name: Dowload IDA SDKs
-              shell: cmd
+              shell: bash
               env:
                 IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
               run: |
