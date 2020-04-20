@@ -55,7 +55,7 @@ jobs:
             - name: Build Ponce x64 IDA 7.0
               run: |
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.dylib" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.dylib" -DZ3_LIBRARY="../z3-4.8.7-x64-osx-10.14.6/bin/libz3.dylib"
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-osx-10.14.6/bin/libz3.dylib"
                   VERBOSE=1 cmake --build build_x64_7.0 --config Release
                   
             - name: Build Ponce x64 IDA 7.1
