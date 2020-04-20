@@ -1,0 +1,144 @@
+name: Build for OSX
+on: 
+    push:
+    pull_request:
+    release:
+      types: # This configuration does not affect the page_build event above
+        - created
+
+jobs:
+    build:
+        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+        runs-on: macos-latest
+        steps:           
+            - uses: actions/checkout@v1
+              with:
+                  submodules: true
+                    
+            - name: Install Boost
+              run: |
+                 sudo brew install boost
+                 
+            - name: Download z3
+              run: |
+                 cd ..
+                 wget https://github.com/Z3Prover/z3/releases/download/z3-4.8.7/z3-4.8.7-x64-osx-10.14.6.zip
+                 unzip z3-4.8.7-x64-osx-10.14.6.zip              
+                  
+            - name: Compile capstone
+              run: |
+                  cd ..
+                  wget https://github.com/aquynh/capstone/archive/4.0.1.tar.gz
+                  tar -xf ./4.0.1.tar.gz
+                  cd ./capstone-4.0.1
+                  bash ./make.sh
+                  sudo make install
+                  
+            - name: Download and build Triton x64
+              run: |
+                  cd ..
+                  git clone https://github.com/JonathanSalwan/Triton
+                  cd Triton
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="../z3-4.8.7-x64-ubuntu-16.04/include" -DCAPSTONE_INCLUDE_DIRS="../capstone-4.0.1/include"
+                  cmake --build build_x64 --target install --config Release
+                      
+            - name: Dowload IDA SDKs
+              shell: cmd
+              env:
+                IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
+              run: |
+                  cd ..
+                  curl -O -J -L "%IDA_SDK%"
+                  unzip IDA_SDKs.zip -d IDA_SDKs              
+            
+            - name: Build Ponce x64 IDA 7.0
+              run: |
+                  unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a"
+                  cmake --build build_x64_7.0 --config Release
+                  
+            - name: Build Ponce x64 IDA 7.1
+              run: |
+                  unzip ../IDA_SDKs/idasdk71.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a"
+                  cmake --build build_x64_7.1 --config Release
+            
+            - name: Build Ponce x64 IDA 7.2
+              run: |
+                  unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a"
+                  cmake --build build_x64_7.2 --config Release
+            
+            - name: Build Ponce x64 IDA 7.3
+              run: |
+                  unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a"
+                  cmake --build build_x64_7.3 --config Release
+            
+            - name: Build Ponce x64 IDA 7.4
+              run: |
+                  unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCapstone_INCLUDE_DIR="../capstone-4.0.1/include/" -DCAPSTONE_LIBRARY="../capstone-4.0.1/libcapstone.a" -DZ3_LIBRARY="../z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a"
+                  cmake --build build_x64_7.4 --config Release
+                      
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.0.so
+                  path: build_x64_7.0/Release/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.1.so
+                  path: build_x64_7.1/Release/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.2.so
+                  path: build_x64_7.2/Release/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.3.so
+                  path: build_x64_7.3/Release/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.4.so
+                  path: build_x64_7.4/Release/libPonce.so
+                  
+            
+                  
+    # release:
+        # runs-on: ubuntu-latest
+        # if: github.event_name == 'release'
+        # needs: build
+        # steps:
+            # - name: Download CidSSH ssh version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ssh_x64.exe
+            
+            # - name: Upload ssh arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ssh_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ssh_x64.exe
+                  # asset_content_type: application/octet-stream
+                  
+            # - name: Download CidSSH ws version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ws_x64.exe
+            # - name: Upload ws arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ws_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ws_x64.exe
+                  # asset_content_type: application/octet-stream    
