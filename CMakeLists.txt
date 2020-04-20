@@ -138,6 +138,9 @@ if(WIN32)
 	set(PLUGIN_EXTENSION dll)
     # for Windows operating system in general
 elseif (APPLE)
+	# by default in osx c++11 is not used and Triton needs it
+	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	set(PLUGIN_EXTENSION dylib)
