@@ -93,7 +93,7 @@ if(STATICLIB)
 	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
 
 	# Find z3
-	find_package(z3 CONFIG REQUIRED)
+	find_package(Z3 CONFIG REQUIRED)
 
 	target_link_libraries(
 		${PROJECT_NAME}_ea32
