@@ -25,7 +25,7 @@ jobs:
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
-                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DBOOST_INCLUDEDIR="$VCPKG_INSTALLATION_ROOT/vcpkg/installed/x64-linux/include"
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DBOOST_ROOT="$VCPKG_INSTALLATION_ROOT/vcpkg/installed/x64-linux/"
                   cmake --build build_x64 --target install --config Release
                       
             - name: Dowload IDA SDKs
