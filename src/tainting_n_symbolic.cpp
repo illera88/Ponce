@@ -87,9 +87,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 
 	triton::uint32 char_size = unicode? 2: 1;// "char_size" in unicode is 2
 	const void* null_byte =	unicode? "\0\0": "\0";
-    uint32 reg_size = 4;
-	if (inf_is_64bit())
-        reg_size = 8;
+    uint32 reg_size = sizeof(void*);
 
 	//We are tainting the argv[0], this is the program path, and it is something that the 
 	//user controls and sometimes is used to do somechecks
@@ -98,10 +96,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
 		ea_t current_argv = read_regSize_from_ida(argv + i * reg_size);
 		if (current_argv == (ea_t)-1)
 		{
-			if (inf_is_64bit())
-				msg("[!] Error reading mem: %#llx\n", argv + i * reg_size);
-			else
-				msg("[!] Error reading mem: %#x\n", argv + i * reg_size);
+			msg("[!] Error reading mem: " MEM_FORMAT "\n", argv + i * reg_size);
 			break;
 		}
 		//We iterate through all the bytes of the current argument

@@ -59,10 +59,7 @@ int tritonize(ea_t pc, thid_t threadID)
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!can_decode(pc)) {
-		if (inf_is_64bit())
-			msg("[!] Some error decoding instruction at %#llx", pc);
-		else
-			msg("[!] Some error decoding instruction at %#x", pc);
+		msg("[!] Some error decoding instruction at " MEM_FORMAT, pc);
 	}
 	
 	unsigned char opcodes[15];
@@ -82,26 +79,17 @@ int tritonize(ea_t pc, thid_t threadID)
 
 	try {
 		if (!api.processing(*tritonInst)) {
-			if (inf_is_64bit())
-				msg("[!] Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-			else
-				msg("[!] Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+			msg("[!] Instruction at " MEM_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 			return 2;
 		}
 	}
 	catch (const triton::exceptions::Exception& e) {
-		if (inf_is_64bit())
-			msg("[!] Error: %s. Instruction at %#llx not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
-		else
-			msg("[!] Error: %s. Instruction at %#x not supported by Triton: %s (Thread id: %d)\n", e.what(), pc, tritonInst->getDisassembly().c_str(), threadID);
+		msg("[!] Instruction at " MEM_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 		return 2;
 	}
 
 	if (cmdOptions.showExtraDebugInfo) {
-		if (inf_is_64bit())
-			msg("[+] Triton at %#llx: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-		else
-			msg("[+] Triton at %#x: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+		msg("[+] Triton at " MEM_FORMAT " : %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
 	}
 
 	/*In the case that the snapshot engine is in use we should track every memory write access*/
@@ -146,10 +134,7 @@ int tritonize(ea_t pc, thid_t threadID)
 		ponce_runtime_status.total_number_symbolic_ins++;
 
 		if (cmdOptions.showDebugInfo) {
-			if (inf_is_64bit())
-				msg("[!] Instruction %s at %#llx \n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
-			else
-				msg("[!] Instruction %s at %#x\n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
+			msg("[!] Instruction %s at " MEM_FORMAT " \n", tritonInst->isTainted() ? "tainted" : "symbolized", pc);
 		}
 		if (cmdOptions.RenameTaintedFunctionNames)
 			rename_tainted_function(pc);
@@ -170,17 +155,10 @@ int tritonize(ea_t pc, thid_t threadID)
 		ea_t addr1 = (ea_t)tritonInst->getNextAddress();
 		ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
 		if (cmdOptions.showDebugInfo) {
-			if (inf_is_64bit())
-				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
-			else
-				msg("[+] Branch symbolized detected at %#llx: %#llx or %#llx, Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
-
+			msg("[+] Branch symbolized detected at " MEM_FORMAT ": " MEM_FORMAT " or " MEM_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
 		}
 		triton::usize ripId = 0;
-		if (inf_is_64bit())
-			ripId = api.getSymbolicRegister(api.registers.x86_rip)->getId();
-		else
-			ripId = api.getSymbolicRegister(api.registers.x86_eip)->getId();
+		ripId = api.getSymbolicRegister(REG_XIP)->getId();
 
 		if (tritonInst->isConditionTaken())
 			ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
@@ -501,13 +479,10 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 					{
 						char name[256];
 						//We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-						qsnprintf(name, 255, "%d_Ponce:solve_formula_sub", i);
+						qsnprintf(name, 255, "%u_Ponce:solve_formula_sub", i);
 						action_IDA_solve_formula_sub.name = name;
 						char label[256];
-						if (inf_is_64bit())
-							qsnprintf(label, 255, "%d. %#llx -> %#llx ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
-						else
-							qsnprintf(label, 255, "%d. %#x -> %#x ", ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+						qsnprintf(label, 255, "%u. " MEM_FORMAT " -> " MEM_FORMAT, ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
 						
 						action_IDA_solve_formula_sub.label = label;
 						bool success = register_action(action_IDA_solve_formula_sub);

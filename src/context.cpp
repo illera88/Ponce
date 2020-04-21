@@ -49,10 +49,7 @@ void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAcce
 {
 	auto memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 	if (cmdOptions.showExtraDebugInfo) {
-		if (inf_is_64bit())
-			msg("[+] Triton asking IDA for memory address: %#llx Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
-		else
-			msg("[+] We need memory! Address: %#x Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
+		msg("[+] Triton asking IDA for memory address: " MEM_FORMAT " Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
 	}	
 	api.setConcreteMemoryValue(mem, memValue);
 }
@@ -87,10 +84,7 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
 {
 	auto regValue = IDA_getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo) {
-		if (inf_is_64bit())
-			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#llx\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
-		else
-			msg("[+] Triton asking IDA for Register: %s. IDA returns value: %#x\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+		msg("[+] Triton asking IDA for Register: %s. IDA returns value: " MEM_FORMAT, reg.getName().c_str(), regValue.convert_to<ea_t>());
 	}
 	api.setConcreteRegisterValue(reg, regValue);
 }

@@ -119,11 +119,7 @@ struct ah_symbolize_register_t : public action_handler_t
 			{
 				msg("[!] Symbolizing register %s\n", selected.c_str());
 				char comment[256];
-
-				if (inf_is_64bit())
-				    qsnprintf(comment, 256, "Reg %s at address: %#llx", selected.c_str(), action_activation_ctx->cur_ea);
-				else
-					qsnprintf(comment, 256, "Reg %s at address: %#x", selected.c_str(), action_activation_ctx->cur_ea);
+				qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), action_activation_ctx->cur_ea);
 
 				api.symbolizeRegister(*register_to_symbolize, std::string(comment));
 
@@ -200,10 +196,7 @@ struct ah_taint_memory_t : public action_handler_t
 		// ToDo: give another thought about variable lenght symbolic arguments.
 		//The selection ends in the last item, we need to add 1 to calculate the length
 		ea_t selection_length = selection_ends - selection_starts;
-		if (inf_is_64bit())
-			msg("[+] Tainting memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
-		else
-			msg("[+] Tainting memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		msg("[+] Tainting memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		//Tainting all the selected memory
 		api.taintMemory(triton::arch::MemoryAccess(selection_starts, selection_length));
@@ -264,10 +257,7 @@ struct ah_symbolize_memory_t : public action_handler_t
 
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts;
-		if (inf_is_64bit())
-		    msg("[+] Symbolizing memory from %#llx to %#llx. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
-		else
-			msg("[+] Symbolizing memory from %#x to %#x. Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+		msg("[+] Symbolizing memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
 
 		// Symbolizing all the selected memory
 		symbolize_all_memory(selection_starts, selection_length);
@@ -339,10 +329,7 @@ struct ah_negate_and_inject_t : public action_handler_t
 		if (action_activation_ctx->widget_type == BWN_DISASM)
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (inf_is_64bit())
-				msg("[+] Negating condition at %#llx\n", pc);
-			else
-				msg("[+] Negating condition at %#x\n", pc);
+			msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
 			//We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
 			unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
@@ -398,10 +385,8 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 		if (action_activation_ctx->widget_type == BWN_DISASM)
 		{
 			ea_t pc = action_activation_ctx->cur_ea;
-			if (inf_is_64bit())
-				msg("[+] Negating condition at %#llx\n", pc);
-			else
-				msg("[+] Negating condition at %#x\n", pc);
+			msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
+
 			//We need to get the instruction associated with this address, we look for the addres in the map
 			//We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 

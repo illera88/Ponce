@@ -127,3 +127,11 @@ extern triton::API api;
 #define inf_is_32bit()          inf.is_32bit()
 #define WOPN_DP_TAB             WOPN_TAB
 #endif
+
+#ifdef __EA64__
+#define MEM_FORMAT "%#llx"
+#define REG_XIP api.registers.x86_rip
+#else
+#define MEM_FORMAT "%#x"
+#define REG_XIP api.registers.x86_eip
+#endif // __EA64__
