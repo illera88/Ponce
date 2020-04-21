@@ -91,7 +91,10 @@ if(STATICLIB)
 	# Find Capstone
 	find_library(CAPSTONE_LIBRARY capstone REQUIRED)
 	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
-
+    
+	message(INFO ${Capstone_INCLUDE_DIR})
+	set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
+	
 	# Find z3
 	find_package(Z3 CONFIG REQUIRED)
 
@@ -115,8 +118,6 @@ if(STATICLIB)
 		set_property(TARGET ${PROJECT_NAME}_ea32 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 		set_property(TARGET ${PROJECT_NAME}_ea64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-		# Using Capstone in Windows from vcpkg has this caveat
-		set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
 	endif()	
 		
 	target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${Capstone_INCLUDE_DIR})
