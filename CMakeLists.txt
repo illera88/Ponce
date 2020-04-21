@@ -43,18 +43,33 @@ endif()
 
 set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
 
+if(USE_CLANG)
+	
+endif()
+
 # IDA SDK libs.
 if(WIN32)
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_32/ida.lib")
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib")
 elseif(APPLE)
-	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_32/libida.dylib")
-	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
+	if(USE_CLANG)
+		set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_32/libida.dylib")
+		set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_64/libida64.dylib")
+	else()
+		set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_32/libida.dylib")
+		set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
+	endif()
 elseif(UNIX) # APPLE is also UNIX, so it MUST be before this elseif().
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 else()
 	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_CLANG)
+    SET(CMAKE_C_COMPILER /usr/bin/clang)
+	SET(CMAKE_CXX_COMPILER /usr/bin/clang++)
 endif()
 
 # Find Triton
@@ -108,6 +123,12 @@ endif()
 
 # Find z3
 find_package(Z3 CONFIG REQUIRED)
+
+get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
+
+message(STATUS ${IDASDK_ROOT_DIR})
+message(STATUS ${a_dir})
+
 
 # Now we create the project
 target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
