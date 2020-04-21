@@ -8,6 +8,7 @@ on:
 
 jobs:
     build:
+        #cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"              
         #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
         runs-on: ubuntu-latest
         steps:           
@@ -15,7 +16,7 @@ jobs:
               with:
                   submodules: true
             
-            - name: Install Triton dependencies
+            - name: Install Triton dependencies (delete and move to vcpkg when https://github.com/Z3Prover/z3/pull/4043 gets merged and vcpkg gets updated to use the merged z3 version)
               run: |
                  cd ..
                  git clone https://github.com/illera88/z3
@@ -49,10 +50,9 @@ jobs:
             
             - name: Build Ponce x64 IDA 7.0
               run: |
-                  ls -lha /usr/local/share/vcpkg/installed/x64-linux/include/capstone
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
                   cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  VERBOSE=1 cmake --build build_x64_7.0 --config Release
+                  cmake --build build_x64_7.0 --config Release
                   
             - name: Build Ponce x64 IDA 7.1
               run: |
