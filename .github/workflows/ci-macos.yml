@@ -17,8 +17,7 @@ jobs:
                     
             - name: Install Triton dependecies
               run: |
-                 brew install boost llvm
-                 ls /usr/bin
+                 brew install --with-toolchain llvm
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
                  vcpkg install capstone z3    
                   
@@ -41,8 +40,6 @@ jobs:
             
             - name: Build Ponce x64 IDA 7.0
               run: |
-                  clang version
-                  whereis clang
                   ls -lha /usr/local/share/vcpkg/installed/x64-osx/include/capstone
                   ls -lha /usr/local/share/vcpkg/installed/x64-osx/include/
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
