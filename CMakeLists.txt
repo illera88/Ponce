@@ -53,7 +53,7 @@ elseif(APPLE)
 elseif(UNIX) # APPLE is also UNIX, so it MUST be before this elseif().
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+	set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 else()
 	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
 endif()
