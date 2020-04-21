@@ -15,7 +15,7 @@ jobs:
               with:
                   submodules: true
                     
-            - name: Install Boost
+            - name: Install Triton dependecies
               run: |
                  brew install boost
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
