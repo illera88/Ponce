@@ -28,7 +28,7 @@ jobs:
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
-                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -G "Visual Studio 16 2019" -A x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -G "Visual Studio 16 2019" -A x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
                   cmake --build build_x64 --target install --config Release
                       
             - name: Dowload IDA SDKs
