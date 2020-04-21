@@ -51,31 +51,31 @@ jobs:
               run: |
                   ls -lha /usr/local/share/vcpkg/installed/x64-linux/include/capstone
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/libz3.a" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   VERBOSE=1 cmake --build build_x64_7.0 --config Release
                   
             - name: Build Ponce x64 IDA 7.1
               run: |
                   unzip ../IDA_SDKs/idasdk71.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.1 --config Release
             
             - name: Build Ponce x64 IDA 7.2
               run: |
                   unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.2 --config Release
             
             - name: Build Ponce x64 IDA 7.3
               run: |
                   unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.3 --config Release
             
             - name: Build Ponce x64 IDA 7.4
               run: |
                   unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.4 --config Release
                       
                   
