@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.15.0)
 cmake_policy(SET CMP0091 NEW) 
 cmake_policy(SET CMP0067 NEW)
 
-option(STATICLIB "Build a static library. Recommended when building shipping ready plugin" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
+
 set(IDA_INSTALLED_DIR "" CACHE PATH "Path to directory where IDA is installed. If set, triton plugin will be moved there after building")
 
 set(CMAKE_CXX_STANDARD 11)
@@ -124,10 +124,6 @@ endif()
 find_package(Z3 CONFIG REQUIRED)
 
 get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
-
-message(STATUS ${IDASDK_ROOT_DIR})
-message(STATUS ${a_dir})
-
 
 # Now we create the project
 target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
