@@ -14,19 +14,29 @@ jobs:
             - uses: actions/checkout@v1
               with:
                   submodules: true
-                    
+            
+            - name: Install Triton dependencies
+              run: |
+                 cd ..
+                 git clone https://github.com/illera88/z3
+                 cd z3
+                 mkdir build_x64
+                 cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DZ3_BUILD_LIBZ3_SHARED=OFF
+                 cmake --build build_x64 --target install --config Release --parallel 6
+            
             - name: Install Triton dependencies
               run: |
                  sudo apt install -y libboost-all-dev
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
-                 vcpkg install capstone z3
+                 vcpkg install capstone
                   
             - name: Download and build Triton x64
               run: |
                   cd ..
                   git clone https://github.com/JonathanSalwan/Triton
                   cd Triton
-                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"
+#                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="../z3/install_dir/include/" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"
                   cmake --build build_x64 --target install --config Release
                       
             - name: Dowload IDA SDKs
@@ -42,7 +52,7 @@ jobs:
               run: |
                   ls -lha /usr/local/share/vcpkg/installed/x64-linux/include/capstone
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/libz3.a" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   VERBOSE=1 cmake --build build_x64_7.0 --config Release
                   
             - name: Build Ponce x64 IDA 7.1
