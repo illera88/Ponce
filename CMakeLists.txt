@@ -86,54 +86,40 @@ if(BUILD_EXAMPLES)
 		FOLDER "Examples")
 endif()
 
-if(STATICLIB)
-	# If we compile it statically we need to provide the all the libraries
-	# Find Capstone
-	find_library(CAPSTONE_LIBRARY capstone REQUIRED)
-	find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
-    
-	message(INFO ${Capstone_INCLUDE_DIR})
-	set(${Capstone_INCLUDE_DIR} ${Capstone_INCLUDE_DIR}../)
-	
-	# Find z3
-	find_package(Z3 CONFIG REQUIRED)
+# Find Capstone
+find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
 
-	target_link_libraries(
-		${PROJECT_NAME}_ea32
-		PRIVATE
-		z3::libz3
-		${CAPSTONE_LIBRARY}
-	)
-	
-	target_link_libraries(
-		${PROJECT_NAME}_ea64
-		PRIVATE
-		z3::libz3
-		${CAPSTONE_LIBRARY}
-	)
-		
-	if(WIN32)
-		add_definitions(/MP)
-		  # If using the static library we should use the static runtime too
-		set_property(TARGET ${PROJECT_NAME}_ea32 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-		set_property(TARGET ${PROJECT_NAME}_ea64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-
-	endif()	
-		
-	target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${Capstone_INCLUDE_DIR})
-	target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${Capstone_INCLUDE_DIR})
+if(WIN32 AND NOT STATICLIB)
+	find_library(CAPSTONE_LIBRARY capstone_dll REQUIRED)
+else()
+    find_library(CAPSTONE_LIBRARY capstone REQUIRED)
 endif()
 
+if (NOT WIN32)
+	# got this from https://github.com/microsoft/vcpkg/issues/10752
+	# In Windows this is not required because Triton is doing:
+	#  #if defined(__unix__) || defined(__APPLE__)
+    #    #include <capstone/x86.h>
+    #  #elif _WIN32
+    #    #include <capstone.h>
+    #  #endif
+	set(Capstone_INCLUDE_DIR ${Capstone_INCLUDE_DIR}/../)
+endif()
+
+# Find z3
+find_package(Z3 CONFIG REQUIRED)
 
 # Now we create the project
-target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
 
 target_link_libraries(
     ${PROJECT_NAME}_ea32
 	PRIVATE
     ${TRITON_LIBRARY}
 	${idasdk_ea32}
+	z3::libz3
+	${CAPSTONE_LIBRARY}
 )
 
 target_link_libraries(
@@ -141,6 +127,8 @@ target_link_libraries(
 	PRIVATE
     ${TRITON_LIBRARY}
 	${idasdk_ea64}
+	z3::libz3
+	${CAPSTONE_LIBRARY}
 )
 
 target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __X64__)
@@ -154,7 +142,10 @@ if(WIN32)
 	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __NT__)
 	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __NT__)
 	set(PLUGIN_EXTENSION dll)
-    # for Windows operating system in general
+	add_definitions(/MP)
+	# If using the static library we should use the static runtime too
+	set_property(TARGET ${PROJECT_NAME}_ea32 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+	set_property(TARGET ${PROJECT_NAME}_ea64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 elseif (APPLE)
 	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
