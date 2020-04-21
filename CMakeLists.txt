@@ -43,22 +43,13 @@ endif()
 
 set(IDA_INCLUDE_DIR ${IDASDK_ROOT_DIR}/include)
 
-if(USE_CLANG)
-	
-endif()
-
 # IDA SDK libs.
 if(WIN32)
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_32/ida.lib")
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_win_vc_64/ida.lib")
 elseif(APPLE)
-	if(USE_CLANG)
-		set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_32/libida.dylib")
-		set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_64/libida64.dylib")
-	else()
-		set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_32/libida.dylib")
-		set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
-	endif()
+	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_32/libida.dylib")
+	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_gcc_64/libida64.dylib")
 elseif(UNIX) # APPLE is also UNIX, so it MUST be before this elseif().
 	set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
 	set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_64/libida64.so")
@@ -67,9 +58,17 @@ else()
 	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND USE_CLANG)
-    SET(CMAKE_C_COMPILER /usr/bin/clang)
-	SET(CMAKE_CXX_COMPILER /usr/bin/clang++)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	if (USE_CLANG)
+		# IDA libs are built with clang from IDA 7.3
+		SET(CMAKE_C_COMPILER /usr/bin/clang)
+		SET(CMAKE_CXX_COMPILER /usr/bin/clang++)
+		set(idasdk_ea32 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_32/libida.dylib")
+		set(idasdk_ea64 "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_64/libida64.dylib")
+	else()
+		SET(CMAKE_C_COMPILER /usr/bin/gcc)
+		SET(CMAKE_CXX_COMPILER /usr/bin/g++)
+	endif()
 endif()
 
 # Find Triton
