@@ -17,8 +17,6 @@
 
 void start_tainting_or_symbolic_analysis();
 const triton::arch::Register* str_to_register(qstring register_name);
-int ask_for_a_snapshot();
-bool already_exits_a_snapshot();
 ea_t find_function(char const* function_name);
 ea_t get_args(int argument_number, bool skip_ret);
 ea_t get_args_pointer(int argument_number, bool skip_ret);
@@ -42,3 +40,5 @@ void concretizeAndUntaintVolatileRegisters();
 short read_unicode_char_from_ida(ea_t address);
 void symbolize_all_memory(ea_t address, ea_t size);
 ea_t current_instruction();
+void delete_ponce_comments();
+bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble);

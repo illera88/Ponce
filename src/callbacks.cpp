@@ -44,7 +44,7 @@ int tritonize(ea_t pc, thid_t threadID)
 	threadID = threadID ? threadID : get_current_thread();
 
 	if (pc == 0) {
-		msg("[!] Some error at tritonize since pc is 0");
+		msg("[!] Some error at tritonize since pc is 0\n");
 		return 2;
 	}
 
@@ -59,7 +59,7 @@ int tritonize(ea_t pc, thid_t threadID)
 
 	/*This will fill the 'cmd' (to get the instruction size) which is a insn_t structure https://www.hex-rays.com/products/ida/support/sdkdoc/classinsn__t.html */
 	if (!can_decode(pc)) {
-		msg("[!] Some error decoding instruction at " MEM_FORMAT, pc);
+		msg("[!] Some error decoding instruction at " MEM_FORMAT "\n", pc);
 	}
 	
 	unsigned char opcodes[15];
@@ -124,8 +124,10 @@ int tritonize(ea_t pc, thid_t threadID)
 	if (cmdOptions.paintExecutedInstructions)
 	{
 		//We only paint the executed instructions if they don't have a previous color
-		if (get_item_color(pc) == 0xffffffff)
+		if (get_item_color(pc) == 0xffffffff){
 			set_item_color(pc, cmdOptions.color_executed_instruction);
+			ponce_comments.push_back(std::make_pair(pc, 3));
+		}
 	}
 
 	//ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
@@ -147,6 +149,7 @@ int tritonize(ea_t pc, thid_t threadID)
 				set_item_color(pc, cmdOptions.color_tainted_condition);
 			else
 				set_item_color(pc, cmdOptions.color_tainted);
+			ponce_comments.push_back(std::make_pair(pc, 3));
 		}
 	}
 
@@ -193,6 +196,7 @@ void triton_restart_engines()
 		delete ponce_runtime_status.last_triton_instruction;
 		ponce_runtime_status.last_triton_instruction = nullptr;
 	}
+
 	// This optimization is veeery good for the size of the formulas
 	//api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
 	//api.setMode(triton::modes::ALIGNED_MEMORY, true);
@@ -216,7 +220,7 @@ void triton_restart_engines()
 	//}
 	//triton::api.getSymbolicEngine()->enable(true);
 	ponce_runtime_status.runtimeTrigger.disable();
-	ponce_runtime_status.is_something_tainted_or_symbolize = false;
+	ponce_runtime_status.is_ponce_tracing_enabled	= false;
 	ponce_runtime_status.tainted_functions_index = 0;
 	//Reset instruction counter
 	ponce_runtime_status.total_number_traced_ins = 0;
@@ -377,7 +381,7 @@ ssize_t idaapi tracer_callback(void *user_data, int notification_code, va_list v
 						set_step_trace_options(0);
 						continue_process();
 						//We delete the comment
-						set_cmt(pc, "", false);
+						ponce_set_cmt(pc, "", false);
 						breakpoint_pending_actions.erase(it);
 					}
 					break;

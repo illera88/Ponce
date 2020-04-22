@@ -238,6 +238,6 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
 	//We set the comment
 	if (comment.str().size() > 0)
 	{
-		set_cmt(pc, comment.str().c_str(), false);
+		ponce_set_cmt(pc, comment.str().c_str(), false);
 	}
 }

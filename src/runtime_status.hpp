@@ -46,8 +46,8 @@ typedef struct runtime_status_t
 	unsigned int total_number_symbolic_conditions;
 	//This variable is used to count how many instructions were executed after the user was asked
 	unsigned int current_trace_counter;
-	//Is it something tainted or symbolize?
-	bool is_something_tainted_or_symbolize;
+	//Is ponce tracing enabled?
+	bool is_ponce_tracing_enabled;
 	//This index is used when we are renaming the tainted funcitons, to know the index
 	unsigned int tainted_functions_index;
 	//Trigger to enable/disable triton

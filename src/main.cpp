@@ -86,23 +86,19 @@ bool idaapi run(size_t)
 		}
 
 
-		//First we ask the user to take a snapshot, -1 is to cancel so we don't run the plugin
-		if (ask_for_a_snapshot() != -1)
+		if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
 		{
-			if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
-			{
-				warning("[!] Could not hook ui callback");
-				return false;
-			}
-			if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
-			{
-				warning("[!] Could not hook tracer callback");
-				return false;
-			}
-		
-			msg("[+] Ponce plugin version: %s running!\n", VERSION);
-			hooked = true;
+			warning("[!] Could not hook ui callback");
+			return false;
 		}
+		if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
+		{
+			warning("[!] Could not hook tracer callback");
+			return false;
+		}
+		
+		msg("[+] Ponce plugin version: %s running!\n", VERSION);
+		hooked = true;
 	}
 	return true;
 }
@@ -159,6 +155,8 @@ int idaapi init(void)
 //--------------------------------------------------------------------------
 void idaapi term(void)
 {
+	// We want to delete Ponce comments and colours before terminating
+	delete_ponce_comments();
 	// Unhook notifications
 	unhook_from_notification_point(HT_UI, ui_callback, NULL);
 	unhook_from_notification_point(HT_DBG, tracer_callback, NULL);

@@ -435,10 +435,10 @@ struct ah_create_snapshot_t : public action_handler_t
 	{
 		ea_t xip;
 		if (!get_ip_val(&xip)) {
-			msg("Could not get the XIP value\n This should never happen");
+			msg("Could not get the XIP value. This should never happen\n");
 			return 0;
 		}
-		set_cmt(xip, "Snapshot taken here", false);
+		ponce_set_cmt(xip, "Snapshot taken here", false);
 		snapshot.takeSnapshot();
 		snapshot.setAddress(xip); // We will use this address later to delete the comment
 		msg("Snapshot Taken\n");
@@ -654,14 +654,8 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		}
 		else
 		{
-			//Enabling step tracing...
-			enable_step_trace();
-			set_step_trace_options(0);
-			ponce_runtime_status.tracing_start_time = 0;
-			//Enabling the trigger
-			ponce_runtime_status.analyzed_thread = get_current_thread();
-			ponce_runtime_status.runtimeTrigger.enable();
-			//And analyzing current instruction
+			start_tainting_or_symbolic_analysis();
+			ponce_runtime_status.is_ponce_tracing_enabled = false;
 			tritonize(current_instruction());
 			if (cmdOptions.showDebugInfo)
 				msg("Enabling step tracing\n");

@@ -6,9 +6,11 @@
 */
 
 #include <iostream>
-#include "snapshot.hpp"
 
+#include "snapshot.hpp"
 #include "globals.hpp"
+#include "utils.hpp"
+
 #include "dbg.hpp"
 
 /*! \page Snapshot_page Snapshot
@@ -171,7 +173,7 @@ void Snapshot::resetEngine(void) {
 	this->snapshotTaken = false;
 
 	//We delete the comment that we created
-	set_cmt(this->address, "", false);
+	ponce_set_cmt(this->address, "", false);
 	this->address = 0;
 }
 

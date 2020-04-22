@@ -41,3 +41,5 @@ ea_t popup_menu_ea;
 std::vector<std::string> *blacklkistedUserFunctions = nullptr;
 
 triton::API api;
+
+std::list<std::pair<ea_t, int>> ponce_comments;

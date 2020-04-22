@@ -41,7 +41,7 @@ triton::uint128 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 	invalidate_dbgmem_contents(addr, size);
 	get_bytes(&buffer, size, addr, GMB_READALL, NULL);
 
-	return triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer));
+	return triton::utils::fromBufferToUint<triton::uint128>(buffer);
 }
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
@@ -60,6 +60,7 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
 	regval_t reg_value;
 	triton::uint512 value = 0;
 	auto reg_name = reg.getName();
+	assert(!reg_name.empty());
 	//We need to invalidate the registers. If not IDA uses the last value when program was stopped
 	invalidate_dbg_state(DBGINV_REGS);
 	get_reg_val(reg_name.c_str(), &reg_value);
@@ -84,7 +85,7 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
 {
 	auto regValue = IDA_getCurrentRegisterValue(reg);
 	if (cmdOptions.showExtraDebugInfo) {
-		msg("[+] Triton asking IDA for Register: %s. IDA returns value: " MEM_FORMAT, reg.getName().c_str(), regValue.convert_to<ea_t>());
+		msg("[+] Triton asking IDA for Register: %s. IDA returns value: " MEM_FORMAT "\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
 	}
 	api.setConcreteRegisterValue(reg, regValue);
 }

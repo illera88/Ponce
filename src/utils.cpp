@@ -44,11 +44,13 @@
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
 void start_tainting_or_symbolic_analysis()
 {
-	if (!ponce_runtime_status.is_something_tainted_or_symbolize)
+	if (!ponce_runtime_status.is_ponce_tracing_enabled)
 	{
+		// Delete previous Ponce comments
+		delete_ponce_comments();
 		ponce_runtime_status.runtimeTrigger.enable();
 		ponce_runtime_status.analyzed_thread = get_current_thread();
-		ponce_runtime_status.is_something_tainted_or_symbolize = true;
+		ponce_runtime_status.is_ponce_tracing_enabled = true;
 		enable_step_trace(true);
 		set_step_trace_options(0);
 		ponce_runtime_status.tracing_start_time = 0;
@@ -59,76 +61,13 @@ void start_tainting_or_symbolic_analysis()
 This is using the triton current architecture so it is more generic.*/
 const triton::arch::Register* str_to_register(qstring register_name)
 {
-	auto regs = api.getAllRegisters();
-	//for (auto it = regs.begin(); it != regs.end(); it++)
-	for (auto& pair : regs)
-	{
-		auto reg = pair.second;
-		//const triton::arch::Register a = it->second;
-		//auto b = &a;
-		//triton::arch::Register r = it->second;
-		if (strcmp(reg.getName().c_str(), register_name.c_str()) == 0)
-		{
-			return &regs[pair.first];
-		}
-	}
+	for (const auto& [key, value] : api.getAllRegisters())
+		if (strcmp(value.getName().c_str(), register_name.c_str()) == 0)
+			return &api.getRegister(key);
+	
 	return nullptr;
 }
 
-
-/*This function ask to the user to take a snapshot.
-It returns:
-1: yes
-0: No
--1: Cancel execution of script*/
-int ask_for_a_snapshot()
-{
-	//We don't want to ask the user all the times if he wants to take a snapshot or not...
-	if (already_exits_a_snapshot())
-		return 1;
-	while (true)
-	{
-		int answer = ask_yn(1, "[?] Do you want to take a database snapshot before using the script? (It will color some intructions) (Y/n):");
-		if (answer == 1) //Yes
-		{
-			snapshot_t snapshot;
-			qstrncpy(snapshot.desc, SNAPSHOT_DESCRIPTION, MAX_DATABASE_DESCRIPTION);
-			qstring errmsg;
-			bool success = take_database_snapshot(&snapshot, &errmsg);
-			return 1;
-		}
-		else if (answer == 0) //No
-			return 0;
-		else //Cancel
-			return -1;
-	}
-}
-
-/*This functions is a helper for already_exits_a_snapshot. This is call for every snapshot found.
-The user data, ud, containt a pointer to a boolean to enable if we find the snapshot.*/
-int __stdcall snapshot_visitor(snapshot_t* ss, void* ud)
-{
-	if (strcmp(ss->desc, SNAPSHOT_DESCRIPTION) == 0)
-	{
-		bool* exists = (bool*)ud;
-		*exists = true;
-		return 1;
-	}
-	return 0;
-}
-
-/*This functions check if it exists already a snapshot made by the plugin.
-So we don't ask to the user every time he runs the plugin.*/
-bool already_exits_a_snapshot()
-{
-	snapshot_t root;
-	bool result = build_snapshot_tree(&root);
-	if (!result)
-		return false;
-	bool exists = false;
-	visit_snapshot_tree(&root, &snapshot_visitor, &exists);
-	return exists;
-}
 
 /*This function is a helper to find a function having its name.
 It is likely IDA SDK has another API to do this but I can't find it.
@@ -334,6 +273,7 @@ void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t addres
 		std::ostringstream oss;
 		oss << expr;
 		add_extra_cmt(address, false, "%s", oss.str().c_str());
+		ponce_comments.push_back(std::make_pair(address, 2));
 	}
 }
 
@@ -887,7 +827,7 @@ void symbolize_all_memory(ea_t address, ea_t size)
 		//api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
 		auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
 		auto var_name = symVar->getName();
-		set_cmt(address + i, var_name.c_str(), true);
+		ponce_set_cmt(address + i, var_name.c_str(), true);
 	}
 }
 
@@ -899,8 +839,42 @@ ea_t current_instruction()
 	}
 	ea_t xip = 0;
 	if (!get_ip_val(&xip)) {
-		msg("Could not get the XIP value\n This should never happen");
+		msg("Could not get the XIP value. This should never happen\n");
 		return 0;
 	}
 	return xip;
+}
+
+/* This function deletes all the comments and colour made by Ponce Plugin everytime that the Ponce
+engine is restarted with another run. We do this to prevent polluting the IDA UI*/
+void delete_ponce_comments() {
+	unsigned int count_comments = 0;
+	unsigned int count_colors = 0;
+	for (auto& comment : ponce_comments) {
+		if (comment.second == 1) { //comment
+			set_cmt(comment.first, "", false);
+			count_comments++;
+		}
+		else if (comment.second == 2) { //extra comment
+			delete_extra_cmts(comment.first, E_NEXT);
+			count_comments++;
+		}
+		else if (comment.second == 3) { //color
+			del_item_color(comment.first);
+			count_colors++;
+		}
+		else {
+			assert(0);
+		}
+	}
+	ponce_comments.clear();
+	msg("[+] Deleted %u comments and %u colored addresses\n", count_comments, count_colors);
+}
+
+
+/* Wrapper to keep track of added comments so we can delete them after*/
+bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble) {
+	ponce_comments.push_back(std::make_pair(ea, 1));
+
+	return set_cmt(ea, comm, rptble);
 }

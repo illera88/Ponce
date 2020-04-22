@@ -11,9 +11,11 @@
 #include <iostream>
 #include <fstream>
 
+// Ponce
 #include "blacklist.hpp"
 #include "globals.hpp"
 #include "callbacks.hpp"
+#include "utils.hpp"
 
 // IDA
 #include <ida.hpp>
@@ -195,7 +197,7 @@ bool should_blacklist(ea_t pc, thid_t tid) {
 				ea_t next_ea = next_head(pc, BADADDR);
 				add_bpt(next_ea, 1, BPT_EXEC);
 				//We set a comment so the user know why there is a new bp there
-				set_cmt(next_ea, "Temporal bp set by ponce for blacklisting\n", false);
+				ponce_set_cmt(next_ea, "Temporal bp set by ponce for blacklisting\n", false);
 
 				breakpoint_pending_action bpa;
 				bpa.address = next_ea;

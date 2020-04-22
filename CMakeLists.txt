@@ -9,7 +9,7 @@ option(BUILD_EXAMPLES "Build examples" ON)
 
 set(IDA_INSTALLED_DIR "" CACHE PATH "Path to directory where IDA is installed. If set, triton plugin will be moved there after building")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set (PROJECT_NAME Ponce)

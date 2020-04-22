@@ -120,6 +120,8 @@ extern void idaapi term(void);
 
 extern triton::API api;
 
+extern std::list<std::pair<ea_t, int>> ponce_comments;
+
 /* For backwards compatibility with IDA SDKs < 7.3 */
 #if IDA_SDK_VERSION < 730
 #define inf_get_min_ea()        inf.min_ea
