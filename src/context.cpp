@@ -28,11 +28,10 @@
 #include "globals.hpp"
 
 /* Get a memory value from IDA debugger*/
-triton::uint128 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
+triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 {
-	if (size > 16)
-	{
-		warning("[!] getCurrentMemoryValue() error, size can't be larger than 16\n");
+	if (size > 64){
+		warning("[!] getCurrentMemoryValue() error, size can't be larger than 64 bytes (512bits)\n");
 		return -1;
 	}
 	triton::uint8 buffer[16] = { 0 };
@@ -41,17 +40,25 @@ triton::uint128 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 	invalidate_dbgmem_contents(addr, size);
 	get_bytes(&buffer, size, addr, GMB_READALL, NULL);
 
-	return triton::utils::fromBufferToUint<triton::uint128>(buffer);
+	return triton::utils::fromBufferToUint<triton::uint512>(buffer);
 }
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
-	auto memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
+	bool had_it = true;
+	auto IDA_memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
+	auto triton_memValue = api.getConcreteMemoryValue(mem, false);
+	
+	if (IDA_memValue != triton_memValue) {
+		api.concretizeMemory(mem);
+		api.setConcreteMemoryValue(mem, IDA_memValue);
+		had_it = false;
+	}
+
 	if (cmdOptions.showExtraDebugInfo) {
-		msg("[+] Triton asking IDA for memory address: " MEM_FORMAT " Size: %u.\n", (ea_t)mem.getAddress(), mem.getSize());
-	}	
-	api.setConcreteMemoryValue(mem, memValue);
+		msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u.\n", had_it? "already" :"not", (ea_t)mem.getAddress(), mem.getSize());
+	}
 }
 
 /* Get a reg value from IDA debugger*/
@@ -75,19 +82,24 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
 		syncReg = api.getRegister(reg.getParent());
 
 	return value;
-	//api.setConcreteRegisterValue(syncReg, value);
-	///* Returns the good casted value */
-	//return api.getConcreteRegisterValue(reg, false);
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
 void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register& reg)
 {
-	auto regValue = IDA_getCurrentRegisterValue(reg);
-	if (cmdOptions.showExtraDebugInfo) {
-		msg("[+] Triton asking IDA for Register: %s. IDA returns value: " MEM_FORMAT "\n", reg.getName().c_str(), regValue.convert_to<ea_t>());
+	bool had_it = true;
+	auto IDA_regValue = IDA_getCurrentRegisterValue(reg);
+	auto triton_regValue = api.getConcreteRegisterValue(reg, false);
+
+	if (IDA_regValue != triton_regValue) {
+		api.concretizeRegister(reg);
+		api.setConcreteRegisterValue(reg, IDA_regValue);
+		had_it = false;
 	}
-	api.setConcreteRegisterValue(reg, regValue);
+
+	if (cmdOptions.showExtraDebugInfo) {
+		msg("[+] Triton asking IDA for %s syncronized register: %s. IDA returns value: " MEM_FORMAT "\n", had_it ? "already" : "not", reg.getName().c_str(), IDA_regValue.convert_to<ea_t>());
+	}
 }
 
 

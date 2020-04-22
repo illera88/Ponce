@@ -16,5 +16,5 @@
 
 void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem);
 void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register& reg);
-triton::uint128 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size);
+triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size);
 triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg);

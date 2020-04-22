@@ -23,6 +23,7 @@
 #include "actions.hpp"
 #include "formTaintWindow.hpp"
 #include "blacklist.hpp"
+#include "context.hpp"
 
 //Triton
 #include "triton/api.hpp"
@@ -121,6 +122,10 @@ struct ah_symbolize_register_t : public action_handler_t
 				char comment[256];
 				qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), action_activation_ctx->cur_ea);
 
+				// Before symbolizing register we should set his concrete value
+				needConcreteRegisterValue_cb(api, *register_to_symbolize);
+
+				// Symbolize register
 				api.symbolizeRegister(*register_to_symbolize, std::string(comment));
 
 				/*When the user symbolize something for the first time we should enable step_tracing*/
@@ -258,6 +263,11 @@ struct ah_symbolize_memory_t : public action_handler_t
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts;
 		msg("[+] Symbolizing memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+
+		// Before symbolizing the memory we should set its concrete value
+		for (unsigned int i = 0; i < selection_length; i++){
+			needConcreteMemoryValue_cb(api, triton::arch::MemoryAccess(selection_starts + i, 1));
+		}
 
 		// Symbolizing all the selected memory
 		symbolize_all_memory(selection_starts, selection_length);
