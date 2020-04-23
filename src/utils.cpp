@@ -410,7 +410,7 @@ Input* solve_formula(ea_t pc, uint bound)
 			auto symExpr = api.getSymbolicExpression(ripId)->getAst();
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 
-			expr.push_back(ast->assert_(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize()))));
+			expr.push_back(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize())));
 		}
 		if (cmdOptions.showExtraDebugInfo)
 			msg("[+] Inverting condition %d\n", bound);
@@ -421,15 +421,17 @@ Input* solve_formula(ea_t pc, uint bound)
 		
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo) {
-			if (inf_is_64bit())
-				msg("[+] ripId: %lu notTakenAddr: %#llx\n", ripId, notTakenAddr);
-			else
-				msg("[+] ripId: %lu notTakenAddr: %#x\n", ripId, notTakenAddr);
+			msg("[+] ripId: %lu notTakenAddr: " MEM_FORMAT "\n", ripId, notTakenAddr);
 		}
-		expr.push_back(ast->assert_(ast->equal(FullAst, ast->bv(notTakenAddr, symExpr->getBitvectorSize()))));
+		expr.push_back(ast->equal(FullAst, ast->bv(notTakenAddr, symExpr->getBitvectorSize())));
 
-		//Time to solve
-		auto final_expr = ast->compound(expr);
+		
+		if (expr.size() == 1) {
+			// Little trick because land needs at least two nodes
+			expr.push_back(ast->equal(ast->bv(1, 1), ast->bv(1, 1)));
+		}
+
+		auto final_expr = ast->land(expr);
 
 		if (cmdOptions.showDebugInfo)
 			msg("[+] Solving formula...\n");
@@ -449,11 +451,12 @@ Input* solve_formula(ea_t pc, uint bound)
 			ss << final_expr;
 			ss << "\n(check-sat)";
 			ss << "\n(get-model)";
-			msg("[+] Formula: %s\n", ss.str().c_str());
+			msg("[+] Formula:\n%s\n", ss.str().c_str());
 
 			auto form = ss.str().c_str();
 		}
 
+		//Time to solve
 		auto model = api.getModel(final_expr);
 
 		if (model.size() > 0)
