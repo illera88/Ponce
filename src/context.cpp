@@ -30,16 +30,28 @@
 /* Get a memory value from IDA debugger*/
 triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 {
-	if (size > 64){
-		warning("[!] getCurrentMemoryValue() error, size can't be larger than 64 bytes (512bits)\n");
+	if (size > triton::size::max_supported){
+		warning("[!] getCurrentMemoryValue() error, size can't be larger than %u bytes (%u)\n", triton::size::max_supported, triton::size::max_supported * 8);
 		return -1;
 	}
-	triton::uint8 buffer[16] = { 0 };
+	triton::uint8 buffer[64] = { 0 };
 	//This is the way to force IDA to read the value from the debugger
 	//More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
 	invalidate_dbgmem_contents(addr, size);
 	get_bytes(&buffer, size, addr, GMB_READALL, NULL);
 
+	triton::uint512 value = 0;
+	switch (size) {
+	case triton::size::byte:    value = *(reinterpret_cast<triton::uint8*>(buffer));  break;
+	case triton::size::word:    value = *(reinterpret_cast<triton::uint16*>(buffer)); break;
+	case triton::size::dword:   value = *(reinterpret_cast<triton::uint32*>(buffer)); break;
+	case triton::size::qword:   value = *(reinterpret_cast<triton::uint64*>(buffer)); break;
+	case triton::size::dqword:  value = triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer)); break;
+	case triton::size::qqword:  value = triton::utils::fromBufferToUint<triton::uint256>(reinterpret_cast<triton::uint8*>(buffer)); break;
+	case triton::size::dqqword: value = triton::utils::fromBufferToUint<triton::uint512>(reinterpret_cast<triton::uint8*>(buffer)); break;
+	}
+
+	return value;
 	return triton::utils::fromBufferToUint<triton::uint512>(buffer);
 }
 
@@ -57,7 +69,7 @@ void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAcce
 	}
 
 	if (cmdOptions.showExtraDebugInfo) {
-		msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u.\n", had_it? "already" :"not", (ea_t)mem.getAddress(), mem.getSize());
+		msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u. Value: \n", had_it? "already" :"not", (ea_t)mem.getAddress(), mem.getSize());
 	}
 }
 

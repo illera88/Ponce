@@ -38,6 +38,7 @@
 #include "globals.hpp"
 #include "context.hpp"
 #include "blacklist.hpp"
+#include "callbacks.hpp"
 
 
 
@@ -46,15 +47,17 @@ void start_tainting_or_symbolic_analysis()
 {
 	if (!ponce_runtime_status.is_ponce_tracing_enabled)
 	{
+		triton_restart_engines();
 		// Delete previous Ponce comments
 		delete_ponce_comments();
 		ponce_runtime_status.runtimeTrigger.enable();
 		ponce_runtime_status.analyzed_thread = get_current_thread();
 		ponce_runtime_status.is_ponce_tracing_enabled = true;
 		enable_step_trace(true);
-		set_step_trace_options(0);
+		set_step_trace_options(0);		
 		ponce_runtime_status.tracing_start_time = 0;
 	}
+
 }
 
 /*This functions gets a string and return the triton register assign or nullptr
@@ -267,11 +270,18 @@ void rename_tainted_function(ea_t address)
 
 void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
 {
+	//auto size = get_extra_cmt(&buf, address, E_NEXT);
+	if (get_extra_cmt(nullptr, address, E_NEXT) != -1) {
+		delete_extra_cmts(address, E_NEXT);
+		ponce_comments.remove({ address,2 });
+	}
+
 	for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++)
 	{
 		auto expr = tritonInst->symbolicExpressions[exp_index];
 		std::ostringstream oss;
 		oss << expr;
+		
 		add_extra_cmt(address, false, "%s", oss.str().c_str());
 		ponce_comments.push_back(std::make_pair(address, 2));
 	}
@@ -400,14 +410,15 @@ Input* solve_formula(ea_t pc, uint bound)
 			auto symExpr = api.getSymbolicExpression(ripId)->getAst();
 			ea_t takenAddr = ponce_runtime_status.myPathConstraints[j].takenAddr;
 
-			//expr.push_back(triton::ast::assert_(triton::ast::equal(symExpr, triton::ast::bv(takenAddr, symExpr->getBitvectorSize()))));
-			expr.push_back(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize())));
+			expr.push_back(ast->assert_(ast->equal(symExpr, ast->bv(takenAddr, symExpr->getBitvectorSize()))));
 		}
 		if (cmdOptions.showExtraDebugInfo)
 			msg("[+] Inverting condition %d\n", bound);
 		//And now we negate the selected condition
 		triton::usize ripId = ponce_runtime_status.myPathConstraints[bound].conditionRipId;
 		auto symExpr = api.getSymbolicExpression(ripId)->getAst();
+		auto FullAst = triton::ast::unroll(symExpr);
+		
 		ea_t notTakenAddr = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
 		if (cmdOptions.showExtraDebugInfo) {
 			if (inf_is_64bit())
@@ -415,7 +426,7 @@ Input* solve_formula(ea_t pc, uint bound)
 			else
 				msg("[+] ripId: %lu notTakenAddr: %#x\n", ripId, notTakenAddr);
 		}
-		expr.push_back(ast->equal(symExpr, ast->bv(notTakenAddr, symExpr->getBitvectorSize())));
+		expr.push_back(ast->assert_(ast->equal(FullAst, ast->bv(notTakenAddr, symExpr->getBitvectorSize()))));
 
 		//Time to solve
 		auto final_expr = ast->compound(expr);
@@ -439,6 +450,8 @@ Input* solve_formula(ea_t pc, uint bound)
 			ss << "\n(check-sat)";
 			ss << "\n(get-model)";
 			msg("[+] Formula: %s\n", ss.str().c_str());
+
+			auto form = ss.str().c_str();
 		}
 
 		auto model = api.getModel(final_expr);

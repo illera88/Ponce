@@ -118,6 +118,9 @@ struct ah_symbolize_register_t : public action_handler_t
 
 			if (register_to_symbolize)
 			{
+				/*When the user symbolize something for the first time we should enable step_tracing*/
+				start_tainting_or_symbolic_analysis();
+
 				msg("[!] Symbolizing register %s\n", selected.c_str());
 				char comment[256];
 				qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), action_activation_ctx->cur_ea);
@@ -127,9 +130,7 @@ struct ah_symbolize_register_t : public action_handler_t
 
 				// Symbolize register
 				api.symbolizeRegister(*register_to_symbolize, std::string(comment));
-
-				/*When the user symbolize something for the first time we should enable step_tracing*/
-				start_tainting_or_symbolic_analysis();
+				
 				//If last_instruction is not set this instruction is not analyze
 				if (ponce_runtime_status.last_triton_instruction == NULL)
 				{
@@ -260,6 +261,9 @@ struct ah_symbolize_memory_t : public action_handler_t
 		else
 			return 0;
 
+		/* When the user taints something for the first time we should enable step_tracing*/
+		start_tainting_or_symbolic_analysis();
+
 		//The selection ends in the last item which is included, so we need to add 1 to calculate the length
 		auto selection_length = selection_ends - selection_starts;
 		msg("[+] Symbolizing memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
@@ -272,8 +276,9 @@ struct ah_symbolize_memory_t : public action_handler_t
 		// Symbolizing all the selected memory
 		symbolize_all_memory(selection_starts, selection_length);
 
-		/*When the user taints something for the first time we should enable step_tracing*/
-		start_tainting_or_symbolic_analysis();
+		tritonize(current_instruction());
+		return 0;
+
 		//If last_instruction is not set this instruction is not analyze
 		if (ponce_runtime_status.last_triton_instruction == nullptr)
 		{
@@ -665,10 +670,9 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 		else
 		{
 			start_tainting_or_symbolic_analysis();
-			ponce_runtime_status.is_ponce_tracing_enabled = false;
 			tritonize(current_instruction());
 			if (cmdOptions.showDebugInfo)
-				msg("Enabling step tracing\n");
+				msg("[+] Enabling step tracing\n");
 		}
 		return 0;
 	}

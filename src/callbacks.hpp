@@ -20,3 +20,4 @@ ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
 
 int tritonize(ea_t pc, thid_t threadID = 0);
 void set_SMT_results(Input* input_ptr);
+void triton_restart_engines();
