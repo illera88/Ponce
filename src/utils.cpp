@@ -894,3 +894,31 @@ bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble) {
 
 	return set_cmt(ea, comm, rptble);
 }
+
+bool ponce_set_triton_architecture() {
+	if (ph.id == PLFM_386) {
+		if (ph.use64())
+			api.setArchitecture(triton::arch::ARCH_X86_64);
+		else if (ph.use32())
+			api.setArchitecture(triton::arch::ARCH_X86);
+		else {
+			msg("[!] Wrong architecture\n");
+			return false;
+		}
+	}
+	else if (ph.id == PLFM_ARM) {
+		if (ph.use64())
+			api.setArchitecture(triton::arch::ARCH_AARCH64);
+		else if (ph.use32())
+			api.setArchitecture(triton::arch::ARCH_ARM32);
+		else {
+			msg("[!] Wrong architecture\n");
+			return false;
+		}
+	}
+	else {
+		msg("[!] Architecture not supported by Ponce\n");
+		return false;
+	}
+	return true;
+}

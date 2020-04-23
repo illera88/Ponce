@@ -66,11 +66,9 @@ bool idaapi run(size_t)
 		register_action(action_IDA_unload);
 		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
 		//Some actions needs to use the api and the api need to have the architecture set
-		if (inf_is_64bit())
-			api.setArchitecture(triton::arch::ARCH_X86_64);
-		else
-			api.setArchitecture(triton::arch::ARCH_X86);
-		
+		if (!ponce_set_triton_architecture()) {
+			return false;
+		}
 		//Loop to register all the actions used in the menus
 		for (int i = 0;; i++)
 		{

@@ -179,10 +179,7 @@ void triton_restart_engines()
 	if (cmdOptions.showDebugInfo)
 		msg("[+] Restarting triton engines...\n");
 	//We need to set the architecture for Triton
-	if (inf_is_64bit())
-		api.setArchitecture(triton::arch::ARCH_X86_64);
-	else
-		api.setArchitecture(triton::arch::ARCH_X86);
+	ponce_set_triton_architecture();
 	//We reset everything at the beginning
 	api.reset();
 	// Memory access callback
