@@ -58,14 +58,19 @@ triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
 void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem)
 {
-	bool had_it = true;
+	bool had_it = false;
 	auto IDA_memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
-	auto triton_memValue = api.getConcreteMemoryValue(mem, false);
 	
-	if (IDA_memValue != triton_memValue) {
-		api.concretizeMemory(mem);
+	if (api.isConcreteMemoryValueDefined(mem)) {
+		auto triton_memValue = api.getConcreteMemoryValue(mem, false);
+		if ((IDA_memValue != triton_memValue)) {
+			api.setConcreteMemoryValue(mem, IDA_memValue);
+			had_it = false;
+		}
+		had_it = true;
+	}
+	else {
 		api.setConcreteMemoryValue(mem, IDA_memValue);
-		had_it = false;
 	}
 
 	if (cmdOptions.showExtraDebugInfo) {
@@ -104,7 +109,6 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
 	auto triton_regValue = api.getConcreteRegisterValue(reg, false);
 
 	if (IDA_regValue != triton_regValue) {
-		api.concretizeRegister(reg);
 		api.setConcreteRegisterValue(reg, IDA_regValue);
 		had_it = false;
 	}
