@@ -29,6 +29,49 @@
 #include "triton/api.hpp"
 #include "triton/x86Specifications.hpp"
 
+
+int symbolize_register(qstring selected, action_activation_ctx_t* action_activation_ctx) {
+	const triton::arch::Register* register_to_symbolize = str_to_register(selected);
+
+	if (register_to_symbolize)
+	{
+		/*When the user symbolize something for the first time we should enable step_tracing*/
+		start_tainting_or_symbolic_analysis();
+
+		msg("[!] Symbolizing register %s\n", selected.c_str());
+		char comment[256];
+		ea_t pc = action_activation_ctx->cur_ea;
+		qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), pc);
+
+		// Before symbolizing register we should set his concrete value
+		needConcreteRegisterValue_cb(api, *register_to_symbolize);
+
+		// Symbolize register
+		api.symbolizeRegister(*register_to_symbolize, std::string(comment));
+
+		//If last_instruction is not set this instruction is not analyze
+		if (ponce_runtime_status.last_triton_instruction == NULL)
+		{
+			tritonize(pc);
+			return 0;
+		}
+		//If the register symbolize is a source for the instruction then we need to reanalize the instruction
+		//So the self instruction will be tainted
+		auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
+		for (auto it = read_registers.begin(); it != read_registers.end(); it++)
+		{
+			auto reg = it->first;
+			if (reg.getId() == register_to_symbolize->getId())
+			{
+				tritonize(pc);
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+
 struct ah_taint_register_t : public action_handler_t
 {
 	/*Event called when the user taint a register*/
@@ -114,42 +157,7 @@ struct ah_symbolize_register_t : public action_handler_t
 
 		if (res)
 		{
-			const triton::arch::Register* register_to_symbolize = str_to_register(selected);
-
-			if (register_to_symbolize)
-			{
-				/*When the user symbolize something for the first time we should enable step_tracing*/
-				start_tainting_or_symbolic_analysis();
-
-				msg("[!] Symbolizing register %s\n", selected.c_str());
-				char comment[256];
-				qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), action_activation_ctx->cur_ea);
-
-				// Before symbolizing register we should set his concrete value
-				needConcreteRegisterValue_cb(api, *register_to_symbolize);
-
-				// Symbolize register
-				api.symbolizeRegister(*register_to_symbolize, std::string(comment));
-				
-				//If last_instruction is not set this instruction is not analyze
-				if (ponce_runtime_status.last_triton_instruction == NULL)
-				{
-					tritonize(current_instruction());
-					return 0;
-				}
-				//If the register symbolize is a source for the instruction then we need to reanalize the instruction
-				//So the self instruction will be tainted
-				auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
-				for (auto it = read_registers.begin(); it != read_registers.end(); it++)
-				{
-					auto reg = it->first;
-					if (reg.getId() == register_to_symbolize->getId())
-					{
-						tritonize(current_instruction());
-						break;
-					}
-				}
-			}
+			symbolize_register(selected, action_activation_ctx);
 		}
 		return 0;
 	}
@@ -425,7 +433,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *action_update_ctx_t)
 	{
 		//Only if process is being debugged
-		if (get_process_state() != DSTATE_NOTASK && snapshot.exists())
+		if (is_debugger_on() && snapshot.exists())
 		{
 			//If we are in runtime and it is the last instruction we test if it is symbolize
 			if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
@@ -463,7 +471,7 @@ struct ah_create_snapshot_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
 		//Only if process is being debugged and there is not previous snaphot
-		if (get_process_state() != DSTATE_NOTASK && !snapshot.exists())
+		if (is_debugger_on() && !snapshot.exists())
 			return AST_ENABLE;
 		else
 			return AST_DISABLE;
@@ -491,7 +499,7 @@ struct ah_restore_snapshot_t : public action_handler_t
 	virtual action_state_t idaapi update(action_update_ctx_t *ctx)
 	{
 		//Only if process is being debugged and there is an existent shapshot
-		if (get_process_state() != DSTATE_NOTASK && snapshot.exists())
+		if (is_debugger_on() && snapshot.exists())
 			return AST_ENABLE;
 		else
 			return AST_DISABLE;
@@ -773,6 +781,59 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
 	12); //Optional: the action icon (shows when in menus/toolbars)
 
 
+#if IDA_SDK_VERSION >= 740
+/*	Adapted code from https://forum.hex-rays.com/viewtopic.php?f=8&t=4161&p=19146#p19146
+	Need to test and complete with IDA 7.4 and IDA 7.5 whenver they are released*/	
+struct ah_ponce_symbolize_reg_UI_t : public action_handler_t
+{
+	virtual int idaapi activate(action_activation_ctx_t* ctx)
+	{
+		auto reg_name = ctx->regname;
+		uint64 reg_value;
+		get_reg_val(reg_name, &reg_value);
+		register_info_t rinfo;
+		char value_str[16] = { 0 };
+		char* type = "integer";
+		if (get_dbg_reg_info(reg_name, &rinfo)) {
+			if (rinfo.dtype == dt_byte)
+				qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
+			else if(rinfo.dtype == dt_byte)
+				qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
+			else if (rinfo.dtype == dt_byte)
+				qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
+			else if (rinfo.dtype == dt_byte)
+				qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
+			else
+				type = "float";
+		}
+		msg("> Register %s (of type %s): %s\n", reg_name, type, value_str);
+
+		symbolize_register(reg_name, ctx);
+
+		return 0;
+	}
+
+	virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+	{
+		if (ctx->widget_type == BWN_CPUREGS){
+			return AST_ENABLE_FOR_WIDGET;
+		}
+		else {
+			return AST_DISABLE_FOR_WIDGET;
+		}
+	}
+};
+static ah_ponce_symbolize_reg_UI_t ah_ponce_symbolize_reg_UI;
+
+//We need to define this struct before the action handler because we are using it inside the handler
+action_desc_t action_IDA_ponce_symbolize_reg = ACTION_DESC_LITERAL(
+	"registers_context_menu:dump_reg_name",
+	"Dump register name from registers window", //The action text.
+	&ah_ponce_symbolize_reg_UI, //The action handler.
+	NULL, //Optional: the action shortcut
+	"Right click and symbolize register", //Optional: the action tooltip (available in menus/toolbar)
+	65); //Optional: the action icon (shows when in menus/toolbars)
+#endif
 
 
 /*This list defined all the actions for the plugin*/
@@ -795,5 +856,10 @@ struct action action_list[] =
 	{ &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
 	{ &action_IDA_deleteSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
 	{ &action_IDA_execute_native, { BWN_DISASM, __END__ }, true, true, "" },
+
+#if IDA_SDK_VERSION >= 740
+	{ &action_IDA_ponce_symbolize_reg, { BWN_CPUREGS, __END__ }, true, true, "" },
+#endif
+
 	{ NULL, __END__, __END__ }
 };
