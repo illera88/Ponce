@@ -13,6 +13,7 @@
 #include "globals.hpp"
 #include "utils.hpp"
 #include "blacklist.hpp"
+#include "triton_logic.hpp"
 
 //IDA
 #include <ida.hpp>

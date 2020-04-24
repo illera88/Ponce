@@ -22,6 +22,7 @@
 #include "context.hpp"
 #include "utils.hpp"
 #include "formConfiguration.hpp"
+#include "triton_logic.hpp"
 
 //Triton
 #include <triton/api.hpp>

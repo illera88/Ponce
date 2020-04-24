@@ -15,7 +15,6 @@
 //Ponce
 #include "globals.hpp"
 
-void start_tainting_or_symbolic_analysis();
 const triton::arch::Register* str_to_register(qstring register_name);
 ea_t find_function(char const* function_name);
 ea_t get_args(int argument_number, bool skip_ret);
@@ -25,15 +24,13 @@ ea_t read_regSize_from_ida(ea_t address);
 void rename_tainted_function(ea_t address);
 void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address);
 std::string notification_code_to_string(int notification_code);
-bool load_options(struct cmdOptionStruct *cmdOptions);
-bool save_options(struct cmdOptionStruct *cmdOptions);
-Input* solve_formula(ea_t pc, uint bound);
-void negate_flag_condition(triton::arch::Instruction *triton_instruction);
+bool load_options(struct cmdOptionStruct* cmdOptions);
+bool save_options(struct cmdOptionStruct* cmdOptions);
 bool ask_for_execute_native();
 qstring get_callee_name(ea_t address);
 void concretizeAndUntaintAllRegisters();
 void enableTrigger_and_concretize_registers(ea_t main_address);
-regval_t ida_get_reg_val_invalidate(char *reg_name);
+regval_t ida_get_reg_val_invalidate(char* reg_name);
 void readBlacklistfile(char* path);
 std::uint64_t GetTimeMs64(void);
 void concretizeAndUntaintVolatileRegisters();
@@ -42,4 +39,3 @@ void symbolize_all_memory(ea_t address, ea_t size);
 ea_t current_instruction();
 void delete_ponce_comments();
 bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble);
-bool ponce_set_triton_architecture();

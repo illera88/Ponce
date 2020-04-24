@@ -24,6 +24,8 @@
 #include "formTaintWindow.hpp"
 #include "blacklist.hpp"
 #include "context.hpp"
+#include "solver.hpp"
+#include "triton_logic.hpp"
 
 //Triton
 #include "triton/api.hpp"

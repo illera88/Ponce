@@ -16,6 +16,7 @@
 #include "globals.hpp"
 #include "callbacks.hpp"
 #include "utils.hpp"
+#include "triton_logic.hpp"
 
 // IDA
 #include <ida.hpp>
@@ -24,6 +25,7 @@
 #include <intel.hpp>
 #include <bytes.hpp>
 
+std::list<breakpoint_pending_action> breakpoint_pending_actions;
 
 std::vector<std::string> builtin_black_functions = {
 	"printf",
