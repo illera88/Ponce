@@ -12,5 +12,5 @@
 
 #include <idp.hpp>
 
-ssize_t idaapi tracer_callback(void * /*user_data*/, int notification_code, va_list va);
-ssize_t idaapi ui_callback(void * /*ud*/, int notification_code, va_list va);
+ssize_t idaapi tracer_callback(void* /*user_data*/, int notification_code, va_list va);
+ssize_t idaapi ui_callback(void* /*ud*/, int notification_code, va_list va);

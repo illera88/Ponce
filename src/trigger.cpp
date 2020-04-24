@@ -8,26 +8,26 @@
 #include "trigger.hpp"
 
 Trigger::Trigger()
-	: state(false) {
+    : state(false) {
 }
 
 void Trigger::toggle() {
-	this->state = !this->state;
+    this->state = !this->state;
 }
 
 bool Trigger::getState() {
-	return this->state;
+    return this->state;
 }
 
 void Trigger::enable(void) {
-	this->state = true;
+    this->state = true;
 }
 
 void Trigger::disable(void) {
-	this->state = false;
+    this->state = false;
 }
 
 void Trigger::update(bool flag) {
-	this->state = flag;
+    this->state = flag;
 }
 

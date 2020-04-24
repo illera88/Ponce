@@ -14,13 +14,13 @@
 
 struct item_t
 {
-	triton::usize id = 0;
-	triton::uint64 address = 0;
-	std::string register_name;
-	triton::uint512 value = 0;
-	bool isTainted = false;
-	bool isSymbolized = false;
-	std::string comment;
+    triton::usize id = 0;
+    triton::uint64 address = 0;
+    std::string register_name;
+    triton::uint512 value = 0;
+    bool isTainted = false;
+    bool isSymbolized = false;
+    std::string comment;
 };
 
 typedef std::vector<item_t*> entrylist_t;
@@ -40,14 +40,14 @@ CHCOL_HEX,
 16 };
 
 // column headers
-static const char *header[] =
+static const char* header[] =
 {
-	"Id",
-	"Address",
-	"Reg Name",
-	"Value",
-	"Is Tainted",
-	"Is Symbolized",
-	"Comment",
+    "Id",
+    "Address",
+    "Reg Name",
+    "Value",
+    "Is Tainted",
+    "Is Symbolized",
+    "Comment",
 };
 #endif

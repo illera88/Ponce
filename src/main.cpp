@@ -49,125 +49,125 @@
 
 bool idaapi run(size_t)
 {
-	/*We shouldn't prompt for it if the user has a saved configuration*/
-	if (!load_options(&cmdOptions))
-	{
-		prompt_conf_window();
-	}
+    /*We shouldn't prompt for it if the user has a saved configuration*/
+    if (!load_options(&cmdOptions))
+    {
+        prompt_conf_window();
+    }
 
-	if (!hooked)
-	{
-		//Registering action for the Ponce config
-		register_action(action_IDA_show_config);
-		attach_action_to_menu("Edit/Ponce/", action_IDA_show_config.name, SETMENU_APP);
-		//Registering action for the Ponce taint window
-		register_action(action_IDA_show_taintWindow);
-		attach_action_to_menu("Edit/Ponce/", action_IDA_show_taintWindow.name, SETMENU_APP);
-		//Registering action for the unload action
-		register_action(action_IDA_unload);
-		attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
-		//Some actions needs to use the api and the api need to have the architecture set
-		if (!ponce_set_triton_architecture()) {
-			return false;
-		}
-		//Loop to register all the actions used in the menus
-		for (int i = 0;; i++)
-		{
-			if (action_list[i].action_decs == NULL){
-				break;
-			}
-			//Here we register all the actions
-			if (!register_action(*action_list[i].action_decs))
-			{
-				warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
-				return false;
-			}
-		}
+    if (!hooked)
+    {
+        //Registering action for the Ponce config
+        register_action(action_IDA_show_config);
+        attach_action_to_menu("Edit/Ponce/", action_IDA_show_config.name, SETMENU_APP);
+        //Registering action for the Ponce taint window
+        register_action(action_IDA_show_taintWindow);
+        attach_action_to_menu("Edit/Ponce/", action_IDA_show_taintWindow.name, SETMENU_APP);
+        //Registering action for the unload action
+        register_action(action_IDA_unload);
+        attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
+        //Some actions needs to use the api and the api need to have the architecture set
+        if (!ponce_set_triton_architecture()) {
+            return false;
+        }
+        //Loop to register all the actions used in the menus
+        for (int i = 0;; i++)
+        {
+            if (action_list[i].action_decs == NULL) {
+                break;
+            }
+            //Here we register all the actions
+            if (!register_action(*action_list[i].action_decs))
+            {
+                warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
+                return false;
+            }
+        }
 
 
-		if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
-		{
-			warning("[!] Could not hook ui callback");
-			return false;
-		}
-		if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
-		{
-			warning("[!] Could not hook tracer callback");
-			return false;
-		}
-		
-		msg("[+] Ponce plugin version: %s running!\n", VERSION);
-		hooked = true;
-	}
-	return true;
+        if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
+        {
+            warning("[!] Could not hook ui callback");
+            return false;
+        }
+        if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
+        {
+            warning("[!] Could not hook tracer callback");
+            return false;
+        }
+
+        msg("[+] Ponce plugin version: %s running!\n", VERSION);
+        hooked = true;
+    }
+    return true;
 }
 
 //--------------------------------------------------------------------------
 int idaapi init(void)
 {
-	char version[8];
-	//We do some checks with the versions...
-	if (get_kernel_version(version, sizeof(version)))
-	{
+    char version[8];
+    //We do some checks with the versions...
+    if (get_kernel_version(version, sizeof(version)))
+    {
 #if IDA_SDK_VERSION >= 740		
-		warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 740
-		//The IDA 7.1 plugin running in old IDA
-		if (strcmp(version, "7.4") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 7.1 plugin running in old IDA
+        if (strcmp(version, "7.4") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 730
-		//The IDA 7.1 plugin running in old IDA
-		if (strcmp(version, "7.3") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 7.1 plugin running in old IDA
+        if (strcmp(version, "7.3") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 720
-		//The IDA 7.1 plugin running in old IDA
-		if (strcmp(version, "7.2") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 7.1 plugin running in old IDA
+        if (strcmp(version, "7.2") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 710
-		//The IDA 7.1 plugin running in old IDA
-		if (strcmp(version, "7.1") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 7.1 plugin running in old IDA
+        if (strcmp(version, "7.1") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 700
-		//The IDA 7.0 plugin running in old IDA
-		if (strcmp(version, "7.00") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 7.0 plugin running in old IDA
+        if (strcmp(version, "7.00") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 680
-		//The IDA 6.8 plugin running in IDA 6.9x
-		if (strcmp(version, "6.8") != 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        //The IDA 6.8 plugin running in IDA 6.9x
+        if (strcmp(version, "6.8") != 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 690		//The IDA 6.9x plugin running in IDA 6.8
-		if (strcmp(version, "6.8") == 0)
-			warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "6.8") == 0)
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #else
 #error // not supported
 #endif
-	}
-	//Error loading config?
-	if (!load_options(&cmdOptions))
-		return PLUGIN_KEEP;
-	//We want to autorun the plugin when IDA starts?
-	if (cmdOptions.auto_init)
-		run(0);
-	return PLUGIN_KEEP;
+    }
+    //Error loading config?
+    if (!load_options(&cmdOptions))
+        return PLUGIN_KEEP;
+    //We want to autorun the plugin when IDA starts?
+    if (cmdOptions.auto_init)
+        run(0);
+    return PLUGIN_KEEP;
 }
 
 //--------------------------------------------------------------------------
 void idaapi term(void)
 {
-	// We want to delete Ponce comments and colours before terminating
-	delete_ponce_comments();
-	// Unhook notifications
-	unhook_from_notification_point(HT_UI, ui_callback, NULL);
-	unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
-	// Unregister and detach menus
-	unregister_action(action_IDA_show_config.name);
-	detach_action_from_menu("Edit/Ponce/", action_IDA_show_config.name);
-	unregister_action(action_IDA_show_taintWindow.name);
-	detach_action_from_menu("Edit/Ponce/", action_IDA_show_taintWindow.name);
-	unregister_action(action_IDA_unload.name);
-	detach_action_from_menu("Edit/Ponce/", action_IDA_unload.name);
-	detach_action_from_menu("Edit/Ponce/", "");
-	hooked = false;
+    // We want to delete Ponce comments and colours before terminating
+    delete_ponce_comments();
+    // Unhook notifications
+    unhook_from_notification_point(HT_UI, ui_callback, NULL);
+    unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
+    // Unregister and detach menus
+    unregister_action(action_IDA_show_config.name);
+    detach_action_from_menu("Edit/Ponce/", action_IDA_show_config.name);
+    unregister_action(action_IDA_show_taintWindow.name);
+    detach_action_from_menu("Edit/Ponce/", action_IDA_show_taintWindow.name);
+    unregister_action(action_IDA_unload.name);
+    detach_action_from_menu("Edit/Ponce/", action_IDA_unload.name);
+    detach_action_from_menu("Edit/Ponce/", "");
+    hooked = false;
 }
 
 //--------------------------------------------------------------------------
@@ -177,14 +177,14 @@ void idaapi term(void)
 //--------------------------------------------------------------------------
 plugin_t PLUGIN =
 {
-	IDP_INTERFACE_VERSION,
-	0,                    // plugin flags
-	init,                 // initialize
-	term,                 // terminate. this pointer may be NULL.
-	run,                  // invoke plugin
-	"Ponce, a concolic execution plugin for IDA", // long comment about the plugin
-	"", // multiline help about the plugin
-	"Ponce", // the preferred short name of the plugin
-	"Ctrl+Shift+Z" // the preferred hotkey to run the plugin
+    IDP_INTERFACE_VERSION,
+    0,                    // plugin flags
+    init,                 // initialize
+    term,                 // terminate. this pointer may be NULL.
+    run,                  // invoke plugin
+    "Ponce, a concolic execution plugin for IDA", // long comment about the plugin
+    "", // multiline help about the plugin
+    "Ponce", // the preferred short name of the plugin
+    "Ctrl+Shift+Z" // the preferred hotkey to run the plugin
 };
 

@@ -9,20 +9,20 @@
 class Input
 {
 public:
-	int bound;
-	std::vector <triton::arch::MemoryAccess> memOperand;
-	std::vector <triton::arch::Register> regOperand;
+    int bound;
+    std::vector <triton::arch::MemoryAccess> memOperand;
+    std::vector <triton::arch::Register> regOperand;
 
-	//! Constructor.
-	Input()
-	{
-		this->bound = 0;
-	}
+    //! Constructor.
+    Input()
+    {
+        this->bound = 0;
+    }
 
-	//! Destructor.
-	~Input()
-	{
-	}
+    //! Destructor.
+    ~Input()
+    {
+    }
 };
 
 void set_SMT_results(Input* input_ptr);

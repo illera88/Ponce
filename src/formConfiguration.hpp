@@ -13,8 +13,8 @@
 #include <ida.hpp>
 #include "globals.hpp"
 
-int idaapi modcb(int fid, form_actions_t &fa);
-void idaapi btn_cb(TWidget *[], int);
+int idaapi modcb(int fid, form_actions_t& fa);
+void idaapi btn_cb(TWidget* [], int);
 void prompt_conf_window(void);
 
 static const char form[] =
