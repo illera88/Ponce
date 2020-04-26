@@ -10,96 +10,86 @@ std::vector<Input> solve_formula(ea_t pc, uint bound)
     auto ast = api.getAstContext();
     std::vector<Input> solutions;
 
-    if (api.getPathConstraints().size() -1 < bound) {
+    if (api.getPathConstraints().size() - 1 < bound) {
         msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, api.getPathConstraints().size());
         return solutions;
     }
 
+    const auto& path_cons = api.getPathConstraints()[bound];
+    assert(std::get<1>(path_cons.getBranchConstraints()[0]) == pc);
 
-    //for (const auto& pc : api.getPathConstraints()) {
-    {
-    const auto& pc = api.getPathConstraints()[bound];
-    
-        msg("path constrain address " MEM_FORMAT "\n", std::get<1>(pc.getBranchConstraints()[0]));
-        if (pc.getTakenPredicate()->isSymbolized() && pc.isMultipleBranches()) {
-            for (auto const& [taken, srcAddr, dstAddr, constraint] : pc.getBranchConstraints()) {
-                if (!taken) {
-                    auto final_expr = ast->land(std::vector({ ast->equal(ast->bv(1, 1), ast->bv(1, 1)), constraint }));
-                    if (cmdOptions.showExtraDebugInfo)
-                    {
-                        std::stringstream ss;
-                        /*Create the full formula*/
-                        ss << "(set-logic QF_AUFBV)\n";
-                        /* Then, delcare all symbolic variables */
-                        for (auto it : api.getSymbolicVariables()) {
-                            ss << ast->declare(ast->variable(it.second));
+    if (path_cons.getTakenPredicate()->isSymbolized() && path_cons.isMultipleBranches()) {
+        for (auto const& [taken, srcAddr, dstAddr, constraint] : path_cons.getBranchConstraints()) {
+            if (!taken) {
+                auto final_expr = ast->land(std::vector({ ast->equal(ast->bv(1, 1), ast->bv(1, 1)), constraint }));
+                if (cmdOptions.showExtraDebugInfo) {
+                    std::stringstream ss;
+                    /*Create the full formula*/
+                    ss << "(set-logic QF_AUFBV)\n";
+                    /* Then, delcare all symbolic variables */
+                    for (auto it : api.getSymbolicVariables()) {
+                        ss << ast->declare(ast->variable(it.second));
 
-                        }
-                        /* And concat the user expression */
-                        ss << "\n\n";
-                        ss << final_expr;
-                        ss << "\n(check-sat)";
-                        ss << "\n(get-model)";
-                        msg("[+] Formula:\n%s\n\n", ss.str().c_str());
-
-                        auto form = ss.str().c_str();
                     }
+                    /* And concat the user expression */
+                    ss << "\n\n";
+                    ss << final_expr;
+                    ss << "\n(check-sat)";
+                    ss << "\n(get-model)";
+                    msg("[+] Formula:\n%s\n\n", ss.str().c_str());
+                }
 
-                    //Time to solve
-                    auto model = api.getModel(final_expr);
-                    
-                    if (model.size() > 0){
-                        Input newinput;
-                        //Clone object 
-                        newinput.bound = bound;
-                        newinput.dstAddr = dstAddr;
-                        newinput.srcAddr = srcAddr;
+                //Time to solve
+                auto model = api.getModel(final_expr);
 
-                        msg("[+] Solution found! Values:\n");
-                        for (const auto& [symId, model] :model) {
-                            triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
-                            std::string  symbVarComment = symbVar->getComment();
-                            triton::uint512 model_value = model.getValue();
-                            if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
-                                auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
-                                newinput.memOperand.push_back(mem);
-                                api.setConcreteMemoryValue(mem, model_value); // Why
-                            }
-                            else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
-                                auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
-                                newinput.regOperand.push_back(reg);
-                                api.setConcreteRegisterValue(reg, model_value); // Why?
-                                //ToDo: add concretizeRegister()??
-                            }
-                            //We represent the number different 
-                            switch (symbVar->getSize())
-                            {
-                            case 8:
-                                msg(" - %s (%s): %#02x (%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
-                                break;
-                            case 16:
-                                msg(" - %s (%s): %#04x (%c%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
-                                break;
-                            case 32:
-                                msg(" - %s (%s): %#08x\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
-                                break;
-                            case 64:
-                                msg(" - %s (%s): %#16llx\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
-                                break;
-                            default:
-                                msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 
-                            }
+                if (model.size() > 0) {
+                    Input newinput;
+                    //Clone object 
+                    newinput.bound = bound;
+                    newinput.dstAddr = dstAddr;
+                    newinput.srcAddr = srcAddr;
+
+                    msg("[+] Solution found! Values:\n");
+                    for (const auto& [symId, model] : model) {
+                        triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
+                        std::string  symbVarComment = symbVar->getComment();
+                        triton::uint512 model_value = model.getValue();
+                        if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
+                            auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
+                            newinput.memOperand.push_back(mem);
+                            api.setConcreteMemoryValue(mem, model_value); // Why
                         }
-                        solutions.push_back(newinput);
+                        else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
+                            auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
+                            newinput.regOperand.push_back(reg);
+                            api.setConcreteRegisterValue(reg, model_value); // Why?
+                            //ToDo: add concretizeRegister()??
+                        }
+                        //We represent the number different 
+                        switch (symbVar->getSize())
+                        {
+                        case 8:
+                            msg(" - %s (%s): %#02x (%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
+                            break;
+                        case 16:
+                            msg(" - %s (%s): %#04x (%c%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
+                            break;
+                        case 32:
+                            msg(" - %s (%s): %#08x\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
+                            break;
+                        case 64:
+                            msg(" - %s (%s): %#16llx\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
+                            break;
+                        default:
+                            msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 
+                        }
                     }
-                    else{
-                        msg("[!] No solution found :(\n");
-                    }               
+                    solutions.push_back(newinput);
+                }
+                else {
+                    msg("[!] No solution found :(\n");
                 }
             }
-        }
-        else if (!pc.getTakenPredicate()->isSymbolized()) {
-            auto coso = pc;
         }
     }
     return solutions;
