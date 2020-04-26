@@ -358,24 +358,24 @@ struct ah_negate_and_inject_t : public action_handler_t
 
             //We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
             unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto input_ptr = solve_formula(pc, bound);
-            if (input_ptr != NULL)
-            {
-                //We need to modify the last path constrain
-                auto temp = ponce_runtime_status.myPathConstraints[bound].notTakenAddr;
-                ponce_runtime_status.myPathConstraints[bound].notTakenAddr = ponce_runtime_status.myPathConstraints[bound].takenAddr;
-                ponce_runtime_status.myPathConstraints[bound].takenAddr = temp;
-                //We need to modify the condition flags to negate the condition
-                if (ponce_runtime_status.last_triton_instruction->getAddress() == pc)
-                {
-                    negate_flag_condition(ponce_runtime_status.last_triton_instruction);
-                }
-                // We set the results obtained from solve_formula
-                set_SMT_results(input_ptr);
+            auto solutions = solve_formula(pc, bound);
+            //if (input_ptr != NULL)
+            //{
+            //    //We need to modify the last path constrain
+            //    auto temp = ponce_runtime_status.myPathConstraints[bound]->notTakenAddr;
+            //    ponce_runtime_status.myPathConstraints[bound]->notTakenAddr = ponce_runtime_status.myPathConstraints[bound]->takenAddr;
+            //    ponce_runtime_status.myPathConstraints[bound]->takenAddr = temp;
+            //    //We need to modify the condition flags to negate the condition
+            //    if (ponce_runtime_status.last_triton_instruction->getAddress() == pc)
+            //    {
+            //        negate_flag_condition(ponce_runtime_status.last_triton_instruction);
+            //    }
+            //    // We set the results obtained from solve_formula
+            //    set_SMT_results(input_ptr);
 
-                //delete it after setting the proper results
-                delete input_ptr;
-            }
+            //    //delete it after setting the proper results
+            //    delete input_ptr;
+            //}
         }
         return 0;
     }
@@ -416,18 +416,18 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
             //We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 
             unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto input_ptr = solve_formula(pc, bound);
-            if (input_ptr != NULL)
-            {
-                //Restore the snapshot
-                snapshot.restoreSnapshot();
+            auto solutions = solve_formula(pc, bound);
+            //if (solutions != NULL)
+            //{
+            //    //Restore the snapshot
+            //    snapshot.restoreSnapshot();
 
-                // We set the results obtained from solve_formula
-                set_SMT_results(input_ptr);
+            //    // We set the results obtained from solve_formula
+            //    set_SMT_results(input_ptr);
 
-                //delete it after setting the proper results
-                delete input_ptr;
-            }
+            //    //delete it after setting the proper results
+            //    delete input_ptr;
+            //}
         }
         return 0;
     }
@@ -729,12 +729,13 @@ struct ah_solve_formula_sub_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         //We extract the solved index from the action name
-        unsigned int condition_index = atoi(ctx->action);
+        unsigned int condition_index = atoi((ctx->action+1)); // sikp [ in action name
         if (cmdOptions.showDebugInfo)
-            msg("[+] Solving condition at %d\n", condition_index);
-        auto input_ptr = solve_formula(ctx->cur_ea, condition_index);
-        if (input_ptr != NULL)
-            delete input_ptr;
+            msg("[+] Solving condition at address " MEM_FORMAT " with bound %d\n", ctx->cur_ea, condition_index);
+        auto solutions = solve_formula(ctx->cur_ea, condition_index);
+        if (!solutions.empty()) {
+            //print info
+        }
         return 0;
     }
 

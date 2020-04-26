@@ -10,13 +10,16 @@ class Input
 {
 public:
     int bound;
+
+    // Memory or register operands involved on the Input
     std::vector <triton::arch::MemoryAccess> memOperand;
     std::vector <triton::arch::Register> regOperand;
 
+    triton::uint64 srcAddr, dstAddr;
+
     //! Constructor.
-    Input()
+    Input() : bound(0), srcAddr(0), dstAddr(0)
     {
-        this->bound = 0;
     }
 
     //! Destructor.
@@ -25,6 +28,6 @@ public:
     }
 };
 
-void set_SMT_results(Input* input_ptr);
+void set_SMT_solution(Input input_ptr);
 void negate_flag_condition(triton::arch::Instruction* triton_instruction);
-Input* solve_formula(ea_t pc, uint bound);
+std::vector<Input> solve_formula(ea_t pc, uint bound);

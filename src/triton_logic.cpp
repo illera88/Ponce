@@ -134,18 +134,20 @@ int tritonize(ea_t pc, thid_t threadID)
 
     if (tritonInst->isBranch() && tritonInst->isSymbolized())
     {
+
+
         ea_t addr1 = (ea_t)tritonInst->getNextAddress();
         ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
         if (cmdOptions.showDebugInfo) {
             msg("[+] Branch symbolized detected at " MEM_FORMAT ": " MEM_FORMAT " or " MEM_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
         }
-        triton::usize ripId = 0;
+       /* triton::usize ripId = 0;
         ripId = api.getSymbolicRegister(REG_XIP)->getId();
 
         if (tritonInst->isConditionTaken())
-            ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
+            ponce_runtime_status.myPathConstraints.push_back(new PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
         else
-            ponce_runtime_status.myPathConstraints.push_back(PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));
+            ponce_runtime_status.myPathConstraints.push_back(new PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));*/
     }
     return 0;
     //We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
@@ -222,7 +224,6 @@ void triton_restart_engines()
     //		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
     //	}
     //}
-    //triton::api.getSymbolicEngine()->enable(true);
     ponce_runtime_status.runtimeTrigger.disable();
     ponce_runtime_status.is_ponce_tracing_enabled = false;
     ponce_runtime_status.tainted_functions_index = 0;

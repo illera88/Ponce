@@ -216,6 +216,7 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
     return 0;
 }
 
+
 //---------------------------------------------------------------------------
 // Callback for ui notifications
 ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
@@ -271,30 +272,35 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         //We get the ea form a global variable that is set in the update event
         //This is not very elegant but I don't know how to do it from here
         ea_t cur_ea = popup_menu_ea;
-        if (view_type == BWN_DISASM)
-        {
-            //Adding submenus for solve with all the conditions executed in the same address
-            for (unsigned int i = 0; i < ponce_runtime_status.myPathConstraints.size(); i++)
-            {
-                //We should filter here for the ea
-                if (cur_ea == ponce_runtime_status.myPathConstraints[i].conditionAddr)
-                {
-                    char name[256];
-                    //We put the index at the beginning so it is very easy to parse it with atoi(action_name)
-                    qsnprintf(name, 255, "%u_Ponce:solve_formula_sub", i);
-                    action_IDA_solve_formula_sub.name = name;
-                    char label[256];
-                    qsnprintf(label, 255, "%u. " MEM_FORMAT " -> " MEM_FORMAT, ponce_runtime_status.myPathConstraints[i].bound, ponce_runtime_status.myPathConstraints[i].conditionAddr, ponce_runtime_status.myPathConstraints[i].takenAddr);
+        if (view_type == BWN_DISASM) {
+            std::set<triton::uint64> symbolic_adresses;
+            unsigned int bound = 0;
+            for (const auto& pc : api.getPathConstraints()) {
+                if (pc.getTakenPredicate()->isSymbolized() && pc.isMultipleBranches()) {
+                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                        if (taken) {
+                            // If it's the taken branch
+                            if (cur_ea == srcAddr) { // if we right click on a symbolic branch                               
+                                char name[256];
+                                //We put the index at the beginning that we will use to get the bound from the action_name
+                                qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
+                                action_IDA_solve_formula_sub.name = name;
+                                char label[256];
+                                qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
 
-                    action_IDA_solve_formula_sub.label = label;
-                    bool success = register_action(action_IDA_solve_formula_sub);
-                    //If the submenu is already registered, we should unregister it and re-register it
-                    if (!success)
-                    {
-                        unregister_action(action_IDA_solve_formula_sub.name);
-                        success = register_action(action_IDA_solve_formula_sub);
+                                action_IDA_solve_formula_sub.label = label;
+                                bool success = register_action(action_IDA_solve_formula_sub);
+                                //If the submenu is already registered, we should unregister it and re-register it
+                                if (!success) {
+                                    unregister_action(action_IDA_solve_formula_sub.name);
+                                    success = register_action(action_IDA_solve_formula_sub);
+                                }
+                                success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
+                                break;
+                            }
+                        }
                     }
-                    success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
+                    bound++;
                 }
             }
         }
