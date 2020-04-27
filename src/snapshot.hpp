@@ -20,6 +20,8 @@
 #include <triton/taintEngine.hpp>
 #include <triton/x8664Cpu.hpp>
 #include <triton/x86Cpu.hpp>
+#include <triton/arm32Cpu.hpp>
+#include <triton/aarch64Cpu.hpp>
 
 // Ponce
 #include "runtime_status.hpp"
@@ -57,8 +59,13 @@ private:
     triton::ast::AstContext* astCtx;
 
     //! Snapshot of triton CPU.
+    triton::arch::x86::x8664Cpu* cpu_x8664;
+    triton::arch::x86::x86Cpu* cpu_x86;
+    triton::arch::arm::aarch64::AArch64Cpu * cpu_AArch64;
+    triton::arch::arm::arm32::Arm32Cpu* cpu_Arm32;
+
 #if defined(__x86_64__) || defined(_M_X64)
-    triton::arch::x86::x8664Cpu* cpu;
+    
 #endif
 #if defined(__i386) || defined(_M_IX86)
     triton::arch::x86::x86Cpu* cpu;
