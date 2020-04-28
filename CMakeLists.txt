@@ -104,10 +104,17 @@ endif()
 find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
 
 if(WIN32 AND NOT STATICLIB)
-	find_library(CAPSTONE_LIBRARY capstone_dll REQUIRED)
+	find_library(CAPSTONE_LIBRARY
+	NAMES capstone_dll
+	PATHS Capstone_INCLUDE_DIR/../
+	)
 else()
-    find_library(CAPSTONE_LIBRARY capstone REQUIRED)
+    find_library(CAPSTONE_LIBRARY
+    NAMES capstone
+    PATHS Capstone_INCLUDE_DIR/../
+    )
 endif()
+
 
 if (NOT WIN32)
 	# got this from https://github.com/microsoft/vcpkg/issues/10752
