@@ -29,7 +29,7 @@ jobs:
               run: |
                  sudo apt install -y libboost-all-dev
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
-                 vcpkg install capstone
+                 vcpkg install capstone[x86,arm,arm64]
                   
             - name: Download and build Triton x64
               run: |
@@ -82,52 +82,52 @@ jobs:
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.0.so
-                  path: build_x64_7.0/libPonce_ea64.so
+                  path: build_x64_7.0/libPonce64.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.0.so
-                  path: build_x64_7.0/libPonce_ea32.so
+                  path: build_x64_7.0/libPonce.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.1.so
-                  path: build_x64_7.1/libPonce_ea64.so
+                  path: build_x64_7.1/libPonce64.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.1.so
-                  path: build_x64_7.1/libPonce_ea32.so
+                  path: build_x64_7.1/libPonce.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.2.so
-                  path: build_x64_7.2/libPonce_ea64.so
+                  path: build_x64_7.2/libPonce64.so
             
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.2.so
-                  path: build_x64_7.2/libPonce_ea32.so
+                  path: build_x64_7.2/libPonce.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.3.so
-                  path: build_x64_7.3/libPonce_ea64.so
+                  path: build_x64_7.3/libPonce64.so
 
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.3.so
-                  path: build_x64_7.3/libPonce_ea32.so
+                  path: build_x64_7.3/libPonce.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.4.so
-                  path: build_x64_7.4/libPonce_ea64.so
+                  path: build_x64_7.4/libPonce64.so
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.4.so
-                  path: build_x64_7.4/libPonce_ea32.so
+                  path: build_x64_7.4/libPonce.so
                   
     # release:
         # runs-on: ubuntu-latest

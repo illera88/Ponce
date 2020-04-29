@@ -27,8 +27,8 @@ file(GLOB PONCE_HEADER_FILES
     src/*.hpp
 )
 
-add_library(${PROJECT_NAME}_ea32 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
-add_library(${PROJECT_NAME}_ea64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 
 #                       #
 # Look for dependencies #
@@ -133,11 +133,11 @@ find_package(Z3 CONFIG REQUIRED)
 get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
 
 # Now we create the project
-target_include_directories(${PROJECT_NAME}_ea32 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME}_ea64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME}64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
 
 target_link_libraries(
-    ${PROJECT_NAME}_ea32
+    ${PROJECT_NAME}
 	PRIVATE
     ${TRITON_LIBRARY}
 	${idasdk_ea32}
@@ -146,7 +146,7 @@ target_link_libraries(
 )
 
 target_link_libraries(
-    ${PROJECT_NAME}_ea64
+    ${PROJECT_NAME}64
 	PRIVATE
     ${TRITON_LIBRARY}
 	${idasdk_ea64}
@@ -154,54 +154,54 @@ target_link_libraries(
 	${CAPSTONE_LIBRARY}
 )
 
-target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __X64__)
-target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __X64__ __EA64__)
+target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__)
+target_compile_definitions(${PROJECT_NAME}64 PRIVATE __X64__ __EA64__)
 
 # Set preprocessor definitions
-target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __IDP__)
-target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __IDP__)
+target_compile_definitions(${PROJECT_NAME} PRIVATE __IDP__)
+target_compile_definitions(${PROJECT_NAME}64 PRIVATE __IDP__)
 
 if(WIN32)
-	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __NT__)
-	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __NT__)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __NT__)
+	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __NT__)
 	set(PLUGIN_EXTENSION dll)
 	add_definitions(/MP)
 	# If using the static library we should use the static runtime too
-	set_property(TARGET ${PROJECT_NAME}_ea32 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-	set_property(TARGET ${PROJECT_NAME}_ea64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+	set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+	set_property(TARGET ${PROJECT_NAME}64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 elseif (APPLE)
-	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
-	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
-	target_compile_definitions(${PROJECT_NAME}_ea32 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
-	target_compile_definitions(${PROJECT_NAME}_ea64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
+	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	set(PLUGIN_EXTENSION so)
 endif()
 
 
 if(IDA_INSTALLED_DIR)
 	message(STATUS "[-] Ponce built plugin and pdb file will be moved to '${IDA_INSTALLED_DIR}/plugins/'. The build system should have permisions to write there or it will error.")
-	add_custom_command(TARGET ${PROJECT_NAME}_ea32 POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}_ea32> ${IDA_INSTALLED_DIR}/plugins/Ponce.${PLUGIN_EXTENSION}
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea32.${PLUGIN_EXTENSION}"
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${IDA_INSTALLED_DIR}/plugins/Ponce.${PLUGIN_EXTENSION}
+		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
 	)
 	
-	add_custom_command(TARGET ${PROJECT_NAME}_ea64 POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}_ea64> ${IDA_INSTALLED_DIR}/plugins/Ponce64.${PLUGIN_EXTENSION}
-			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea64.${PLUGIN_EXTENSION}"
+	add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}64> ${IDA_INSTALLED_DIR}/plugins/Ponce64.${PLUGIN_EXTENSION}
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}64.${PLUGIN_EXTENSION}"
 		)
 
 	# Move symbols for debugging in Windows
 	if(WIN32)
-		add_custom_command(TARGET ${PROJECT_NAME}_ea32 POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}_ea32.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce.pdb
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea32.${PLUGIN_EXTENSION}"
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce.pdb
+		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
 		)
 		
-		add_custom_command(TARGET ${PROJECT_NAME}_ea64 POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}_ea64.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce64.pdb
-			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}_ea64.${PLUGIN_EXTENSION}"
+		add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}64.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce64.pdb
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}64.${PLUGIN_EXTENSION}"
 		)
 	endif()
 endif()

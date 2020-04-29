@@ -19,7 +19,7 @@ jobs:
               run: |
                  brew install boost
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
-                 vcpkg install capstone z3    
+                 vcpkg install capstone[x86,arm,arm64] z3    
                   
             - name: Download and build Triton x64
               run: |
@@ -72,52 +72,52 @@ jobs:
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.0.dylib
-                  path: build_x64_7.0/libPonce_ea64.dylib
+                  path: build_x64_7.0/libPonce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.0.dylib
-                  path: build_x64_7.0/libPonce_ea32.dylib
+                  path: build_x64_7.0/libPonce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.1.dylib
-                  path: build_x64_7.1/libPonce_ea64.dylib
+                  path: build_x64_7.1/libPonce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.1.dylib
-                  path: build_x64_7.1/libPonce_ea32.dylib
+                  path: build_x64_7.1/libPonce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.2.dylib
-                  path: build_x64_7.2/libPonce_ea64.dylib
+                  path: build_x64_7.2/libPonce64.dylib
             
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.2.dylib
-                  path: build_x64_7.2/libPonce_ea32.dylib
+                  path: build_x64_7.2/libPonce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.3.dylib
-                  path: build_x64_7.3/libPonce_ea64.dylib
+                  path: build_x64_7.3/libPonce64.dylib
 
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.3.dylib
-                  path: build_x64_7.3/libPonce_ea32.dylib
+                  path: build_x64_7.3/libPonce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce64_7.4.dylib
-                  path: build_x64_7.4/libPonce_ea64.dylib
+                  path: build_x64_7.4/libPonce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_7.4.dylib
-                  path: build_x64_7.4/libPonce_ea32.dylib
+                  path: build_x64_7.4/libPonce.dylib
                   
     # release:
         # runs-on: ubuntu-latest
