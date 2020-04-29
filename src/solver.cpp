@@ -7,88 +7,113 @@
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
 std::vector<Input> solve_formula(ea_t pc, uint bound)
 {
-    auto ast = api.getAstContext();
-    std::vector<Input> solutions;
+    // Triton records every condition as a path constraintx`, we only care about the symbolized ones
+    std::vector<const triton::engines::symbolic::PathConstraint*> symbolizedPathConstrains;
+    for (auto &path_constrain : api.getPathConstraints()) {
+        if (path_constrain.getTakenPredicate()->isSymbolized()) {
+            symbolizedPathConstrains.push_back(&path_constrain);
+        }
+    }
 
-    if (api.getPathConstraints().size() - 1 < bound) {
+    std::vector<Input> solutions;
+    
+    if (bound < symbolizedPathConstrains.size() - 1) {
         msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, api.getPathConstraints().size());
         return solutions;
     }
 
-    const auto& path_cons = api.getPathConstraints()[bound];
-    assert(std::get<1>(path_cons.getBranchConstraints()[0]) == pc);
+    // Double check that the condition at the bound is at the address the user selected
+    assert(std::get<1>(symbolizedPathConstrains[bound]->getBranchConstraints()[0]) == pc);
 
-    if (path_cons.getTakenPredicate()->isSymbolized() && path_cons.isMultipleBranches()) {
-        for (auto const& [taken, srcAddr, dstAddr, constraint] : path_cons.getBranchConstraints()) {
-            if (!taken) {
-                auto final_expr = ast->land(std::vector({ ast->equal(ast->bv(1, 1), ast->bv(1, 1)), constraint }));
-                if (cmdOptions.showExtraDebugInfo) {
-                    std::stringstream ss;
-                    /*Create the full formula*/
-                    ss << "(set-logic QF_AUFBV)\n";
-                    /* Then, delcare all symbolic variables */
-                    for (auto it : api.getSymbolicVariables()) {
-                        ss << ast->declare(ast->variable(it.second));
+    auto ast = api.getAstContext();
+    // We are going to store here the constraints for the previous conditions
+    // We can not initializate this to null, so we do it to a true condition (based on code_coverage_crackme_xor.py from the triton project)
+    auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
 
+    // First we iterate through the previous path constrains to add the predicates of the taken path
+    unsigned int j;
+    for (j = 0; j < bound; j++)
+    {
+        if (cmdOptions.showExtraDebugInfo)
+            msg("[+] Keeping condition %d\n", j);
+
+        // We add to the previous constraints the predicate for the taken branch 
+        auto predicate = symbolizedPathConstrains[j]->getTakenPredicate();
+    }
+
+    // Then we use the predicate for the non taken path so we "solve" that condition.
+    // We try to solve every non taken branch (more than one is possible under certain situations
+    for (auto const& [taken, srcAddr, dstAddr, constraint] : symbolizedPathConstrains[bound]->getBranchConstraints()) {
+        if (!taken) {
+            //auto final_expr = ast->land(std::vector({ ast->equal(ast->bv(1, 1), ast->bv(1, 1)), constraint }));
+            // We concatenate the previous constraints for the taken path plus the non taken constrain of the user selected condition
+            auto final_expr = ast->land(previousConstraints, constraint);
+            if (cmdOptions.showExtraDebugInfo) {
+                std::stringstream ss;
+                /*Create the full formula*/
+                ss << "(set-logic QF_AUFBV)\n";
+                /* Then, delcare all symbolic variables */
+                for (auto it : api.getSymbolicVariables()) {
+                    ss << ast->declare(ast->variable(it.second));
+
+                }
+                /* And concat the user expression */
+                ss << "\n\n";
+                ss << final_expr;
+                ss << "\n(check-sat)";
+                ss << "\n(get-model)";
+                msg("[+] Formula:\n%s\n\n", ss.str().c_str());
+            }
+
+            //Time to solve
+            auto model = api.getModel(final_expr);
+
+            if (model.size() > 0) {
+                Input newinput;
+                //Clone object 
+                newinput.bound = bound;
+                newinput.dstAddr = dstAddr;
+                newinput.srcAddr = srcAddr;
+
+                msg("[+] Solution found! Values:\n");
+                for (const auto& [symId, model] : model) {
+                    triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
+                    std::string  symbVarComment = symbVar->getComment();
+                    triton::uint512 model_value = model.getValue();
+                    if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
+                        auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
+                        newinput.memOperand.push_back(mem);
+                        api.setConcreteMemoryValue(mem, model_value); // Why
                     }
-                    /* And concat the user expression */
-                    ss << "\n\n";
-                    ss << final_expr;
-                    ss << "\n(check-sat)";
-                    ss << "\n(get-model)";
-                    msg("[+] Formula:\n%s\n\n", ss.str().c_str());
-                }
-
-                //Time to solve
-                auto model = api.getModel(final_expr);
-
-                if (model.size() > 0) {
-                    Input newinput;
-                    //Clone object 
-                    newinput.bound = bound;
-                    newinput.dstAddr = dstAddr;
-                    newinput.srcAddr = srcAddr;
-
-                    msg("[+] Solution found! Values:\n");
-                    for (const auto& [symId, model] : model) {
-                        triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
-                        std::string  symbVarComment = symbVar->getComment();
-                        triton::uint512 model_value = model.getValue();
-                        if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
-                            auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
-                            newinput.memOperand.push_back(mem);
-                            api.setConcreteMemoryValue(mem, model_value); // Why
-                        }
-                        else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
-                            auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
-                            newinput.regOperand.push_back(reg);
-                            api.setConcreteRegisterValue(reg, model_value); // Why?
-                            //ToDo: add concretizeRegister()??
-                        }
-                        //We represent the number different 
-                        switch (symbVar->getSize())
-                        {
-                        case 8:
-                            msg(" - %s (%s): %#02x (%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
-                            break;
-                        case 16:
-                            msg(" - %s (%s): %#04x (%c%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
-                            break;
-                        case 32:
-                            msg(" - %s (%s): %#08x\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
-                            break;
-                        case 64:
-                            msg(" - %s (%s): %#16llx\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
-                            break;
-                        default:
-                            msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 
-                        }
+                    else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
+                        auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
+                        newinput.regOperand.push_back(reg);
+                        api.setConcreteRegisterValue(reg, model_value); // Why?
+                        //ToDo: add concretizeRegister()??
                     }
-                    solutions.push_back(newinput);
+                    //We represent the number different 
+                    switch (symbVar->getSize())
+                    {
+                    case 8:
+                        msg(" - %s (%s): %#02x (%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
+                        break;
+                    case 16:
+                        msg(" - %s (%s): %#04x (%c%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
+                        break;
+                    case 32:
+                        msg(" - %s (%s): %#08x\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
+                        break;
+                    case 64:
+                        msg(" - %s (%s): %#16llx\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
+                        break;
+                    default:
+                        msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 
+                    }
                 }
-                else {
-                    msg("[!] No solution found :(\n");
-                }
+                solutions.push_back(newinput);
+            }
+            else {
+                msg("[!] No solution found :(\n");
             }
         }
     }
