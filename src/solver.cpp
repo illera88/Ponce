@@ -7,7 +7,7 @@
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
 std::vector<Input> solve_formula(ea_t pc, uint bound)
 {
-    // Triton records every condition as a path constraintx`, we only care about the symbolized ones
+    // Triton records every condition as a path constraint, we only care about the symbolized ones
     std::vector<const triton::engines::symbolic::PathConstraint*> symbolizedPathConstrains;
     for (auto &path_constrain : api.getPathConstraints()) {
         if (path_constrain.getTakenPredicate()->isSymbolized()) {
@@ -18,7 +18,7 @@ std::vector<Input> solve_formula(ea_t pc, uint bound)
     std::vector<Input> solutions;
     
     if (bound < symbolizedPathConstrains.size() - 1) {
-        msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, api.getPathConstraints().size());
+        msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, symbolizedPathConstrains.size());
         return solutions;
     }
 
@@ -39,13 +39,13 @@ std::vector<Input> solve_formula(ea_t pc, uint bound)
 
         // We add to the previous constraints the predicate for the taken branch 
         auto predicate = symbolizedPathConstrains[j]->getTakenPredicate();
+        previousConstraints = ast->land(previousConstraints, predicate);
     }
 
     // Then we use the predicate for the non taken path so we "solve" that condition.
     // We try to solve every non taken branch (more than one is possible under certain situations
     for (auto const& [taken, srcAddr, dstAddr, constraint] : symbolizedPathConstrains[bound]->getBranchConstraints()) {
         if (!taken) {
-            //auto final_expr = ast->land(std::vector({ ast->equal(ast->bv(1, 1), ast->bv(1, 1)), constraint }));
             // We concatenate the previous constraints for the taken path plus the non taken constrain of the user selected condition
             auto final_expr = ast->land(previousConstraints, constraint);
             if (cmdOptions.showExtraDebugInfo) {
