@@ -17,7 +17,7 @@ std::vector<Input> solve_formula(ea_t pc, uint bound)
 
     std::vector<Input> solutions;
     
-    if (bound < symbolizedPathConstrains.size() - 1) {
+    if (bound > symbolizedPathConstrains.size() - 1) {
         msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, symbolizedPathConstrains.size());
         return solutions;
     }

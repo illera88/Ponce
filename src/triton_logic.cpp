@@ -225,7 +225,7 @@ void triton_restart_engines()
     //	}
     //}
     ponce_runtime_status.runtimeTrigger.disable();
-    ponce_runtime_status.is_ponce_tracing_enabled = false;
+    ponce_runtime_status.is_ponce_tracing_enabled = false; // ToDo: Why using this instead of just ponce_runtime_status.runtimeTrigger
     ponce_runtime_status.tainted_functions_index = 0;
     //Reset instruction counter
     ponce_runtime_status.total_number_traced_ins = 0;

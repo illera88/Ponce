@@ -272,7 +272,8 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         //We get the ea form a global variable that is set in the update event
         //This is not very elegant but I don't know how to do it from here
         ea_t cur_ea = popup_menu_ea;
-        if (view_type == BWN_DISASM) {
+        // Don't let solve formulas if user is debugging natively
+        if (view_type == BWN_DISASM && !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { 
             std::set<triton::uint64> symbolic_adresses;
             unsigned int bound = 0;
             for (const auto& pc : api.getPathConstraints()) {
