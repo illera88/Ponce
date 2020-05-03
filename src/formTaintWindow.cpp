@@ -50,7 +50,7 @@ void fill_entryList() {
             item_t* list_entry = new item_t();
 
             list_entry->address = *iterator;
-            list_entry->isTainted = true;
+            list_entry->isTainted_or_symbolized = true;
             list_entry->value = api.getConcreteMemoryValue(*iterator);
 
             global_list->push_back(list_entry);
@@ -62,7 +62,7 @@ void fill_entryList() {
             auto reg = *(*iterator);
 
             list_entry->register_name = reg.getName();
-            list_entry->isTainted = true;
+            list_entry->isTainted_or_symbolized = true;
             list_entry->value = api.getConcreteRegisterValue(reg, false);
 
             global_list->push_back(list_entry);
@@ -71,14 +71,28 @@ void fill_entryList() {
     else if (cmdOptions.use_symbolic_engine) {
         auto symMemMap = api.getSymbolicMemory();
         auto symRegMap = api.getSymbolicRegisters();
-        api.getSymbolicEngine();
+
+        //for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
+        //    if (SymVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
+        //        auto mem = triton::arch::MemoryAccess(SymVar->getOrigin(), SymVar->getSize() / 8);
+        //        newinput.memOperand.push_back(mem);
+        //        api.setConcreteMemoryValue(mem, model_value); // Why
+        //    }
+        //    else if (SymVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
+        //        (triton::arch::register_e)SymVar->getOrigin()
+        //        auto reg = triton::arch::Register(*api.getCpuInstance(), );
+        //        newinput.regOperand.push_back(reg);
+        //        api.setConcreteRegisterValue(reg, model_value); // Why?
+        //        //ToDo: add concretizeRegister()??
+        //    }
+        //}
 
         //Iterate over symbolic memory
         for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
             auto symbExpr = iterator->second;
             item_t* list_entry = new item_t();
 
-            list_entry->isSymbolized = symbExpr->isSymbolized();
+            list_entry->isTainted_or_symbolized = symbExpr->isSymbolized();
             list_entry->id = symbExpr->getId();
             list_entry->address = iterator->first;
             list_entry->comment = symbExpr->getComment();
@@ -94,7 +108,7 @@ void fill_entryList() {
             auto reg = symbExpr->getOriginRegister();
             item_t* list_entry = new item_t();
 
-            list_entry->isSymbolized = symbExpr->isSymbolized();
+            list_entry->isTainted_or_symbolized = symbExpr->isSymbolized();
             list_entry->id = symbExpr->getId();
             list_entry->register_name = reg.getName();
             list_entry->comment = symbExpr->getComment();
@@ -110,7 +124,6 @@ struct entry_chooser_t : public chooser_t
 {
 protected:
     static const int widths_[];
-    static const char* const header_[];
 public:
 
     // this object must be allocated using `new`
@@ -148,27 +161,25 @@ public:
 };
 
 const int entry_chooser_t::widths_[] = { CHCOL_DEC | 8,
-CHCOL_HEX,
-5,
+10,
+7,
 16,
-6,
 6,
 16 };
 
 // column headers
-const char* const entry_chooser_t::header_[] =
+ char* header_[] =
 {
     "Id",
     "Address",
     "Reg Name",
     "Value",
-    "Is Tainted",
-    "Is Symbolized",
+    "",
     "Comment",
 };
 
 inline entry_chooser_t::entry_chooser_t()
-    : chooser_t(CH_CAN_REFRESH, qnumber(widths_), widths_, header_, "Taint/Symbolic Items") {
+    : chooser_t(CH_CAN_REFRESH, qnumber(widths_), widths_, header_, cmdOptions.use_tainting_engine? "Taint Items" :"Symbolic Items") {
     CASSERT(qnumber(widths_) == qnumber(header_));
 
     if (global_list == NULL) {
@@ -189,17 +200,23 @@ void idaapi entry_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_attrs_
     if (li->address == 0)
         cols[1].sprnt("%s", "");
     else
-        cols[1].sprnt("0x%x", li->address);
+        cols[1].sprnt(MEM_FORMAT, li->address);
     cols[2].sprnt("%s", li->register_name.c_str());
-    cols[3].sprnt("0x%x", li->value.convert_to<ea_t>());
-    cols[4].sprnt("%s", li->isTainted ? "true" : "false");
-    cols[5].sprnt("%s", li->isSymbolized ? "true" : "false");
+    cols[3].sprnt(MEM_FORMAT, li->value.convert_to<ea_t>()); // ToDo: this should not be converted
+    cols[4].sprnt("%s", li->isTainted_or_symbolized ? "x" : "");
     cols[6].sprnt("%s", li->comment.c_str());
 
 }
 
 
 void create_taint_window() {
+    //First we set the name depending if we are in tainting or symbolic mode
+    if (cmdOptions.use_tainting_engine) {
+        header_[4] = "Taint";
+    }
+    else if (cmdOptions.use_symbolic_engine) {
+        header_[4] = "Symbolic";
+    }
     // open the window
     entry_chooser_t* ch = new entry_chooser_t();
     ch->choose();

@@ -255,10 +255,11 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     }
                 }
             }
-        }
+        }       
 
         //Adding a separator
         attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
+
         break;
     }
     case ui_finish_populating_widget_popup:

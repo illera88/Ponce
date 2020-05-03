@@ -18,8 +18,7 @@ struct item_t
     triton::uint64 address = 0;
     std::string register_name;
     triton::uint512 value = 0;
-    bool isTainted = false;
-    bool isSymbolized = false;
+    bool isTainted_or_symbolized = false;
     std::string comment;
 };
 
@@ -47,7 +46,6 @@ static const char* header[] =
     "Reg Name",
     "Value",
     "Is Tainted",
-    "Is Symbolized",
     "Comment",
 };
 #endif

@@ -769,6 +769,8 @@ struct ah_ponce_banner_t : public action_handler_t
         auto custom_ponce_icon = load_custom_icon(ponce_icon, sizeof(ponce_icon), "png");
         update_action_icon(ctx->action, custom_ponce_icon);
 
+        update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Ponce Plugin (Taint mode)" : "Ponce Plugin (Symbolic mode)");
+
         return AST_ENABLE_ALWAYS;
     }
 };
