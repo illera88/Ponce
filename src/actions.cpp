@@ -425,11 +425,11 @@ struct ah_negate_and_inject_t : public action_handler_t
 };
 static ah_negate_and_inject_t ah_negate_and_inject;
 
-static const action_desc_t action_IDA_negate = ACTION_DESC_LITERAL(
+action_desc_t action_IDA_negate_and_inject = ACTION_DESC_LITERAL(
     "Ponce:negate_and_inject", // The action name. This acts like an ID and must be unique
-    "Negate & Inject", //The action text.
+    "Negate and Inject", //The action text.
     &ah_negate_and_inject, //The action handler.
-    "Ctrl+Shift+N", //Optional: the action shortcut
+    "", //Optional: the action shortcut
     "Negate the current condition and inject the solution into memory", //Optional: the action tooltip (available in menus/toolbar)
     58); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -737,10 +737,6 @@ struct ah_enable_disable_tracing_t : public action_handler_t
                 update_action_label(ctx->action, "Enable ponce tracing");
                 update_action_icon(ctx->action, 61);
             }
-
-            //So...we use this update event to update the ea, and then in the 
-            //ui_finish_populating_tform_popup to add the sunmenus for solve
-            popup_menu_ea = ctx->cur_ea;
             return AST_ENABLE;
         }
         return AST_DISABLE;
@@ -767,27 +763,37 @@ struct ah_solve_formula_sub_t : public action_handler_t
         if (cmdOptions.showDebugInfo)
             msg("[+] Solving condition at address " MEM_FORMAT " with bound %d\n", ctx->cur_ea, condition_index);
         auto solutions = solve_formula(ctx->cur_ea, condition_index);
-        if (!solutions.empty()) {
-            //print info
-        }
+        
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
-    {
-        return AST_ENABLE;
+    {      
+        if (ctx->widget_type == BWN_DISASM &&
+            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) {
+            // Don't let solve formulas if user is debugging natively
+            std::set<triton::uint64> symbolic_adresses;
+            unsigned int bound = 0;
+            for (const auto& pc : api.getPathConstraints()) {
+                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                    if (ctx->cur_ea == srcAddr) {
+                        return AST_ENABLE;
+                    }
+                }
+            }
+        }
+        return AST_DISABLE;
     }
 };
 ah_solve_formula_sub_t ah_solve_formula_sub;
 
 action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
     "Ponce:solve_formula_sub", // The action name. This acts like an ID and must be unique
-    "", //The action text.
+    "Solve formula", //The action text.
     &ah_solve_formula_sub, //The action handler.
     "", //Optional: the action shortcut
-    "The solves a specific conditions and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
+    "This solves a specific conditions and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
     13); //Optional: the action icon (shows when in menus/toolbars)
-
 
 struct ah_ponce_banner_t : public action_handler_t
 {
@@ -893,8 +899,9 @@ struct action action_list[] =
     { &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, false, true, "Symbolic/"},
     { &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, __END__ }, false, true, "Symbolic/" },
 
-    { &action_IDA_negate, { BWN_DISASM, __END__ }, false, true, "SMT/" },
-    { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, true, true, "SMT/" },
+    { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, false, true, "SMT/" },
+    { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, false, true, "SMT/" },
+    { &action_IDA_solve_formula_sub, { BWN_DISASM, __END__ }, false, true, "SMT/" },
 
     { &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/"},
     { &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },

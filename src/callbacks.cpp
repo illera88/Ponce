@@ -25,6 +25,7 @@
 #include <loader.hpp>
 #include <intel.hpp>
 #include <bytes.hpp>
+
 //Triton
 #include "triton/api.hpp"
 #include "triton/x86Specifications.hpp"
@@ -216,7 +217,6 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
     return 0;
 }
 
-
 //---------------------------------------------------------------------------
 // Callback for ui notifications
 ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
@@ -230,35 +230,32 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         TWidget* form = va_arg(va, TWidget*);
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
-
+        bool success;
         //Adding a separator
-        attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
+        success = attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
         /*Iterate over all the actions*/
-        for (int i = 0;; i++)
-        {
+        for (int i = 0;; i++) {
             if (action_list[i].action_decs == NULL)
                 break;
 
             /*Iterate over the view types of every action*/
-            for (int j = 0;; j++)
-            {
+            for (int j = 0;; j++) {
                 if (action_list[i].view_type[j] == __END__) {
                     break;
                 }
-                if (action_list[i].view_type[j] == view_type)
-                {
+                if (action_list[i].view_type[j] == view_type) {
                     //We only attach to the popup if the action makes sense with the current configuration
-                    if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic)
-                    {
-                        attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
+                    if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic) {
+                        success = attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
+                        msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success?"true":"false");
                     }
                 }
             }
         }       
 
         //Adding a separator
-        attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
+        success = attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
         break;
     }
@@ -269,41 +266,52 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         TWidget* form = va_arg(va, TWidget*);
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
+        ea_t cur_ea = get_screen_ea();
 
-        //We get the ea form a global variable that is set in the update event
-        //This is not very elegant but I don't know how to do it from here
-        ea_t cur_ea = popup_menu_ea;
-        // Don't let solve formulas if user is debugging natively
-        if (view_type == BWN_DISASM && !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { 
+        /* Here we fill the posible SMT branches to solve if there is multiple*/
+        if (view_type == BWN_DISASM && 
+            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { 
+            // Don't let solve formulas if user is debugging natively
             std::set<triton::uint64> symbolic_adresses;
             unsigned int bound = 0;
             for (const auto& pc : api.getPathConstraints()) {
-                if (pc.getTakenPredicate()->isSymbolized() && pc.isMultipleBranches()) {
-                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                        if (taken) {
-                            // If it's the taken branch
-                            if (cur_ea == srcAddr) { // if we right click on a symbolic branch                               
-                                char name[256];
-                                //We put the index at the beginning that we will use to get the bound from the action_name
-                                qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
-                                action_IDA_solve_formula_sub.name = name;
-                                char label[256];
-                                qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
-
-                                action_IDA_solve_formula_sub.label = label;
-                                bool success = register_action(action_IDA_solve_formula_sub);
-                                //If the submenu is already registered, we should unregister it and re-register it
-                                if (!success) {
-                                    unregister_action(action_IDA_solve_formula_sub.name);
-                                    success = register_action(action_IDA_solve_formula_sub);
-                                }
-                                success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
-                                break;
-                            }
+                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                    if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
+                        char name[256];
+                        char label[256];
+                        bool success;
+                        //We put the index at the beginning that we will use to get the bound from the action_name
+                        qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
+                        action_IDA_solve_formula_sub.name = name;                        
+                        qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
+                        action_IDA_solve_formula_sub.label = label;
+                        success = register_action(action_IDA_solve_formula_sub);
+                        //If the submenu is already registered, we should unregister it and re-register it
+                        if (!success) {
+                            unregister_action(action_IDA_solve_formula_sub.name);
+                            success = register_action(action_IDA_solve_formula_sub);
                         }
+                        success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
+
+
+
+                        qsnprintf(name, 255, "[%u]_Ponce:negate_formula_sub", bound);
+                        action_IDA_negate_and_inject.name = name;
+                        qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
+                        action_IDA_negate_and_inject.label = label;
+                        success = register_action(action_IDA_negate_and_inject);
+                        //If the submenu is already registered, we should unregister it and re-register it
+                        if (!success) {
+                            unregister_action(action_IDA_negate_and_inject.name);
+                            success = register_action(action_IDA_negate_and_inject);
+                        }
+                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT/Negate and Inject/", SETMENU_INS);
+
+
+                        break;
                     }
-                    bound++;
                 }
+                bound++;
             }
         }
         break;

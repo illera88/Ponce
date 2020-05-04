@@ -89,9 +89,6 @@ struct cmdOptionStruct {
 };
 extern struct cmdOptionStruct cmdOptions;
 
-//This variable stores the ea where the popup menu is being displayed, this is use to add the submenus for Solve condition
-extern ea_t popup_menu_ea;
-
 extern std::vector<std::string>* blacklkistedUserFunctions;
 
 extern void idaapi term(void);

@@ -87,7 +87,6 @@ std::vector<Input> solve_formula(ea_t pc, int bound)
                         auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
                         newinput.regOperand.push_back(reg);
                         api.setConcreteRegisterValue(reg, model_value); // Why?
-                        //ToDo: add concretizeRegister()??
                     }
                     //We represent the number different 
                     switch (symbVar->getSize())
