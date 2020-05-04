@@ -380,12 +380,10 @@ struct ah_negate_and_inject_t : public action_handler_t
                             break;
                         }
                     }
-
                     // Once found we first pop the last path constraint
                     api.popPathConstraint();
                     // And replace it for the found previously
                     api.pushPathConstraint(new_constraint);
-
                 }
                 else{
                     // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
@@ -806,7 +804,6 @@ struct ah_ponce_banner_t : public action_handler_t
         update_action_icon(ctx->action, custom_ponce_icon);
 
         update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Ponce Plugin (Taint mode)" : "Ponce Plugin (Symbolic mode)");
-
         return AST_ENABLE_ALWAYS;
     }
 };
@@ -833,17 +830,23 @@ struct ah_ponce_symbolize_reg_UI_t : public action_handler_t
         uint64 reg_value;
         get_reg_val(reg_name, &reg_value);
         register_info_t rinfo;
-        char value_str[16] = { 0 };
+        char value_str[128] = { 0 };
         char* type = "integer";
         if (get_dbg_reg_info(reg_name, &rinfo)) {
             if (rinfo.dtype == dt_byte)
                 qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
-            else if (rinfo.dtype == dt_byte)
-                qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
-            else if (rinfo.dtype == dt_byte)
-                qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
-            else if (rinfo.dtype == dt_byte)
-                qsnprintf(value_str, sizeof(value_str), "0x%02x", reg_value);
+            else if (rinfo.dtype == dt_word)
+                qsnprintf(value_str, sizeof(value_str), "0x%04x", reg_value);
+            else if (rinfo.dtype == dt_dword)
+                qsnprintf(value_str, sizeof(value_str), "0x%08x", reg_value);
+            else if (rinfo.dtype == dt_qword)
+                qsnprintf(value_str, sizeof(value_str), "0x%016x", reg_value);
+            else if (rinfo.dtype == dt_byte16)
+                qsnprintf(value_str, sizeof(value_str), "0x%032x", reg_value);
+            else if (rinfo.dtype == dt_byte32)
+                qsnprintf(value_str, sizeof(value_str), "0x%064x", reg_value);
+            else if (rinfo.dtype == dt_byte64)
+                qsnprintf(value_str, sizeof(value_str), "0x%0128x", reg_value);
             else
                 type = "float";
         }
