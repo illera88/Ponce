@@ -68,6 +68,11 @@ jobs:
                   cmake -S . -B build_x64_7.4 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.4 --config Release
                       
+            - name: Build Ponce x64 IDA 7.5
+              run: |
+                  unzip ../IDA_SDKs/idasdk75.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.5 --config Release
                   
             - uses: actions/upload-artifact@master
               with:
@@ -118,6 +123,17 @@ jobs:
               with:
                   name: Ponce_7.4.dylib
                   path: build_x64_7.4/libPonce.dylib
+            
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.5.dylib
+                  path: build_x64_7.5/libPonce64.dylib
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.5.dylib
+                  path: build_x64_7.5/libPonce.dylib
+                  
                   
     # release:
         # runs-on: ubuntu-latest

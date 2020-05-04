@@ -102,7 +102,11 @@ bool idaapi run(size_t)
 }
 
 //--------------------------------------------------------------------------
+#if IDA_SDK_VERSION >= 750
+size_t idaapi init(void)
+#else
 int idaapi init(void)
+#endif
 {
     char version[8];
     //We do some checks with the versions...
