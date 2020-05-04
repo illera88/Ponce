@@ -336,11 +336,9 @@ void set_SMT_solution(const Input& solution) {
     /*To set the memory types*/
     for (const auto& mem : solution.memOperand){
         auto concreteValue = api.getConcreteMemoryValue(mem, false);
-
         put_bytes((ea_t)mem.getAddress(), &concreteValue, mem.getSize());
         api.setConcreteMemoryValue(mem, concreteValue);
-        //auto a = concreteValue.convert_to<char*>();
-        auto b = concreteValue.convert_to<char>();
+
         if (cmdOptions.showExtraDebugInfo){
             char ascii_value[5] = { 0 };
             if(std::isprint(concreteValue.convert_to<unsigned char>()))
@@ -359,9 +357,6 @@ void set_SMT_solution(const Input& solution) {
         auto concreteRegValue = api.getConcreteRegisterValue(reg, false);
         set_reg_val(reg.getName().c_str(), concreteRegValue.convert_to<uint64>());
         api.setConcreteRegisterValue(reg, concreteRegValue);
-        if (cmdOptions.showExtraDebugInfo)
-            msg("[+] Registers %s set with value %s\n", reg.getName().c_str(), concreteRegValue.str().c_str());
-
 
         if (cmdOptions.showExtraDebugInfo) {
             char ascii_value[5] = { 0 };
