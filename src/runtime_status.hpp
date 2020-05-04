@@ -17,23 +17,6 @@
 #include <pro.h> 
 #include <idd.hpp>
 
-typedef struct PathConstraint {
-    triton::usize conditionRipId;
-    ea_t conditionAddr;
-    ea_t takenAddr;
-    ea_t notTakenAddr;
-    unsigned int bound;
-
-    PathConstraint(triton::usize conditionRipId, ea_t conditionAddr, ea_t takenAddr, ea_t notTakenAddr, unsigned int bound)
-    {
-        this->conditionRipId = conditionRipId;
-        this->conditionAddr = conditionAddr;
-        this->takenAddr = takenAddr;
-        this->notTakenAddr = notTakenAddr;
-        this->bound = bound;
-    }
-} PathConstraint;
-
 //This struct stores all the global variables used for the current state of the Ponce plugin during execution
 //The idea is restore this sctruct when we restore the snapshot
 typedef struct runtime_status_t
@@ -54,8 +37,6 @@ typedef struct runtime_status_t
     Trigger runtimeTrigger;
     //This is the last instruction executed by triton, we need to reference to reanalize if the user taint a register
     triton::arch::Instruction* last_triton_instruction;
-    //This variable stores all the path constraints executed before reach the current instruction
-    std::vector<PathConstraint*> myPathConstraints;
     //This variable is used to know how much time the tracing was working, and stop if this time is bigger than the user defined value
     std::uint64_t tracing_start_time = 0;
     thid_t analyzed_thread;

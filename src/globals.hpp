@@ -52,9 +52,6 @@ extern Snapshot snapshot;
 extern struct action action_list[];
 extern bool hooked;
 
-//We could use this if we want to keep all the instructions in memory
-//extern std::map<ea_t, std::list<triton::arch::Instruction *>> instructions_executed_map;
-
 //User options
 struct cmdOptionStruct {
     bool auto_init = false;

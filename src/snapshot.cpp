@@ -83,7 +83,7 @@ void Snapshot::takeSnapshot() {
     /* 5 - Save the Triton CPU state. It depens on the analyzed binary*/   
     switch (api.getArchitecture()) {
     case triton::arch::ARCH_X86_64:
-        this->cpu_x8664 = new triton::arch::x86::x8664Cpu(*reinterpret_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()));
+        this->cpu_x8664 = new triton::arch::x86::x8664Cpu(*dynamic_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()));
         break;
     case triton::arch::ARCH_X86:
         this->cpu_x86 = new triton::arch::x86::x86Cpu(*reinterpret_cast<triton::arch::x86::x86Cpu*>(api.getCpuInstance()));
@@ -183,6 +183,9 @@ void Snapshot::disableSnapshot(void) {
 /* Reset the snapshot engine.
 * Clear all backups for a new snapshot. */
 void Snapshot::resetEngine(void) {
+    if (!this->snapshotTaken)
+        return;
+
     this->memory.clear();
 
     //ToDo: We should delete this when this issue is fixed: https://github.com/JonathanSalwan/Triton/issues/385

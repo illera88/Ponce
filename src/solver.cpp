@@ -5,14 +5,12 @@
 #include <dbg.hpp>
 
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
-std::vector<Input> solve_formula(ea_t pc, uint bound)
+std::vector<Input> solve_formula(ea_t pc, int bound)
 {
     // Triton records every condition as a path constraint, we only care about the symbolized ones
     std::vector<const triton::engines::symbolic::PathConstraint*> symbolizedPathConstrains;
     for (auto &path_constrain : api.getPathConstraints()) {
-        if (path_constrain.getTakenPredicate()->isSymbolized()) {
-            symbolizedPathConstrains.push_back(&path_constrain);
-        }
+        symbolizedPathConstrains.push_back(&path_constrain);
     }
 
     std::vector<Input> solutions;
@@ -327,32 +325,57 @@ void negate_flag_condition(triton::arch::Instruction* triton_instruction)
         set_reg_val("SF", sf);
         break;
     }
+    default:
+        msg("[!] We cannot negate %s instruction\n", triton_instruction->getDisassembly().c_str());
     }
 }
 
 
 /*We set the memory to the results we got and do the analysis from there*/
-void set_SMT_solution(Input input_ptr) {
+void set_SMT_solution(const Input& solution) {
     /*To set the memory types*/
-    for (auto it = input_ptr.memOperand.begin(); it != input_ptr.memOperand.end(); it++)
-    {
-        auto concreteValue = api.getConcreteMemoryValue(*it, false);
-        //auto concreteValue=it->getConcreteValue();
-        put_bytes((ea_t)it->getAddress(), &concreteValue, it->getSize());
+    for (const auto& mem : solution.memOperand){
+        auto concreteValue = api.getConcreteMemoryValue(mem, false);
 
-        api.setConcreteMemoryValue(*it, concreteValue);
-        //We concretize the memory we set
-        api.concretizeMemory(*it);
+        put_bytes((ea_t)mem.getAddress(), &concreteValue, mem.getSize());
+        api.setConcreteMemoryValue(mem, concreteValue);
+        //auto a = concreteValue.convert_to<char*>();
+        auto b = concreteValue.convert_to<char>();
+        if (cmdOptions.showExtraDebugInfo){
+            char ascii_value[5] = { 0 };
+            if(std::isprint(concreteValue.convert_to<unsigned char>()))
+                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", concreteValue.convert_to<char>());
+            std::stringstream stream;
+            stream << std::hex << concreteValue;
+            msg("[+] Memory " MEM_FORMAT " set with value 0x%s %s\n", 
+                mem.getAddress(), 
+                stream.str().c_str(), 
+                std::isprint(concreteValue.convert_to<unsigned char>())? ascii_value :"");
+        }
     }
 
     /*To set the register types*/
-    for (auto it = input_ptr.regOperand.begin(); it != input_ptr.regOperand.end(); it++)
-    {
-        auto concreteRegValue = api.getConcreteRegisterValue(*it, false);
-        set_reg_val(it->getName().c_str(), concreteRegValue.convert_to<uint64>());
-        api.setConcreteRegisterValue(*it, concreteRegValue);
-        //We concretize the register we set
-        api.concretizeRegister(*it);
+    for (const auto& reg : solution.regOperand) {
+        auto concreteRegValue = api.getConcreteRegisterValue(reg, false);
+        set_reg_val(reg.getName().c_str(), concreteRegValue.convert_to<uint64>());
+        api.setConcreteRegisterValue(reg, concreteRegValue);
+        if (cmdOptions.showExtraDebugInfo)
+            msg("[+] Registers %s set with value %s\n", reg.getName().c_str(), concreteRegValue.str().c_str());
+
+
+        if (cmdOptions.showExtraDebugInfo) {
+            char ascii_value[5] = { 0 };
+            if (std::isprint(concreteRegValue.convert_to<unsigned char>()))
+                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", concreteRegValue.convert_to<char>());
+            std::stringstream stream;
+            stream << std::hex << concreteRegValue;
+
+            msg("[+] Registers %s set with value 0x%s %s\n", 
+                reg.getName().c_str(), 
+                stream.str().c_str(),
+                std::isprint(concreteRegValue.convert_to<unsigned char>()) ? ascii_value : "");
+        }
+
     }
 
     if (cmdOptions.showDebugInfo)

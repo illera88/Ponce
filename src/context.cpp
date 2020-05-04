@@ -74,7 +74,17 @@ void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAcce
     }
 
     if (cmdOptions.showExtraDebugInfo) {
-        msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u. Value: \n", had_it ? "already" : "not", (ea_t)mem.getAddress(), mem.getSize());
+        char ascii_value[5] = { 0 };
+        if (std::isprint(IDA_memValue.convert_to<unsigned char>()))
+            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", IDA_memValue.convert_to<char>());
+        std::stringstream stream;
+        stream << std::nouppercase << std::hex << IDA_memValue;
+        msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u. Value: 0x%s %s\n", 
+            had_it ? "already" : "not", 
+            (ea_t)mem.getAddress(), 
+            mem.getSize(), 
+            stream.str().c_str(),
+            std::isprint(IDA_memValue.convert_to<unsigned char>()) ? ascii_value : "");
     }
 }
 
@@ -112,9 +122,19 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
         api.setConcreteRegisterValue(reg, IDA_regValue);
         had_it = false;
     }
-
+ 
     if (cmdOptions.showExtraDebugInfo) {
-        msg("[+] Triton asking IDA for %s syncronized register: %s. IDA returns value: " MEM_FORMAT "\n", had_it ? "already" : "not", reg.getName().c_str(), IDA_regValue.convert_to<ea_t>());
+        char ascii_value[5] = { 0 };
+        if (std::isprint(IDA_regValue.convert_to<unsigned char>()))
+            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", IDA_regValue.convert_to<char>());
+        
+        std::stringstream stream;
+        stream << std::nouppercase << std::hex << IDA_regValue;
+        msg("[+] Triton asking IDA for %s syncronized register: %s. IDA returns value: 0x%s %s\n",
+            had_it ? "already" : "not",
+            reg.getName().c_str(),
+            stream.str().c_str(),
+            std::isprint(IDA_regValue.convert_to<unsigned char>()) ? ascii_value : "");
     }
 }
 

@@ -28,6 +28,6 @@ public:
     }
 };
 
-void set_SMT_solution(Input input_ptr);
+void set_SMT_solution(const Input& input_ptr);
 void negate_flag_condition(triton::arch::Instruction* triton_instruction);
-std::vector<Input> solve_formula(ea_t pc, uint bound);
+std::vector<Input> solve_formula(ea_t pc, int bound);

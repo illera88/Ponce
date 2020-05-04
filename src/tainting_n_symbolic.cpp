@@ -214,9 +214,9 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
     if (regs_controlled.str().size() > 0)
     {
         if (cmdOptions.use_tainting_engine)
-            comment << "Tainted regs: " << regs_controlled.str();
+            comment << "Tainted regs: " << regs_controlled.str() << "\n";
         else
-            comment << "Symbolized regs: " << regs_controlled.str();
+            comment << "Symbolic regs: " << regs_controlled.str() << "\n";
     }
     auto accesses = tritonInst->getLoadAccess();
     for (auto it = accesses.begin(); it != accesses.end(); it++)
@@ -233,7 +233,7 @@ void get_controlled_operands_and_add_comment(triton::arch::Instruction* tritonIn
         if (cmdOptions.use_tainting_engine)
             comment << "Tainted memory: " << mems_controlled.str();
         else
-            comment << "Symbolized memory: " << mems_controlled.str();
+            comment << "Symbolic memory: " << mems_controlled.str();
     }
 
     //We set the comment

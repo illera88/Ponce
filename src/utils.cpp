@@ -491,7 +491,6 @@ void symbolize_all_memory(ea_t address, ea_t size)
     // ToDo: add a proper comment on each symbolized memory
     for (unsigned int i = 0; i < size; i++)
     {
-        //api.symbolizeMemory(triton::arch::MemoryAccess(address+i, 1), comment);
         auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
         auto var_name = symVar->getName();
         ponce_set_cmt(address + i, var_name.c_str(), true);
@@ -517,18 +516,24 @@ engine is restarted with another run. We do this to prevent polluting the IDA UI
 void delete_ponce_comments() {
     unsigned int count_comments = 0;
     unsigned int count_colors = 0;
-    for (auto& comment : ponce_comments) {
-        if (comment.second == 1) { //comment
-            set_cmt(comment.first, "", false);
+    ea_t snapshot_address = 0;
+    for (auto& [address, type]: ponce_comments) {
+        if (type == 1) { //comment
+            set_cmt(address, "", false);
             count_comments++;
         }
-        else if (comment.second == 2) { //extra comment
-            delete_extra_cmts(comment.first, E_NEXT);
+        else if (type == 2) { //extra comment
+            delete_extra_cmts(address, E_NEXT);
             count_comments++;
         }
-        else if (comment.second == 3) { //color
-            del_item_color(comment.first);
+        else if (type == 3) { //color
+            del_item_color(address);
             count_colors++;
+        }
+        else if (type == 4) { //snapshot comment
+            if (snapshot.exists()) 
+                snapshot_address = address;
+            set_cmt(address, "", false);
         }
         else {
             assert(0);
@@ -536,6 +541,11 @@ void delete_ponce_comments() {
     }
     ponce_comments.clear();
     msg("[+] Deleted %u comments and %u colored addresses\n", count_comments, count_colors);
+
+    // If snapshot exists lets put it back
+    if (snapshot_address) {
+        set_cmt(snapshot_address, "Snapshot taken here", false);
+    }
 }
 
 
@@ -543,6 +553,5 @@ void delete_ponce_comments() {
 bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble) {
     ponce_comments.push_back(std::make_pair(ea, 1));
 
-    return set_cmt(ea, comm, rptble);
+    return append_cmt(ea, comm, rptble);
 }
-

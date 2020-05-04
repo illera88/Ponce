@@ -71,7 +71,8 @@ void fill_entryList() {
     else if (cmdOptions.use_symbolic_engine) {
         auto symMemMap = api.getSymbolicMemory();
         auto symRegMap = api.getSymbolicRegisters();
-
+        auto ctx = api.getAstContext();
+        
         //for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
         //    if (SymVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
         //        auto mem = triton::arch::MemoryAccess(SymVar->getOrigin(), SymVar->getSize() / 8);
@@ -91,6 +92,8 @@ void fill_entryList() {
         for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
             auto symbExpr = iterator->second;
             item_t* list_entry = new item_t();
+
+            auto variables = triton::ast::search(symbExpr->getAst(), triton::ast::ast_e::VARIABLE_NODE);
 
             list_entry->isTainted_or_symbolized = symbExpr->isSymbolized();
             list_entry->id = symbExpr->getId();

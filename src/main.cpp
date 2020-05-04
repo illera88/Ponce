@@ -154,6 +154,8 @@ int idaapi init(void)
 //--------------------------------------------------------------------------
 void idaapi term(void)
 {
+    // remove snapshot if exists
+    snapshot.resetEngine();
     // We want to delete Ponce comments and colours before terminating
     delete_ponce_comments();
     // Unhook notifications

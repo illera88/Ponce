@@ -100,8 +100,7 @@ int tritonize(ea_t pc, thid_t threadID)
     if (cmdOptions.addCommentsSymbolicExpresions)
         add_symbolic_expressions(tritonInst, pc);
 
-    if (cmdOptions.paintExecutedInstructions)
-    {
+    if (cmdOptions.paintExecutedInstructions) {
         //We only paint the executed instructions if they don't have a previous color
         if (get_item_color(pc) == 0xffffffff) {
             set_item_color(pc, cmdOptions.color_executed_instruction);
@@ -110,8 +109,7 @@ int tritonize(ea_t pc, thid_t threadID)
     }
 
     //ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
-    if (tritonInst->isTainted() || tritonInst->isSymbolized())
-    {
+    if (tritonInst->isTainted() || tritonInst->isSymbolized()) {
         ponce_runtime_status.total_number_symbolic_ins++;
 
         if (cmdOptions.showDebugInfo) {
@@ -121,8 +119,8 @@ int tritonize(ea_t pc, thid_t threadID)
             rename_tainted_function(pc);
         // Check if it is a conditional jump
         // We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
-        if (tritonInst->isBranch())
-        {
+        if (tritonInst->isBranch()) {
+            ponce_set_cmt(pc, "Symbolic branch, make your choice!", false);
             ponce_runtime_status.total_number_symbolic_conditions++;
             if (cmdOptions.use_symbolic_engine)
                 set_item_color(pc, cmdOptions.color_tainted_condition);
@@ -132,26 +130,14 @@ int tritonize(ea_t pc, thid_t threadID)
         }
     }
 
-    if (tritonInst->isBranch() && tritonInst->isSymbolized())
-    {
-
-
+    if (tritonInst->isBranch() && tritonInst->isSymbolized()) {
         ea_t addr1 = (ea_t)tritonInst->getNextAddress();
         ea_t addr2 = (ea_t)tritonInst->operands[0].getImmediate().getValue();
         if (cmdOptions.showDebugInfo) {
             msg("[+] Branch symbolized detected at " MEM_FORMAT ": " MEM_FORMAT " or " MEM_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
         }
-       /* triton::usize ripId = 0;
-        ripId = api.getSymbolicRegister(REG_XIP)->getId();
-
-        if (tritonInst->isConditionTaken())
-            ponce_runtime_status.myPathConstraints.push_back(new PathConstraint(ripId, pc, addr2, addr1, ponce_runtime_status.myPathConstraints.size()));
-        else
-            ponce_runtime_status.myPathConstraints.push_back(new PathConstraint(ripId, pc, addr1, addr2, ponce_runtime_status.myPathConstraints.size()));*/
     }
     return 0;
-    //We add the instruction to the map, so we can use it later to negate conditions, view SE, slicing, etc..
-    //instructions_executed_map[pc].push_back(tritonInst);
 }
 
 bool ponce_set_triton_architecture() {
@@ -204,8 +190,9 @@ void triton_restart_engines()
     }
 
     // This optimization is veeery good for the size of the formulas
-    //api.enableSymbolicOptimization(triton::engines::symbolic:: ALIGNED_MEMORY, true);
-    //api.setMode(triton::modes::ALIGNED_MEMORY, true);
+    api.setMode(triton::modes::ALIGNED_MEMORY, true);
+    // We don't need to track non symbolic path constraints
+    api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
 
     // We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
     //if (cmdOptions.only_on_optimization)
@@ -234,7 +221,6 @@ void triton_restart_engines()
     ponce_runtime_status.current_trace_counter = 0;
     breakpoint_pending_actions.clear();
     set_automatic_taint_n_simbolic();
-    ponce_runtime_status.myPathConstraints.clear();
 }
 
 

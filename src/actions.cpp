@@ -356,26 +356,56 @@ struct ah_negate_and_inject_t : public action_handler_t
             ea_t pc = action_activation_ctx->cur_ea;
             msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
-            //We want to negate the last path contraint at the current address, so we use as a bound the size of the path constrains
-            unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto solutions = solve_formula(pc, bound);
-            //if (input_ptr != NULL)
-            //{
-            //    //We need to modify the last path constrain
-            //    auto temp = ponce_runtime_status.myPathConstraints[bound]->notTakenAddr;
-            //    ponce_runtime_status.myPathConstraints[bound]->notTakenAddr = ponce_runtime_status.myPathConstraints[bound]->takenAddr;
-            //    ponce_runtime_status.myPathConstraints[bound]->takenAddr = temp;
-            //    //We need to modify the condition flags to negate the condition
-            //    if (ponce_runtime_status.last_triton_instruction->getAddress() == pc)
-            //    {
-            //        negate_flag_condition(ponce_runtime_status.last_triton_instruction);
-            //    }
-            //    // We set the results obtained from solve_formula
-            //    set_SMT_results(input_ptr);
+            /* We get the bound we are at by iterating over the pathConstraints*/
+            int bound = -1;
+            for (auto& path_constraint : api.getPathConstraints()) {
+                bound++;
+                auto constraint_address = std::get<1>(path_constraint.getBranchConstraints()[0]);
+                if (pc == constraint_address) {
+                    break;
+                }
+            }
+            assert(bound != -1); // impossible
 
-            //    //delete it after setting the proper results
-            //    delete input_ptr;
-            //}
+            auto solutions = solve_formula(pc, bound);
+            Input* chosen_solution;
+            if (solutions.size() > 0) {
+                if (solutions.size() == 1) {
+                    chosen_solution = &solutions[0];
+                    triton::ast::SharedAbstractNode new_constraint;
+                    for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                        // Let's look for the constraint we have force to take wich is the a priori not taken one
+                        if (!taken) {
+                            new_constraint = constraint;
+                            break;
+                        }
+                    }
+
+                    // Once found we first pop the last path constraint
+                    api.popPathConstraint();
+                    // And replace it for the found previously
+                    api.pushPathConstraint(new_constraint);
+
+                }
+                else{
+                    // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
+                    for (const auto& solution : solutions) { 
+                        // ask the user where he wants to go in popup or even better in the contextual menu
+                        // chosen_solution = &solutions[0];
+                        //We need to modify the last path constrain from api.getPathConstraints()
+                        for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                            if (!taken) {
+                            
+                            }
+                        }
+                    }
+                }
+
+                // We negate necesary flags to go over the other branch
+                negate_flag_condition(ponce_runtime_status.last_triton_instruction);
+
+                set_SMT_solution(*chosen_solution);
+            }
         }
         return 0;
     }
@@ -386,7 +416,10 @@ struct ah_negate_and_inject_t : public action_handler_t
         if (is_debugger_on())
         {
             //If we are in runtime and it is the last instruction we test if it is symbolize
-            if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
+            if (ponce_runtime_status.last_triton_instruction != NULL && 
+                ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && 
+                ponce_runtime_status.last_triton_instruction->isBranch() && 
+                ponce_runtime_status.last_triton_instruction->isSymbolized())
                 return AST_ENABLE;
         }
         return AST_DISABLE;
@@ -415,8 +448,8 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
             //We need to get the instruction associated with this address, we look for the addres in the map
             //We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
 
-            unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto solutions = solve_formula(pc, bound);
+            /*unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
+            auto solutions = solve_formula(pc, bound);*/
             //if (solutions != NULL)
             //{
             //    //Restore the snapshot
@@ -464,6 +497,9 @@ struct ah_create_snapshot_t : public action_handler_t
             return 0;
         }
         ponce_set_cmt(xip, "Snapshot taken here", false);
+        set_item_color(xip, 0x00FFFF);
+        ponce_comments.push_back(std::make_pair(xip, 3));
+
         snapshot.takeSnapshot();
         snapshot.setAddress(xip); // We will use this address later to delete the comment
         msg("Snapshot Taken\n");
