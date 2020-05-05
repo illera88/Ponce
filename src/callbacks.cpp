@@ -9,6 +9,8 @@
 */
 
 #include <list>
+#include <locale> 
+
 // Ponce
 #include "callbacks.hpp"
 #include "globals.hpp"
@@ -234,38 +236,12 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
         // Set the name for the action depending if using tainting or symbolic engine
         if (cmdOptions.use_tainting_engine) {
-            update_action_label(action_list[2].action_decs->name, TAINT_REG);
             action_list[2].menu_path = TAINT;
-            action_IDA_taint_symbolize_register.label = TAINT_REG;
-            action_IDA_taint_symbolize_register.tooltip = COMMENT_TAINT_REG;
-
-            update_action_label(action_list[3].action_decs->name, TAINT_MEM);
             action_list[3].menu_path = TAINT;
-            action_IDA_taint_symbolize_memory.label = TAINT_MEM;
-            action_IDA_taint_symbolize_memory.tooltip = COMMENT_TAINT_MEM;
-#if IDA_SDK_VERSION >= 740
-            update_action_label(action_list[10].action_decs->name, TAINT_REG);
-            action_list[10].menu_path = TAINT;
-            action_IDA_ponce_symbolize_reg.label = TAINT_REG;
-            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_TAINT_REG;
-#endif
         }
         else {
-            update_action_label(action_list[2].action_decs->name, SYMBOLICE_REG);
             action_list[2].menu_path = SYMBOLIC;
-            action_IDA_taint_symbolize_register.label = SYMBOLICE_REG;
-            action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
-
-            update_action_label(action_list[3].action_decs->name, SYMBOLICE_MEM);
             action_list[3].menu_path = SYMBOLIC;
-            action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
-            action_IDA_taint_symbolize_memory.label = SYMBOLICE_MEM;
-#if IDA_SDK_VERSION >= 740
-            update_action_label(action_list[10].action_decs->name, SYMBOLICE_REG);
-            action_list[10].menu_path = SYMBOLIC;
-            action_IDA_ponce_symbolize_reg.label = SYMBOLICE_REG;
-            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_SYMB_REG;
-#endif          
         }
 
         //Adding a separator
@@ -306,6 +282,28 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
         ea_t cur_ea = get_screen_ea();
+
+
+        /* This code will craft the menu to chose the register at the dissasembly view to 
+        taint/symbolize to have the name of the selected register */
+       /* if (view_type == BWN_DISASM){
+            qstring selected;
+            uint32 flags;
+            if (get_highlight(&selected, get_current_viewer(), &flags)) {
+                if (auto reg = str_to_register(selected)) {
+                    char label[50] = { 0 };
+                    qsnprintf(label, sizeof(label), "%s %s register",cmdOptions.use_tainting_engine ? "Taint": "Symbolize", qstrupr((char*)selected.c_str()));
+
+                    bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
+                }
+            }
+        }*/
+
+        /* This code does the same of the one before but */
+        //if (view_type == BWN_CPUREGS && is_debugger_on()) {
+        //    int a = 1;
+        //    //update_action_label(action_IDA_ponce_symbolize_reg.name, )
+        //}
 
         /* Here we fill the posible SMT branches to solve if there is multiple*/
         if (view_type == BWN_DISASM && 

@@ -49,7 +49,7 @@ This is using the triton current architecture so it is more generic.*/
 const triton::arch::Register* str_to_register(qstring register_name)
 {
     for (const auto& [key, value] : api.getAllRegisters())
-        if (strcmp(value.getName().c_str(), register_name.c_str()) == 0)
+        if (stricmp(value.getName().c_str(), register_name.c_str()) == 0)
             return &api.getRegister(key);
 
     return nullptr;
