@@ -115,12 +115,12 @@ struct ah_taint_symbolize_register_t : public action_handler_t
         return AST_DISABLE;
     }
 };
-static ah_taint_symbolize_register_t ah_taint_symbolice_register;
+static ah_taint_symbolize_register_t ah_taint_symbolize_register;
 
 action_desc_t action_IDA_taint_symbolize_register = ACTION_DESC_LITERAL(
     "Ponce:taint_symbolize_register", // The action name. This acts like an ID and must be unique
     "nothing", //The action text.
-    &ah_taint_symbolice_register, //The action handler.
+    &ah_taint_symbolize_register, //The action handler.
     "Ctrl+Shift+R", //Optional: the action shortcut
     "Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
     50); //Optional: the action icon (shows when in menus/toolbars)

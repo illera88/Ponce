@@ -84,7 +84,7 @@ void prompt_conf_window(void) {
         NOTE: Parenthesis are mandatory or it won't work!*/
         chkgroup1 = (cmdOptions.auto_init ? 1 : 0) | (cmdOptions.showDebugInfo ? 2 : 0) | (cmdOptions.showExtraDebugInfo ? 4 : 0);
         chkgroup2 = (cmdOptions.taintArgv ? 1 : 0) | (cmdOptions.taintEndOfString ? 2 : 0) | (cmdOptions.taintArgv0 ? 4 : 0) | (cmdOptions.taintArgc ? 8 : 0) | (cmdOptions.taintRecv ? 16 : 0) | (cmdOptions.taintFread ? 32 : 0) | (cmdOptions.only_on_optimization ? 64 : 0) | (cmdOptions.manageSymbolicIndexing ? 128 : 0);
-        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
+        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentssymbolizexpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
         symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
     }
@@ -134,7 +134,7 @@ void prompt_conf_window(void) {
         //
         cmdOptions.addCommentsControlledOperands = chkgroup3 & 1 ? 1 : 0;
         cmdOptions.RenameTaintedFunctionNames = chkgroup3 & 2 ? 1 : 0;
-        cmdOptions.addCommentsSymbolicExpresions = chkgroup3 & 4 ? 1 : 0;
+        cmdOptions.addCommentssymbolizexpresions = chkgroup3 & 4 ? 1 : 0;
         cmdOptions.paintExecutedInstructions = chkgroup3 & 8 ? 1 : 0;
 
         if (cmdOptions.blacklist_path[0] != '\0') {
@@ -168,7 +168,7 @@ void prompt_conf_window(void) {
                 "manageSymbolicIndexing: %s\n"
                 "addCommentsControlledOperands: %s\n"
                 "RenameTaintedFunctionNames: %s\n"
-                "addCommentsSymbolicExpresions: %s\n"
+                "addCommentssymbolizexpresions: %s\n"
                 "paintExecutedInstructions: %s\n"
                 "color_tainted: %x\n"
                 "color_tainted_execution: %x\n"
@@ -189,7 +189,7 @@ void prompt_conf_window(void) {
                 cmdOptions.manageSymbolicIndexing ? "true" : "false",
                 cmdOptions.addCommentsControlledOperands ? "true" : "false",
                 cmdOptions.RenameTaintedFunctionNames ? "true" : "false",
-                cmdOptions.addCommentsSymbolicExpresions ? "true" : "false",
+                cmdOptions.addCommentssymbolizexpresions ? "true" : "false",
                 cmdOptions.paintExecutedInstructions ? "true" : "false",
                 cmdOptions.color_tainted,
                 cmdOptions.color_executed_instruction,

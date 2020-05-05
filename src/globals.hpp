@@ -80,7 +80,7 @@ struct cmdOptionStruct {
 
     bool addCommentsControlledOperands = false;
     bool RenameTaintedFunctionNames = false;
-    bool addCommentsSymbolicExpresions = false;
+    bool addCommentssymbolizexpresions = false;
     bool paintExecutedInstructions = false;
 
     char blacklist_path[QMAXPATH];

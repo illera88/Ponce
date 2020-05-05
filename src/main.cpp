@@ -82,12 +82,12 @@ bool idaapi run(size_t)
         }
         else {
             action_list[2].menu_path = SYMBOLIC;
-            action_IDA_taint_symbolize_register.label = SYMBOLICE_REG;
+            action_IDA_taint_symbolize_register.label = symbolize_REG;
             action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
 
             action_list[3].menu_path = SYMBOLIC;
             action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
-            action_IDA_taint_symbolize_memory.label = SYMBOLICE_MEM;     
+            action_IDA_taint_symbolize_memory.label = symbolize_MEM;     
         }
 
         //Loop to register all the actions used in the menus

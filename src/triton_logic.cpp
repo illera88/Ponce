@@ -97,7 +97,7 @@ int tritonize(ea_t pc, thid_t threadID)
     if (cmdOptions.addCommentsControlledOperands)
         get_controlled_operands_and_add_comment(tritonInst, pc);
 
-    if (cmdOptions.addCommentsSymbolicExpresions)
+    if (cmdOptions.addCommentssymbolizexpresions)
         add_symbolic_expressions(tritonInst, pc);
 
     if (cmdOptions.paintExecutedInstructions) {

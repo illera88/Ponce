@@ -20,8 +20,8 @@ extern action_desc_t action_IDA_taint_symbolize_memory;
 extern action_desc_t action_IDA_ponce_banner;
 
 #define SYMBOLIC "Symbolic/"
-#define SYMBOLICE_REG "Symbolice Register"
-#define SYMBOLICE_MEM "Symbolice Memory"
+#define symbolize_REG "Symbolize Register"
+#define symbolize_MEM "Symbolize Memory"
 #define TAINT "Taint/"
 #define TAINT_REG "Taint Register"
 #define TAINT_MEM "Taint Memory"
