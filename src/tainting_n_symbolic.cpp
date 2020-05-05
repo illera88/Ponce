@@ -168,11 +168,7 @@ void set_automatic_taint_n_simbolic()
             }
         }
         if (cmdOptions.showDebugInfo) {
-            if (inf_is_64bit())
-                msg("[+] main function found at %#llx\n", main_function);
-            else
-                msg("[+] main function found at %#x\n", main_function);
-
+            msg("[+] main function found at " MEM_FORMAT "\n", main_function);
         }
         //Then we should check if there is already a breakpoint
         bpt_t breakpoint;

@@ -231,6 +231,43 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
         bool success;
+
+        // Set the name for the action depending if using tainting or symbolic engine
+        if (cmdOptions.use_tainting_engine) {
+            update_action_label(action_list[2].action_decs->name, TAINT_REG);
+            action_list[2].menu_path = TAINT;
+            action_IDA_taint_symbolize_register.label = TAINT_REG;
+            action_IDA_taint_symbolize_register.tooltip = COMMENT_TAINT_REG;
+
+            update_action_label(action_list[3].action_decs->name, TAINT_MEM);
+            action_list[3].menu_path = TAINT;
+            action_IDA_taint_symbolize_memory.label = TAINT_MEM;
+            action_IDA_taint_symbolize_memory.tooltip = COMMENT_TAINT_MEM;
+#if IDA_SDK_VERSION >= 740
+            update_action_label(action_list[10].action_decs->name, TAINT_REG);
+            action_list[10].menu_path = TAINT;
+            action_IDA_ponce_symbolize_reg.label = TAINT_REG;
+            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_TAINT_REG;
+#endif
+        }
+        else {
+            update_action_label(action_list[2].action_decs->name, SYMBOLICE_REG);
+            action_list[2].menu_path = SYMBOLIC;
+            action_IDA_taint_symbolize_register.label = SYMBOLICE_REG;
+            action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
+
+            update_action_label(action_list[3].action_decs->name, SYMBOLICE_MEM);
+            action_list[3].menu_path = SYMBOLIC;
+            action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
+            action_IDA_taint_symbolize_memory.label = SYMBOLICE_MEM;
+#if IDA_SDK_VERSION >= 740
+            update_action_label(action_list[10].action_decs->name, SYMBOLICE_REG);
+            action_list[10].menu_path = SYMBOLIC;
+            action_IDA_ponce_symbolize_reg.label = SYMBOLICE_REG;
+            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_SYMB_REG;
+#endif          
+        }
+
         //Adding a separator
         success = attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
@@ -239,17 +276,19 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
             if (action_list[i].action_decs == NULL)
                 break;
 
+            if (cmdOptions.use_tainting_engine && strcmp(action_list[i].menu_path, "SMT Solver/") == 0) {
+                /* Do not populate SMT Solver options if we use the tainting engine*/
+                continue;
+            }
+
             /*Iterate over the view types of every action*/
             for (int j = 0;; j++) {
                 if (action_list[i].view_type[j] == __END__) {
                     break;
                 }
-                if (action_list[i].view_type[j] == view_type) {
-                    //We only attach to the popup if the action makes sense with the current configuration
-                    if (cmdOptions.use_tainting_engine && action_list[i].enable_taint || cmdOptions.use_symbolic_engine && action_list[i].enable_symbolic) {
-                        success = attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
-                        msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success?"true":"false");
-                    }
+                if (action_list[i].view_type[j] == view_type) {  
+                    success = attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
+                    msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success ? "true" : "false");
                 }
             }
         }       
@@ -291,7 +330,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                             unregister_action(action_IDA_solve_formula_sub.name);
                             success = register_action(action_IDA_solve_formula_sub);
                         }
-                        success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT/Solve formula/", SETMENU_INS);
+                        success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT Solver/Solve formula/", SETMENU_INS);
 
 
 
@@ -305,7 +344,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                             unregister_action(action_IDA_negate_and_inject.name);
                             success = register_action(action_IDA_negate_and_inject);
                         }
-                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT/Negate and Inject/", SETMENU_INS);
+                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT Solver/Negate and Inject/", SETMENU_INS);
 
 
                         break;

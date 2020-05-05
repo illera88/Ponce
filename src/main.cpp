@@ -23,6 +23,7 @@
 #include "utils.hpp"
 #include "formConfiguration.hpp"
 #include "triton_logic.hpp"
+#include "actions.hpp"
 
 //Triton
 #include <triton/api.hpp>
@@ -50,13 +51,11 @@
 bool idaapi run(size_t)
 {
     /*We shouldn't prompt for it if the user has a saved configuration*/
-    if (!load_options(&cmdOptions))
-    {
+    if (!load_options(&cmdOptions)) {
         prompt_conf_window();
     }
 
-    if (!hooked)
-    {
+    if (!hooked) {
         //Registering action for the Ponce config
         register_action(action_IDA_show_config);
         attach_action_to_menu("Edit/Ponce/", action_IDA_show_config.name, SETMENU_APP);
@@ -70,27 +69,54 @@ bool idaapi run(size_t)
         if (!ponce_set_triton_architecture()) {
             return false;
         }
+
+        // Set the name for the action depending if using tainting or symbolic engine
+        if (cmdOptions.use_tainting_engine) {
+            action_list[2].menu_path = TAINT;
+            action_IDA_taint_symbolize_register.label = TAINT_REG;
+            action_IDA_taint_symbolize_register.tooltip = COMMENT_TAINT_REG;
+
+            action_list[3].menu_path = TAINT;
+            action_IDA_taint_symbolize_memory.label = TAINT_MEM;
+            action_IDA_taint_symbolize_memory.tooltip = COMMENT_TAINT_MEM;
+#if IDA_SDK_VERSION >= 740
+            action_list[10].menu_path = TAINT;
+            action_IDA_ponce_symbolize_reg.label = TAINT_REG;
+            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_TAINT_REG;
+#endif
+        }
+        else {
+            action_list[2].menu_path = SYMBOLIC;
+            action_IDA_taint_symbolize_register.label = SYMBOLICE_REG;
+            action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
+
+            action_list[3].menu_path = SYMBOLIC;
+            action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
+            action_IDA_taint_symbolize_memory.label = SYMBOLICE_MEM;
+#if IDA_SDK_VERSION >= 740
+            action_list[10].menu_path = SYMBOLIC;
+            action_IDA_ponce_symbolize_reg.label = SYMBOLICE_REG;
+            action_IDA_ponce_symbolize_reg.tooltip = COMMENT_SYMB_REG;
+#endif          
+        }
+
         //Loop to register all the actions used in the menus
         for (int i = 0;; i++) {
             if (action_list[i].action_decs == NULL) {
                 break;
             }
             //Here we register all the actions
-            if (!register_action(*action_list[i].action_decs))
-            {
+            if (!register_action(*action_list[i].action_decs)) {
                 warning("[!] Failed to register %s actions. Exiting Ponce plugin\n", action_list[i].action_decs->name);
                 return false;
             }
         }
 
-
-        if (!hook_to_notification_point(HT_UI, ui_callback, NULL))
-        {
+        if (!hook_to_notification_point(HT_UI, ui_callback, NULL)) {
             warning("[!] Could not hook ui callback");
             return false;
         }
-        if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL))
-        {
+        if (!hook_to_notification_point(HT_DBG, tracer_callback, NULL)) {
             warning("[!] Could not hook tracer callback");
             return false;
         }
@@ -111,26 +137,24 @@ int idaapi init(void)
     char version[8];
     //We do some checks with the versions...
     if (get_kernel_version(version, sizeof(version))) {
-#if IDA_SDK_VERSION > 740		
+#if IDA_SDK_VERSION > 750
         warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+#elif IDA_SDK_VERSION == 750
+        if (strcmp(version, "7.5") != 0)
+        warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);       
 #elif IDA_SDK_VERSION == 740
-        //The IDA 7.1 plugin running in old IDA
         if (strcmp(version, "7.4") != 0)
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 730
-        //The IDA 7.1 plugin running in old IDA
         if (strcmp(version, "7.3") != 0)
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 720
-        //The IDA 7.1 plugin running in old IDA
         if (strcmp(version, "7.2") != 0)
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 710
-        //The IDA 7.1 plugin running in old IDA
         if (strcmp(version, "7.1") != 0)
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION == 700
-        //The IDA 7.0 plugin running in old IDA
         if (strcmp(version, "7.00") != 0)
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
 #elif IDA_SDK_VERSION < 700

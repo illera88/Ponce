@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *serial = "\x31\x3e\x3d\x26\x31";
+const char *serial = "\x31\x3e\x3d\x26\x31";
 
 int check(char *ptr)
 {

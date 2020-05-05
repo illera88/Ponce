@@ -185,10 +185,7 @@ short read_unicode_char_from_ida(ea_t address)
     invalidate_dbgmem_contents(address, sizeof(value));
     ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
     if (bytes_read == 0 || bytes_read == -1) {
-        if (inf_is_64bit())
-            msg("[!] Error reading memory from %#llx\n", address);
-        else
-            msg("[!] Error reading memory from %#x\n", address);
+        msg("[!] Error reading memory from " MEM_FORMAT "\n", address);
     }
     return value;
 }
@@ -202,10 +199,7 @@ char read_char_from_ida(ea_t address)
     invalidate_dbgmem_contents(address, sizeof(value));
     ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
     if (bytes_read == 0 || bytes_read == -1) {
-        if (inf_is_64bit())
-            msg("[!] Error reading memory from %#llx\n", address);
-        else
-            msg("[!] Error reading memory from %#x\n", address);
+        msg("[!] Error reading memory from " MEM_FORMAT "\n", address);
     }
     return value;
 }
@@ -218,10 +212,7 @@ ea_t read_regSize_from_ida(ea_t address)
     invalidate_dbgmem_contents(address, sizeof(value));
     ssize_t bytes_read = get_bytes(&value, sizeof(value), address, GMB_READALL, NULL);
     if (bytes_read == 0 || bytes_read == -1) {
-        if (inf_is_64bit())
-            msg("[!] Error reading memory from %#llx\n", address);
-        else
-            msg("[!] Error reading memory from %#x\n", address);
+        msg("[!] Error reading memory from " MEM_FORMAT "\n", address);
     }
 
     return value;
@@ -483,18 +474,6 @@ std::uint64_t GetTimeMs64(void)
 
     return ret;
 #endif
-}
-
-/*We need this helper because triton doesn't allow to symbolize memory regions unalinged, so we symbolize every byte*/
-void symbolize_all_memory(ea_t address, ea_t size)
-{
-    // ToDo: add a proper comment on each symbolized memory
-    for (unsigned int i = 0; i < size; i++)
-    {
-        auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(address + i, 1));
-        auto var_name = symVar->getName();
-        ponce_set_cmt(address + i, var_name.c_str(), true);
-    }
 }
 
 /* Gets current instruction. Only possible if */

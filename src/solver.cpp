@@ -16,7 +16,7 @@ std::vector<Input> solve_formula(ea_t pc, int bound)
     std::vector<Input> solutions;
     
     if (bound > symbolizedPathConstrains.size() - 1) {
-        msg("Error. Requested bound %u is larger than PathConstraints vector size (%u)\n", bound, symbolizedPathConstrains.size());
+        msg("Error. Requested bound %u is larger than PathConstraints vector size (%lu)\n", bound, symbolizedPathConstrains.size());
         return solutions;
     }
 
@@ -369,7 +369,6 @@ void set_SMT_solution(const Input& solution) {
                 stream.str().c_str(),
                 std::isprint(concreteRegValue.convert_to<unsigned char>()) ? ascii_value : "");
         }
-
     }
 
     if (cmdOptions.showDebugInfo)

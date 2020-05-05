@@ -40,37 +40,37 @@ jobs:
                   curl -O -J -L "%IDA_SDK%"
                   powershell Expand-Archive -Force IDA_SDKs.zip IDA_SDKs              
             
-            - name: Build Ponce x64 IDA 7.0
+            - name: Build Ponce IDA 7.0
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk70.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"
                   cmake --build build_x64_7.0 --config Release
                   
-            - name: Build Ponce x64 IDA 7.1
+            - name: Build Ponce IDA 7.1
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk71.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
                   cmake --build build_x64_7.1 --config Release
             
-            - name: Build Ponce x64 IDA 7.2
+            - name: Build Ponce IDA 7.2
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk72.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
                   cmake --build build_x64_7.2 --config Release
             
-            - name: Build Ponce x64 IDA 7.3
+            - name: Build Ponce IDA 7.3
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk73.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
                   cmake --build build_x64_7.3 --config Release
             
-            - name: Build Ponce x64 IDA 7.4
+            - name: Build Ponce 7.4
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk74.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
                   cmake --build build_x64_7.4 --config Release
                       
-            - name: Build Ponce x64 IDA 7.5
+            - name: Build Ponce IDA 7.5
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk75.zip ..\IDA_SDKs
                   cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          

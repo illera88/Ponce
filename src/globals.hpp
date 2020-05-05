@@ -41,8 +41,6 @@
 struct action {
     const action_desc_t* action_decs;
     int view_type[44]; // This are the posible views
-    bool enable_taint;
-    bool enable_symbolic;
     char const* menu_path; // this is where the item will be conteined in
 };
 
@@ -106,9 +104,9 @@ extern std::list<std::pair<ea_t, int>> ponce_comments;
 #endif
 
 #ifdef __EA64__
-#define MEM_FORMAT "%#llx"
+#define MEM_FORMAT "%#" PRIx64
 #define REG_XIP api.registers.x86_rip
 #else
-#define MEM_FORMAT "%#x"
+#define MEM_FORMAT "%#" PRIx32
 #define REG_XIP api.registers.x86_eip
 #endif // __EA64__

@@ -32,15 +32,14 @@
 #include "triton/x86Specifications.hpp"
 
 
-int symbolize_register(qstring selected, action_activation_ctx_t* action_activation_ctx) {
+int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* action_activation_ctx) {
     const triton::arch::Register* register_to_symbolize = str_to_register(selected);
 
-    if (register_to_symbolize)
-    {
+    if (register_to_symbolize) {
         /*When the user symbolize something for the first time we should enable step_tracing*/
         start_tainting_or_symbolic_analysis();
 
-        msg("[!] Symbolizing register %s\n", selected.c_str());
+        msg("[!] %s register %s\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", selected.c_str());
         char comment[256];
         ea_t pc = action_activation_ctx->cur_ea;
         qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), pc);
@@ -48,74 +47,34 @@ int symbolize_register(qstring selected, action_activation_ctx_t* action_activat
         // Before symbolizing register we should set his concrete value
         needConcreteRegisterValue_cb(api, *register_to_symbolize);
 
-        // Symbolize register
-        api.symbolizeRegister(*register_to_symbolize, std::string(comment));
+        if (cmdOptions.use_tainting_engine) {
+            api.taintRegister(*register_to_symbolize);
+        }
+        else{ // Symbolize register            
+            api.symbolizeRegister(*register_to_symbolize, std::string(comment));
+        }
 
-        //If last_instruction is not set this instruction is not analyze
-        if (ponce_runtime_status.last_triton_instruction == NULL)
-        {
-            tritonize(pc);
-            return 0;
-        }
-        //If the register symbolize is a source for the instruction then we need to reanalize the instruction
-        //So the self instruction will be tainted
-        auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
-        for (auto it = read_registers.begin(); it != read_registers.end(); it++)
-        {
-            auto reg = it->first;
-            if (reg.getId() == register_to_symbolize->getId())
-            {
-                tritonize(pc);
-                break;
-            }
-        }
+        tritonize(pc);
+        return 0;
     }
     return 0;
 }
 
 
-struct ah_taint_register_t : public action_handler_t
+struct ah_taint_symbolize_register_t : public action_handler_t
 {
     /*Event called when the user taint a register*/
-    virtual int idaapi activate(action_activation_ctx_t*)
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
-        // Get the address range selected, or return false if there was no selection
         bool res = false;
+        // Get the address range selected, or return false if there was no selection
         qstring selected;
         uint32 flags;
         res = get_highlight(&selected, get_current_viewer(), &flags);
 
         if (res)
         {
-            const triton::arch::Register* register_to_taint = str_to_register(selected);
-
-            if (register_to_taint)
-            {
-                msg("[!] Tainting register %s\n", selected.c_str());
-                api.taintRegister(*register_to_taint);
-
-                //When the user taints something for the first time we should enable step_tracing
-                start_tainting_or_symbolic_analysis();
-                //If last_instruction is not set this instruction is not analyze
-                if (ponce_runtime_status.last_triton_instruction == NULL)
-                {
-                    tritonize(current_instruction());
-                    return 0;
-                }
-                //If the register tainted is a source for the instruction then we need to reanalize the instruction
-                //So the self instruction will be tainted
-                auto read_registers = ponce_runtime_status.last_triton_instruction->getReadRegisters();
-                for (auto it = read_registers.begin(); it != read_registers.end(); it++)
-                {
-                    auto reg = it->first;
-                    //msg("Register read: %s\n", reg.getName().c_str());
-                    if (reg.getId() == register_to_taint->getId())
-                    {
-                        tritonize(current_instruction());
-                        break;
-                    }
-                }
-            }
+            taint_symbolize_register(selected, ctx);
         }
         return 0;
     }
@@ -136,212 +95,69 @@ struct ah_taint_register_t : public action_handler_t
         return AST_DISABLE;
     }
 };
-static ah_taint_register_t ah_taint_register;
+static ah_taint_symbolize_register_t ah_taint_symbolice_register;
 
-static const action_desc_t action_IDA_taint_register = ACTION_DESC_LITERAL(
-    "Ponce:taint_register", // The action name. This acts like an ID and must be unique
-    "Taint Register", //The action text.
-    &ah_taint_register, //The action handler.
+action_desc_t action_IDA_taint_symbolize_register = ACTION_DESC_LITERAL(
+    "Ponce:taint_symbolize_register", // The action name. This acts like an ID and must be unique
+    "nothing", //The action text.
+    &ah_taint_symbolice_register, //The action handler.
     "Ctrl+Shift+R", //Optional: the action shortcut
     "Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
     50); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_symbolize_register_t : public action_handler_t
-{
-    /*Event called when the user symbolize a register*/
-    virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
-    {
-        bool res = false;
-        // Get the address range selected, or return false if there was no selection
-        qstring selected;
-        uint32 flags;
-        res = get_highlight(&selected, get_current_viewer(), &flags);
-
-        if (res)
-        {
-            symbolize_register(selected, action_activation_ctx);
-        }
-        return 0;
-    }
-
-    virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
-    {
-        //Only if process is being debugged
-        if (is_debugger_on())
-        {
-            qstring selected;
-            uint32 flags;
-            if (get_highlight(&selected, get_current_viewer(), &flags))
-            {
-                if (str_to_register(selected))
-                    return AST_ENABLE;
-            }
-        }
-        return AST_DISABLE;
-    }
-};
-static ah_symbolize_register_t ah_symbolize_register;
-
-static const action_desc_t action_IDA_symbolize_register = ACTION_DESC_LITERAL(
-    "Ponce:symbolize_register", // The action name. This acts like an ID and must be unique
-    "Symbolize Register", //The action text.
-    &ah_symbolize_register, //The action handler.
-    "Ctrl+Shift+R", //Optional: the action shortcut
-    "Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
-    50); //Optional: the action icon (shows when in menus/toolbars)
-
-struct ah_taint_memory_t : public action_handler_t
-{
-    /*Event called when the user taint a memory*/
-    virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
-    {
-        ea_t selection_starts = 0;
-        ea_t selection_ends = 0;
-        //In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-        if (action_activation_ctx->widget_type == BWN_DISASM)
-        {
-            //We don't know how to do this :( 
-            //msg("[!] Disassembly windows no supported for memory tainting...yet\n");
-            //So we ask to the user for the memory and the size
-            // this is just a hint for the user. they can change the filled value
-            if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
-                return 0;
-        }
-        else
-            return 0;
-        // ToDo: give another thought about variable lenght symbolic arguments.
-        //The selection ends in the last item, we need to add 1 to calculate the length
-        ea_t selection_length = selection_ends - selection_starts;
-        msg("[+] Tainting memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
-
-        //Tainting all the selected memory
-        api.taintMemory(triton::arch::MemoryAccess(selection_starts, selection_length));
-        /*When the user taints something for the first time we should enable step_tracing*/
-        start_tainting_or_symbolic_analysis();
-        //If last_instruction is not set this instruction is not analyze
-        if (ponce_runtime_status.last_triton_instruction == NULL)
-        {
-            tritonize(current_instruction());
-            return 0;
-        }
-        //We reanalyse the instruction where the pc is right now
-        auto store_access_list = ponce_runtime_status.last_triton_instruction->getStoreAccess();
-        for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
-        {
-            triton::arch::MemoryAccess memory_access = it->first;
-            //If the address is inside the range just tainted, then reanalize
-            if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
-            {
-                tritonize(current_instruction());
-                break;
-            }
-        }
-        return 0;
-    }
-
-    virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
-    {
-        return AST_DISABLE;
-    }
-};
-static ah_taint_memory_t ah_taint_memory;
-
-static const action_desc_t action_IDA_taint_memory = ACTION_DESC_LITERAL(
-    "Ponce:taint_memory", // The action name. This acts like an ID and must be unique
-    "Taint Memory", //The action text.
-    &ah_taint_memory, //The action handler.
-    "Ctrl+Shift+M", //Optional: the action shortcut
-    "Taint the selected register", //Optional: the action tooltip (available in menus/toolbar)
-    50); //Optional: the action icon (shows when in menus/toolbars)
-
-struct ah_symbolize_memory_t : public action_handler_t
+struct ah_taint_symbolize_memory_t : public action_handler_t
 {
     /*Event called when the user symbolize a memory*/
     virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
     {
         ea_t selection_starts = 0;
         ea_t selection_ends = 0;
-        //In the dissas windows we use the whole item selected. If we have a string we can't select only some bytes from the dissas windows
-        if (action_activation_ctx->widget_type == BWN_DISASM)
-        {
-            //We ask to the user for the memory and the size
-            if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
-                return 0;
-        }
-        else
+        //We ask to the user for the memory and the size
+        if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
             return 0;
 
         /* When the user taints something for the first time we should enable step_tracing*/
         start_tainting_or_symbolic_analysis();
 
-        //The selection ends in the last item which is included, so we need to add 1 to calculate the length
         auto selection_length = selection_ends - selection_starts;
-        msg("[+] Symbolizing memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", selection_starts, selection_ends, (int)selection_length);
+        msg("[+] %s memory from " MEM_FORMAT " to " MEM_FORMAT ". Total: %d bytes\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing",  selection_starts, selection_ends, (int)selection_length);
 
         // Before symbolizing the memory we should set its concrete value
         for (unsigned int i = 0; i < selection_length; i++) {
             needConcreteMemoryValue_cb(api, triton::arch::MemoryAccess(selection_starts + i, 1));
         }
 
-        // Symbolizing all the selected memory
-        symbolize_all_memory(selection_starts, selection_length);
-
-        tritonize(current_instruction());
-        return 0;
-
-        //If last_instruction is not set this instruction is not analyze
-        if (ponce_runtime_status.last_triton_instruction == nullptr)
-        {
-            // ToDo: What happens if Triton is enable when at a blacklisted function (printf, fgets...)?
-            // It wont be blacklisted. We should change t
-            tritonize(current_instruction());
-            return 0;
+        if (cmdOptions.use_tainting_engine) {
+            api.taintMemory(triton::arch::MemoryAccess(selection_starts, selection_length));
         }
-        //We reanalyse the instruction where the pc is right now if the instruction was reading the memory that was just symbolized
-        auto load_access_list = ponce_runtime_status.last_triton_instruction->getLoadAccess();
-        for (auto it = load_access_list.begin(); it != load_access_list.end(); it++)
-        {
-            triton::arch::MemoryAccess memory_access = it->first;
-            //If the address is inside the range just symbolized, then reanalize
-            if (memory_access.getAddress() >= selection_starts && memory_access.getAddress() < selection_starts + selection_length)
-            {
-                tritonize(current_instruction());
-                break;
+        else{ // Symbolizing all the selected memory
+            for (unsigned int i = 0; i < selection_length; i++) {
+                auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
+                auto var_name = symVar->getName();
+                ponce_set_cmt(selection_starts + i, var_name.c_str(), true);
             }
         }
+
+        tritonize(current_instruction());
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
     {
         //Only if process is being debugged
-        if (is_debugger_on())
+        if (is_debugger_on() && action_update_ctx_t->widget_type == BWN_DISASM)
         {
-            if (action_update_ctx_t->widget_type == BWN_DUMP)
-            {
-                if (action_update_ctx_t->cur_sel.from.at != NULL && action_update_ctx_t->cur_sel.to.at != NULL)
-                {
-                    auto selection_starts = action_update_ctx_t->cur_sel.from.at->toea();
-                    auto selection_ends = action_update_ctx_t->cur_sel.to.at->toea();
-                    int diff = (int)(selection_ends - selection_starts);
-                    if (diff >= 0)
-                        return AST_ENABLE;
-                }
-            }
-            else
-            {
-                return AST_ENABLE;
-            }
+            return AST_ENABLE;
         }
         return AST_DISABLE;
     }
 };
-static ah_symbolize_memory_t ah_symbolize_memory;
+static ah_taint_symbolize_memory_t ah_taint_symbolize_memory;
 
-static const action_desc_t action_IDA_symbolize_memory = ACTION_DESC_LITERAL(
-    "Ponce:symbolize_memory", // The action name. This acts like an ID and must be unique
-    "Symbolize Memory", //The action text.
-    &ah_symbolize_memory, //The action handler.
+action_desc_t action_IDA_taint_symbolize_memory = ACTION_DESC_LITERAL(
+    "Ponce:taint_symbolize_memory", // The action name. This acts like an ID and must be unique
+    "bla bla bla", //The action text.
+    &ah_taint_symbolize_memory, //The action handler.
     "Ctrl+Shift+M", //Optional: the action shortcut
     "Symbolize the selected register", //Optional: the action tooltip (available in menus/toolbar)
     50); //Optional: the action icon (shows when in menus/toolbars)
@@ -365,6 +181,7 @@ struct ah_negate_and_inject_t : public action_handler_t
                     break;
                 }
             }
+
             assert(bound != -1); // impossible
 
             auto solutions = solve_formula(pc, bound);
@@ -658,50 +475,13 @@ action_desc_t action_IDA_unload = ACTION_DESC_LITERAL(
     "Unload the plugin", //Optional: the action tooltip (available in menus/toolbar)
     138); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_execute_native_t : public action_handler_t
-{
-    virtual int idaapi activate(action_activation_ctx_t* ctx)
-    {
-        if (ask_for_execute_native())
-        {
-            //Deleting previous snapshot
-            snapshot.resetEngine();
-            //Disabling step tracing...
-            disable_step_trace();
-            //And continue! (F9)
-            continue_process();
-        }
-        return 0;
-    }
-
-    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
-    {
-        //Only if process is being debugged
-        if (is_debugger_on())
-        {
-            return AST_ENABLE;
-        }
-        return AST_DISABLE;
-    }
-};
-static ah_execute_native_t ah_execute_native;
-
-action_desc_t action_IDA_execute_native = ACTION_DESC_LITERAL(
-    "Ponce:execute_native", // The action name. This acts like an ID and must be unique
-    "Execute native", //The action text.
-    &ah_execute_native, //The action handler.
-    "Ctrl+Shift+F9", //Optional: the action shortcut
-    "Execute native without tracing every instruction until next breakpoint", //Optional: the action tooltip (available in menus/toolbar)
-    113); //Optional: the action icon (shows when in menus/toolbars)
-
 struct ah_enable_disable_tracing_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         if (ponce_runtime_status.runtimeTrigger.getState())
         {
-            if (ask_for_execute_native())
-            {
+            if (ask_for_execute_native()) {
                 //Deleting previous snapshot
                 snapshot.resetEngine();
                 //Disabling step tracing...
@@ -711,8 +491,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
                     msg("Disabling step tracing\n");
             }
         }
-        else
-        {
+        else {
             start_tainting_or_symbolic_analysis();
             tritonize(current_instruction());
             if (cmdOptions.showDebugInfo)
@@ -724,16 +503,13 @@ struct ah_enable_disable_tracing_t : public action_handler_t
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
         //Only if process is being debugged
-        if (is_debugger_on())
-        {
+        if (is_debugger_on()) {
             //We are using this event to change the text of the action
-            if (ponce_runtime_status.runtimeTrigger.getState())
-            {
+            if (ponce_runtime_status.runtimeTrigger.getState()) {
                 update_action_label(ctx->action, "Disable ponce tracing");
                 update_action_icon(ctx->action, 62);
             }
-            else
-            {
+            else {
                 update_action_label(ctx->action, "Enable ponce tracing");
                 update_action_icon(ctx->action, 61);
             }
@@ -858,14 +634,14 @@ struct ah_ponce_symbolize_reg_UI_t : public action_handler_t
         }
         msg("> Register %s (of type %s): %s\n", reg_name, type, value_str);
 
-        symbolize_register(reg_name, ctx);
+        taint_symbolize_register(reg_name, ctx);
 
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        if (ctx->widget_type == BWN_CPUREGS) {
+        if (ctx->widget_type == BWN_CPUREGS && is_debugger_on()) {
             return AST_ENABLE_FOR_WIDGET;
         }
         else {
@@ -878,38 +654,36 @@ static ah_ponce_symbolize_reg_UI_t ah_ponce_symbolize_reg_UI;
 //We need to define this struct before the action handler because we are using it inside the handler
 action_desc_t action_IDA_ponce_symbolize_reg = ACTION_DESC_LITERAL(
     "registers_context_menu:dump_reg_name",
-    "Dump register name from registers window", //The action text.
+    "trtrtr", //The action text.
     &ah_ponce_symbolize_reg_UI, //The action handler.
     NULL, //Optional: the action shortcut
     "Right click and symbolize register", //Optional: the action tooltip (available in menus/toolbar)
-    65); //Optional: the action icon (shows when in menus/toolbars)
+    50); //Optional: the action icon (shows when in menus/toolbars)
 #endif
 
 
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-    { &action_IDA_ponce_banner, { BWN_DISASM, __END__ }, true, true, "" },
+    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, __END__ }, "" },
 
-    { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, true, true, "" },
+    { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
 
-    { &action_IDA_taint_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, true, false, "Taint/"},
-    { &action_IDA_taint_memory, { BWN_DISASM, BWN_DUMP, __END__ }, true, false, "Taint/" },
+    { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
+    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, __END__ }, "Symbolic or taint/" },
 
-    { &action_IDA_symbolize_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, false, true, "Symbolic/"},
-    { &action_IDA_symbolize_memory, { BWN_DISASM, BWN_DUMP, __END__ }, false, true, "Symbolic/" },
+    { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
+    { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },
+    { &action_IDA_solve_formula_sub, { BWN_DISASM, __END__ }, "SMT Solver/" },
 
-    { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, false, true, "SMT/" },
-    { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, false, true, "SMT/" },
-    { &action_IDA_solve_formula_sub, { BWN_DISASM, __END__ }, false, true, "SMT/" },
+    { &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, "Snapshot/"},
+    { &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, "Snapshot/" },
+    { &action_IDA_deleteSnapshot, { BWN_DISASM, __END__ }, "Snapshot/" },
 
-    { &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/"},
-    { &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
-    { &action_IDA_deleteSnapshot, { BWN_DISASM, __END__ }, true, true, "Snapshot/" },
-    { &action_IDA_execute_native, { BWN_DISASM, __END__ }, true, true, "" },
+    //{ &action_IDA_execute_native, { BWN_DISASM, __END__ }, "" },
 
 #if IDA_SDK_VERSION >= 740
-    { &action_IDA_ponce_symbolize_reg, { BWN_CPUREGS, __END__ }, true, true, "" },
+    { &action_IDA_ponce_symbolize_reg, { BWN_CPUREGS, __END__ }, "" },
 #endif
 
     { NULL, __END__, __END__ }
