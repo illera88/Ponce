@@ -16,7 +16,7 @@
 /* libTriton */
 #include <triton/api.hpp>
 #include <triton/ast.hpp>
-#include <triton/symbolicengine.hpp>
+#include <triton/symbolicEngine.hpp>
 #include <triton/taintEngine.hpp>
 #include <triton/x8664Cpu.hpp>
 #include <triton/x86Cpu.hpp>
