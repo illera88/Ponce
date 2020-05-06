@@ -128,12 +128,25 @@ action_desc_t action_IDA_taint_symbolize_register = ACTION_DESC_LITERAL(
 struct ah_taint_symbolize_memory_t : public action_handler_t
 {
     /*Event called when the user symbolize a memory*/
-    virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         ea_t selection_starts = 0;
         ea_t selection_ends = 0;
+        ea_t current_ea = 0;
         //We ask to the user for the memory and the size
-        if (!prompt_window_taint_symbolize(get_screen_ea(), &selection_starts, &selection_ends))
+        if (ctx->widget_type == BWN_DISASM) {
+            current_ea = get_screen_ea();
+        }
+#if IDA_SDK_VERSION >= 740
+        else if (ctx->widget_type == BWN_CPUREGS) {
+        auto reg_name = ctx->regname;
+        uint64 reg_value;
+        get_reg_val(reg_name, &reg_value);
+        current_ea = reg_value;
+        }
+#endif
+
+        if (!prompt_window_taint_symbolize(current_ea, &selection_starts, &selection_ends))
             return 0;
 
         /* When the user taints something for the first time we should enable step_tracing*/
@@ -174,6 +187,20 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             success = update_action_tooltip(action_IDA_taint_symbolize_memory.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_MEM: COMMENT_SYMB_MEM);
             if (is_debugger_on()) return AST_ENABLE;
         }
+#if IDA_SDK_VERSION >= 740
+        else if (action_update_ctx_t->widget_type == BWN_CPUREGS) {
+            auto reg_name = action_update_ctx_t->regname;
+            uint64 reg_value;
+            get_reg_val(reg_name, &reg_value);
+            char label[50] = { 0 };
+            bool success;
+            qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name, reg_value);
+
+            success = update_action_label(action_IDA_taint_symbolize_memory.name, label);
+            success = update_action_tooltip(action_IDA_taint_symbolize_memory.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_MEM : COMMENT_SYMB_MEM);
+            if (is_debugger_on()) return AST_ENABLE;
+        }
+#endif
         return AST_DISABLE;
     }
 };
@@ -280,8 +307,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
     {
         //This is only working from the disassembly windows
-        if (action_activation_ctx->widget_type == BWN_DISASM)
-        {
+        if (action_activation_ctx->widget_type == BWN_DISASM) {
             ea_t pc = action_activation_ctx->cur_ea;
             msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
@@ -308,8 +334,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
     virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
     {
         //Only if process is being debugged
-        if (is_debugger_on() && snapshot.exists())
-        {
+        if (is_debugger_on() && snapshot.exists()) {
             //If we are in runtime and it is the last instruction we test if it is symbolize
             if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
                 return AST_ENABLE;
@@ -504,8 +529,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
-        if (ponce_runtime_status.runtimeTrigger.getState())
-        {
+        if (ponce_runtime_status.runtimeTrigger.getState()) {
             if (ask_for_execute_native()) {
                 //Deleting previous snapshot
                 snapshot.resetEngine();
@@ -632,7 +656,7 @@ struct action action_list[] =
 #else
     { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
 #endif
-    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, __END__ }, "Symbolic or taint/" },
+    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, __END__ }, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
     { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },
