@@ -10,6 +10,7 @@
 
 #include <list>
 #include <locale> 
+#include <fstream>
 
 // Ponce
 #include "callbacks.hpp"
@@ -84,9 +85,8 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
             msg("Instructions traced: %d Symbolic instructions: %d Symbolic conditions: %d Time: %lld secs\n", ponce_runtime_status.total_number_traced_ins, ponce_runtime_status.total_number_symbolic_ins, ponce_runtime_status.total_number_symbolic_conditions, GetTimeMs64() - ponce_runtime_status.tracing_start_time);
         //msg("[+] Instructions traced: %d\n", ponce_runtime_status.total_number_traced_ins);
 
-    //This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
-        if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1)
-        {
+        //This is the wow64 switching, we need to skip it. https://forum.hex-rays.com/viewtopic.php?f=8&t=4070
+        if (ponce_runtime_status.last_triton_instruction->getDisassembly().find("call dword ptr fs:[0xc0]") != -1) {
             if (cmdOptions.showExtraDebugInfo)
                 msg("[+] Wow64 switching! Requesting a step_over\n");
             //And now we need to stop the tracing, do step over and reenable the tracing...
@@ -101,32 +101,26 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
         }
 
         //Check if the limit instructions limit was reached
-        if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode)
-        {
+        if (cmdOptions.limitInstructionsTracingMode && ponce_runtime_status.current_trace_counter >= cmdOptions.limitInstructionsTracingMode) {
             int answer = ask_yn(1, "[?] %u instructions has been traced. Do you want to execute %u more?", ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitInstructionsTracingMode);
-            if (answer == 0 || answer == -1) //No or Cancel
-            {
+            if (answer == 0 || answer == -1)  { //No or Cancel
                 // stop the trace mode and suspend the process
                 disable_step_trace();
                 suspend_process();
                 msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
             }
-            else
-            {
+            else {
                 ponce_runtime_status.current_trace_counter = 0;
             }
         }
 
         //Check if the time limit for tracing was reached
-        if (cmdOptions.limitTime != 0)
-        {
+        if (cmdOptions.limitTime != 0) {
             //This is the first time we start the tracer
-            if (ponce_runtime_status.tracing_start_time == 0)
-            {
+            if (ponce_runtime_status.tracing_start_time == 0) {
                 ponce_runtime_status.tracing_start_time = GetTimeMs64();
             }
-            else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime)
-            {
+            else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime) {
                 int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
                 if (answer == 0 || answer == -1) //No or Cancel
                 {
@@ -274,6 +268,10 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
         break;
     }
+
+    case ui_widget_closing:
+        break;
+
     case ui_finish_populating_widget_popup:
     {
         //This event is call after all the Ponce menus have been added and updated
@@ -283,33 +281,24 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         int view_type = get_widget_type(form);
         ea_t cur_ea = get_screen_ea();
 
-
-        /* This code will craft the menu to chose the register at the dissasembly view to 
-        taint/symbolize to have the name of the selected register */
-       /* if (view_type == BWN_DISASM){
-            qstring selected;
-            uint32 flags;
-            if (get_highlight(&selected, get_current_viewer(), &flags)) {
-                if (auto reg = str_to_register(selected)) {
-                    char label[50] = { 0 };
-                    qsnprintf(label, sizeof(label), "%s %s register",cmdOptions.use_tainting_engine ? "Taint": "Symbolize", qstrupr((char*)selected.c_str()));
-
-                    bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
-                }
-            }
-        }*/
-
-        /* This code does the same of the one before but */
-        //if (view_type == BWN_CPUREGS && is_debugger_on()) {
-        //    int a = 1;
-        //    //update_action_label(action_IDA_ponce_symbolize_reg.name, )
-        //}
-
         /* Here we fill the posible SMT branches to solve if there is multiple*/
         if (view_type == BWN_DISASM && 
-            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { 
-            // Don't let solve formulas if user is debugging natively
-            std::set<triton::uint64> symbolic_adresses;
+            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
+            
+            /* For the selected address(cur_ea), let's count how many branches we can reach (how many non taken addresses are in reach)*/
+            int non_taken_branches_n = std::count_if(api.getPathConstraints().begin(), api.getPathConstraints().end(), [cur_ea](const auto& pc)  {
+                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                    if (cur_ea == srcAddr && !taken) return true;
+                }
+                return false;
+            });
+
+            if (non_taken_branches_n == 1) {
+                /* The actions at action.cpp will take care of filling the action label*/
+                break;
+            }
+
+            /**/
             unsigned int bound = 0;
             for (const auto& pc : api.getPathConstraints()) {
                 for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
@@ -317,6 +306,8 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                         char name[256];
                         char label[256];
                         bool success;
+                        
+
                         //We put the index at the beginning that we will use to get the bound from the action_name
                         qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
                         action_IDA_solve_formula_sub.name = name;                        

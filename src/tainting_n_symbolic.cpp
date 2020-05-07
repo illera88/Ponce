@@ -91,7 +91,7 @@ void taint_or_symbolize_main_callback(ea_t main_address)
     uint32 reg_size = sizeof(void*);
 
     //We are tainting the argv[0], this is the program path, and it is something that the 
-    //user controls and sometimes is used to do somechecks
+    //user controls and sometimes is used to do some checks
     for (unsigned int i = cmdOptions.taintArgv0 ? 0 : 1; i < argc; i++)
     {
         ea_t current_argv = read_regSize_from_ida(argv + i * reg_size);

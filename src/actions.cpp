@@ -33,25 +33,28 @@
 
 
 int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* action_activation_ctx) {
-    const triton::arch::Register* register_to_symbolize = str_to_register(selected);
+    auto reg_id_to_symbolize = str_to_register(selected);
 
-    if (register_to_symbolize) {
+    if (reg_id_to_symbolize != triton::arch::register_e::ID_REG_INVALID) {
+        auto register_to_symbolize = api.getRegister(reg_id_to_symbolize);
         /*When the user symbolize something for the first time we should enable step_tracing*/
         start_tainting_or_symbolic_analysis();
 
-        msg("[!] %s register %s\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", selected.c_str());
+        msg("[+] %s register %s\n", cmdOptions.use_tainting_engine ? "Tainting" : "Symbolizing", selected.c_str());
+        
+        ea_t pc;
+        get_ip_val(&pc);
         char comment[256];
-        ea_t pc = action_activation_ctx->cur_ea;
         qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), pc);
 
         // Before symbolizing register we should set his concrete value
-        needConcreteRegisterValue_cb(api, *register_to_symbolize);
+        needConcreteRegisterValue_cb(api, register_to_symbolize);
 
         if (cmdOptions.use_tainting_engine) {
-            api.taintRegister(*register_to_symbolize);
+            api.taintRegister(register_to_symbolize);
         }
         else{ // Symbolize register            
-            api.symbolizeRegister(*register_to_symbolize, std::string(comment));
+            api.symbolizeRegister(register_to_symbolize, std::string(comment));
         }
 
         tritonize(pc);
@@ -88,7 +91,7 @@ struct ah_taint_symbolize_register_t : public action_handler_t
             qstring selected;
             uint32 flags;
             if (get_highlight(&selected, get_current_viewer(), &flags)) {
-                if (auto reg = str_to_register(selected)) {
+                if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
                     char label[50] = { 0 };
                     qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", qstrupr((char*)selected.c_str()));
 
@@ -103,7 +106,7 @@ struct ah_taint_symbolize_register_t : public action_handler_t
             auto reg_name = action_update_ctx->regname;
             //uint64 reg_value;
             //get_reg_val(reg_name, &reg_value); // Leave it here just in case
-            if (auto reg = str_to_register(reg_name)) {
+            if (str_to_register(reg_name) != triton::arch::register_e::ID_REG_INVALID) {
                 char label[50] = { 0 };
                 qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name);
 
@@ -137,6 +140,14 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         if (ctx->widget_type == BWN_DISASM) {
             current_ea = get_screen_ea();
         }
+        else if (ctx->widget_type == BWN_DUMP) {
+            current_ea = get_screen_ea();
+            //We get the selection bounds from the action activation context
+            auto selection_starts = ctx->cur_sel.from.at->toea();
+            auto selection_ends = ctx->cur_sel.to.at->toea();
+            int a = 2;
+        }
+       
 #if IDA_SDK_VERSION >= 740
         else if (ctx->widget_type == BWN_CPUREGS) {
         auto reg_name = ctx->regname;
@@ -177,31 +188,40 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
 
     virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
     {
-        //Only if process is being debugged
+        char label[50] = { 0 };
+        bool success;
+        action_state_t action_to_take = AST_DISABLE;
         if (action_update_ctx_t->widget_type == BWN_DISASM) {
-            char label[50] = { 0 };
-            bool success;
             qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
-
-            success = update_action_label(action_IDA_taint_symbolize_memory.name, label);
-            success = update_action_tooltip(action_IDA_taint_symbolize_memory.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_MEM: COMMENT_SYMB_MEM);
-            if (is_debugger_on()) return AST_ENABLE;
+            action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
+        }
+        else if (action_update_ctx_t->widget_type == BWN_DUMP) {
+            qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+            action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;    
         }
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx_t->widget_type == BWN_CPUREGS) {
             auto reg_name = action_update_ctx_t->regname;
-            uint64 reg_value;
+            uint64 reg_value;  
             get_reg_val(reg_name, &reg_value);
-            char label[50] = { 0 };
-            bool success;
-            qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name, reg_value);
 
-            success = update_action_label(action_IDA_taint_symbolize_memory.name, label);
-            success = update_action_tooltip(action_IDA_taint_symbolize_memory.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_MEM : COMMENT_SYMB_MEM);
-            if (is_debugger_on()) return AST_ENABLE;
+            if (!is_mapped(reg_value)) {
+                qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+                action_to_take = AST_DISABLE;
+            }
+            
+            qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name, reg_value);    
+            action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
         }
 #endif
-        return AST_DISABLE;
+        else {
+            return AST_DISABLE;
+        }
+
+        success = update_action_label(action_IDA_taint_symbolize_memory.name, label);
+        success = update_action_tooltip(action_IDA_taint_symbolize_memory.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_MEM : COMMENT_SYMB_MEM);
+        return action_to_take;
+        
     }
 };
 static ah_taint_symbolize_memory_t ah_taint_symbolize_memory;
@@ -219,8 +239,7 @@ struct ah_negate_and_inject_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* action_activation_ctx)
     {
         //This is only working from the disassembly windows
-        if (action_activation_ctx->widget_type == BWN_DISASM)
-        {
+        if (action_activation_ctx->widget_type == BWN_DISASM) {
             ea_t pc = action_activation_ctx->cur_ea;
             msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
@@ -277,17 +296,26 @@ struct ah_negate_and_inject_t : public action_handler_t
         return 0;
     }
 
-    virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
         //Only if process is being debugged
-        if (is_debugger_on())
-        {
+        if (is_debugger_on()) {
             //If we are in runtime and it is the last instruction we test if it is symbolize
-            if (ponce_runtime_status.last_triton_instruction != NULL && 
-                ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && 
-                ponce_runtime_status.last_triton_instruction->isBranch() && 
-                ponce_runtime_status.last_triton_instruction->isSymbolized())
-                return AST_ENABLE;
+            if (ponce_runtime_status.last_triton_instruction != NULL &&
+                ponce_runtime_status.last_triton_instruction->getAddress() == ctx->cur_ea &&
+                ponce_runtime_status.last_triton_instruction->isBranch() &&
+                ponce_runtime_status.last_triton_instruction->isSymbolized()) {
+                for (const auto& pc : api.getPathConstraints()) {
+                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                        if (ctx->cur_ea == srcAddr) {
+                            char label[100] = { 0 };
+                            qsnprintf(label, sizeof(label), "Negate and Inject to reach " MEM_FORMAT, dstAddr);
+                            update_action_label(ctx->action, label);
+                            return AST_ENABLE;
+                        }
+                    }
+                }
+            }
         }
         return AST_DISABLE;
     }
@@ -331,13 +359,26 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
         return 0;
     }
 
-    virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx_t)
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
         //Only if process is being debugged
         if (is_debugger_on() && snapshot.exists()) {
             //If we are in runtime and it is the last instruction we test if it is symbolize
-            if (ponce_runtime_status.last_triton_instruction != NULL && ponce_runtime_status.last_triton_instruction->getAddress() == action_update_ctx_t->cur_ea && ponce_runtime_status.last_triton_instruction->isBranch() && ponce_runtime_status.last_triton_instruction->isSymbolized())
-                return AST_ENABLE;
+            if (ponce_runtime_status.last_triton_instruction != NULL &&
+                ponce_runtime_status.last_triton_instruction->getAddress() == ctx->cur_ea &&
+                ponce_runtime_status.last_triton_instruction->isBranch() &&
+                ponce_runtime_status.last_triton_instruction->isSymbolized()) {
+                for (const auto& pc : api.getPathConstraints()) {
+                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                        if (ctx->cur_ea == srcAddr) {
+                            char label[100] = { 0 };
+                            qsnprintf(label, sizeof(label), "Negate, Inject to reach " MEM_FORMAT " & Restore snapshot", dstAddr);
+                            update_action_label(ctx->action, label);
+                            return AST_ENABLE;
+                        }
+                    }
+                }
+            }
         }
         return AST_DISABLE;
     }
@@ -489,7 +530,9 @@ struct ah_show_taintWindow_t : public action_handler_t
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        return AST_ENABLE_ALWAYS;
+        update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Show Taint expressions": "Show Symbolic expressions");
+        update_action_tooltip(ctx->action, cmdOptions.use_tainting_engine ? "Show all the taint expressions" : "Show all the symbolic expressions");
+        return AST_ENABLE;
     }
 };
 static ah_show_taintWindow_t ah_show_taintWindow;
@@ -511,7 +554,7 @@ struct ah_unload_t : public action_handler_t
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
-    {
+    {       
         return AST_ENABLE_ALWAYS;
     }
 };
@@ -593,20 +636,23 @@ struct ah_solve_formula_sub_t : public action_handler_t
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
-    {      
+    {    
+        char label[100] = { 0 };
         if (ctx->widget_type == BWN_DISASM &&
             !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) {
             // Don't let solve formulas if user is debugging natively
-            std::set<triton::uint64> symbolic_adresses;
-            unsigned int bound = 0;
             for (const auto& pc : api.getPathConstraints()) {
                 for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                    if (ctx->cur_ea == srcAddr) {
+                    if (ctx->cur_ea == srcAddr) {                       
+                        qsnprintf(label, sizeof(label), "Solve formula to take " MEM_FORMAT, dstAddr);
+                        update_action_label(ctx->action, label);
                         return AST_ENABLE;
                     }
                 }
             }
         }
+        qsnprintf(label, sizeof(label), "Solve formula");
+        update_action_label(ctx->action, label);
         return AST_DISABLE;
     }
 };
@@ -647,7 +693,7 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, __END__ }, "" },
+    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
 
@@ -656,7 +702,7 @@ struct action action_list[] =
 #else
     { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
 #endif
-    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, __END__ }, "Symbolic or taint/" },
+    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
     { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },

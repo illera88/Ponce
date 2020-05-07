@@ -15,7 +15,7 @@
 //Ponce
 #include "globals.hpp"
 
-const triton::arch::Register* str_to_register(qstring register_name);
+const triton::arch::register_e str_to_register(const qstring& register_name);
 ea_t find_function(char const* function_name);
 ea_t get_args(int argument_number, bool skip_ret);
 ea_t get_args_pointer(int argument_number, bool skip_ret);

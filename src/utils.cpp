@@ -46,13 +46,13 @@
 
 /*This functions gets a string and return the triton register assign or nullptr
 This is using the triton current architecture so it is more generic.*/
-const triton::arch::Register* str_to_register(qstring register_name)
+const triton::arch::register_e str_to_register(const qstring& register_name)
 {
     for (const auto& [key, value] : api.getAllRegisters())
         if (stricmp(value.getName().c_str(), register_name.c_str()) == 0)
-            return &api.getRegister(key);
+            return key;
 
-    return nullptr;
+    return triton::arch::register_e::ID_REG_INVALID;
 }
 
 
@@ -321,7 +321,7 @@ bool load_options(struct cmdOptionStruct* cmdOptions)
     config_file.open("Ponce.cfg", std::ios::in | std::ios::binary);
     if (!config_file.is_open())
     {
-        msg("[!] Config file %s not found\n", "Ponce.cfg");
+        msg("[i] Config file %s not found\n", "Ponce.cfg");
         return false;
     }
     auto begin = config_file.tellg();

@@ -37,7 +37,6 @@ entrylist_t* global_list;
 
 
 void fill_entryList() {
-
     //We clear the list
     global_list->clear();
 
@@ -71,7 +70,6 @@ void fill_entryList() {
     else if (cmdOptions.use_symbolic_engine) {
         auto symMemMap = api.getSymbolicMemory();
         auto symRegMap = api.getSymbolicRegisters();
-        auto ctx = api.getAstContext();
         
         //for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
         //    if (SymVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
@@ -214,7 +212,7 @@ void idaapi entry_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_attrs_
 
 void create_taint_window() {
     //First we set the name depending if we are in tainting or symbolic mode
-    if (cmdOptions.use_tainting_engine) {
+    if (cmdOptions.use_tainting_engine) {   
         header_[4] = "Taint";
     }
     else if (cmdOptions.use_symbolic_engine) {

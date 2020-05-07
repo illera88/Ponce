@@ -147,7 +147,7 @@ bool ponce_set_triton_architecture() {
         else if (ph.use32())
             api.setArchitecture(triton::arch::ARCH_X86);
         else {
-            msg("[!] Wrong architecture\n");
+            msg("[e] Wrong architecture\n");
             return false;
         }
     }
@@ -157,12 +157,12 @@ bool ponce_set_triton_architecture() {
         else if (ph.use32())
             api.setArchitecture(triton::arch::ARCH_ARM32);
         else {
-            msg("[!] Wrong architecture\n");
+            msg("[e] Wrong architecture\n");
             return false;
         }
     }
     else {
-        msg("[!] Architecture not supported by Ponce\n");
+        msg("[e] Architecture not supported by Ponce\n");
         return false;
     }
     return true;
