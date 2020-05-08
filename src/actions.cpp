@@ -87,35 +87,34 @@ struct ah_taint_symbolize_register_t : public action_handler_t
 
     virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx)
     {
+        char label[50] = { 0 };
+        bool success;
+        action_state_t action_to_take = AST_DISABLE;
+        qsnprintf(label, sizeof(label), "%s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+        // Default
         if (action_update_ctx->widget_type == BWN_DISASM) {
             qstring selected;
             uint32 flags;
             if (get_highlight(&selected, get_current_viewer(), &flags)) {
                 if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
-                    char label[50] = { 0 };
                     qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", qstrupr((char*)selected.c_str()));
-
-                    bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
-                    success = update_action_tooltip(action_IDA_taint_symbolize_register.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_REG : COMMENT_SYMB_REG);
-                    if (is_debugger_on()) return AST_ENABLE;
+                    action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
                 }
-            }
+            }                
         }
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx->widget_type == BWN_CPUREGS) {
             auto reg_name = action_update_ctx->regname;
-            //uint64 reg_value;
-            //get_reg_val(reg_name, &reg_value); // Leave it here just in case
             if (str_to_register(reg_name) != triton::arch::register_e::ID_REG_INVALID) {
-                char label[50] = { 0 };
                 qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name);
-
-                bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
-                if (is_debugger_on()) return AST_ENABLE;
+                action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
             }
         }
 #endif
-        return AST_DISABLE;
+        success = update_action_label(action_IDA_taint_symbolize_register.name, label);
+        success = update_action_tooltip(action_IDA_taint_symbolize_register.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_REG : COMMENT_SYMB_REG);
+
+        return action_to_take;
     }
 };
 static ah_taint_symbolize_register_t ah_taint_symbolize_register;
@@ -136,16 +135,33 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         ea_t selection_starts = 0;
         ea_t selection_ends = 0;
         ea_t current_ea = 0;
+        sval_t size = 1;
         //We ask to the user for the memory and the size
         if (ctx->widget_type == BWN_DISASM) {
-            current_ea = get_screen_ea();
+            qstring selected;
+            uint32 flags;
+            /* Try to get register if selected*/
+            if (get_highlight(&selected, get_current_viewer(), &flags)) {
+                if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
+                    regval_t reg;
+                    auto sucess = get_reg_val(selected.c_str(), &reg);
+                    if (sucess && is_mapped(reg.ival)) {
+                        current_ea = reg.ival;                        
+                    }
+                }
+            }
+            else{
+                current_ea = ctx->cur_value;
+            }        
         }
         else if (ctx->widget_type == BWN_DUMP) {
-            current_ea = get_screen_ea();
-            //We get the selection bounds from the action activation context
-            auto selection_starts = ctx->cur_sel.from.at->toea();
-            auto selection_ends = ctx->cur_sel.to.at->toea();
-            int a = 2;
+            if (ctx->cur_flags & ACF_HAS_SELECTION){ // Only if there has been a valid selection
+                //We get the selection bounds from the action activation context
+                auto selection_starts = ctx->cur_sel.from.at->toea();
+                auto selection_ends = ctx->cur_sel.to.at->toea();
+                size = selection_ends - selection_starts + 1;
+                current_ea = selection_starts;
+            }
         }
        
 #if IDA_SDK_VERSION >= 740
@@ -156,8 +172,9 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         current_ea = reg_value;
         }
 #endif
+        jumpto(current_ea);
 
-        if (!prompt_window_taint_symbolize(current_ea, &selection_starts, &selection_ends))
+        if (!prompt_window_taint_symbolize(current_ea, size, &selection_starts, &selection_ends))
             return 0;
 
         /* When the user taints something for the first time we should enable step_tracing*/
@@ -191,8 +208,21 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         char label[50] = { 0 };
         bool success;
         action_state_t action_to_take = AST_DISABLE;
+        qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
         if (action_update_ctx_t->widget_type == BWN_DISASM) {
-            qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+            qstring selected;
+            uint32 flags;
+            /* Try to get register if selected*/
+            if (get_highlight(&selected, get_current_viewer(), &flags)) {
+                if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
+                    regval_t reg;
+                    //invalidate_dbg_state(DBGINV_REGS);
+                    auto sucess = get_reg_val(selected.c_str(), &reg);
+                    if (sucess && is_mapped(reg.ival)) {
+                        qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", qstrupr((char*)selected.c_str()), reg.ival);
+                    }
+                }
+            }
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
         }
         else if (action_update_ctx_t->widget_type == BWN_DUMP) {
@@ -206,7 +236,6 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             get_reg_val(reg_name, &reg_value);
 
             if (!is_mapped(reg_value)) {
-                qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
                 action_to_take = AST_DISABLE;
             }
             

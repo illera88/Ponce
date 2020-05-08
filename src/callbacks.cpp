@@ -269,9 +269,6 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         break;
     }
 
-    case ui_widget_closing:
-        break;
-
     case ui_finish_populating_widget_popup:
     {
         //This event is call after all the Ponce menus have been added and updated
@@ -293,8 +290,8 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                 return false;
             });
 
-            if (non_taken_branches_n == 1) {
-                /* The actions at action.cpp will take care of filling the action label*/
+            if (non_taken_branches_n <= 1) {
+                /* There is no submenus needed to be added*/
                 break;
             }
 

@@ -24,9 +24,8 @@
 
 /*Function to show a dialog to the user asking for an address and a size to taint/symbolize.
 It returns a MemoryAccess with the memory address and the size indicated. the caller need to free this object*/
-bool prompt_window_taint_symbolize(ea_t address, ea_t *selection_start, ea_t *selection_end)
+bool prompt_window_taint_symbolize(ea_t address, sval_t size, ea_t *selection_start, ea_t *selection_end)
 {
-	sval_t size = 1;
 	char format[200] = { 0 };
 	//qsnprintf(format, sizeof(format), formTaintSymbolizeInput, cmdOptions.use_symbolic_engine ? "Symbolize" : "Taint");
 	if (ask_form(formTaintSymbolizeInput,
