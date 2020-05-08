@@ -151,7 +151,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                 }
             }
             else{
-                current_ea = ctx->cur_value;
+                current_ea = get_screen_ea();
             }        
         }
         else if (ctx->widget_type == BWN_DUMP) {
