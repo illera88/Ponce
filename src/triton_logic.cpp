@@ -120,14 +120,20 @@ int tritonize(ea_t pc, thid_t threadID)
         // Check if it is a conditional jump
         // We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
         if (tritonInst->isBranch()) {
-            ponce_set_cmt(pc, "Symbolic branch, make your choice!", false);
-            ponce_runtime_status.total_number_symbolic_conditions++;
-            if (cmdOptions.use_symbolic_engine)
-                set_item_color(pc, cmdOptions.color_tainted_condition);
+            if (tritonInst->isTainted())
+                ponce_set_cmt(pc, "Tainted branch!", false);
             else
-                set_item_color(pc, cmdOptions.color_tainted);
-            ponce_comments.push_back(std::make_pair(pc, 3));
+                ponce_set_cmt(pc, "Symbolic branch, make your choice!", false);
+
+            ponce_runtime_status.total_number_symbolic_conditions++;
+            set_item_color(pc, cmdOptions.color_tainted_condition);
         }
+        else
+        {
+            //It paints every tainted/symbolic instruction
+            set_item_color(pc, cmdOptions.color_tainted);
+        }
+        ponce_comments.push_back(std::make_pair(pc, 3));
     }
 
     if (tritonInst->isBranch() && tritonInst->isSymbolized()) {
