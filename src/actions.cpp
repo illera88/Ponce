@@ -151,8 +151,12 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                 }
             }
             else{
-                current_ea = get_screen_ea();
+                current_ea = get_screen_ea() != -1 ? get_screen_ea(): 0;
             }        
+        }
+        else if (ctx->widget_type == BWN_STKVIEW) {
+            if(is_mapped(ctx->cur_value))
+                current_ea = ctx->cur_value;
         }
         else if (ctx->widget_type == BWN_DUMP) {
             if (ctx->cur_flags & ACF_HAS_SELECTION){ // Only if there has been a valid selection
@@ -166,13 +170,13 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
        
 #if IDA_SDK_VERSION >= 740
         else if (ctx->widget_type == BWN_CPUREGS) {
-        auto reg_name = ctx->regname;
-        uint64 reg_value;
-        get_reg_val(reg_name, &reg_value);
-        current_ea = reg_value;
+            auto reg_name = ctx->regname;
+            uint64 reg_value;
+            get_reg_val(reg_name, &reg_value);
+            current_ea = reg_value;
         }
 #endif
-        jumpto(current_ea);
+        auto success = jumpto(current_ea, -1, UIJMP_IDAVIEW);
 
         if (!prompt_window_taint_symbolize(current_ea, size, &selection_starts, &selection_ends))
             return 0;
@@ -226,8 +230,15 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
         }
         else if (action_update_ctx_t->widget_type == BWN_DUMP) {
-            qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;    
+        }
+        else if (action_update_ctx_t->widget_type == BWN_STKVIEW) {
+            if (is_mapped(action_update_ctx_t->cur_value)) {
+                qsnprintf(label, sizeof(label), "%s memory at " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", action_update_ctx_t->cur_value);
+                action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
+            }
+            else
+                action_to_take = AST_DISABLE;
         }
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx_t->widget_type == BWN_CPUREGS) {
@@ -722,7 +733,7 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
 /*This list defined all the actions for the plugin*/
 struct action action_list[] =
 {
-    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "" },
+    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ }, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
 
@@ -731,7 +742,7 @@ struct action action_list[] =
 #else
     { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
 #endif
-    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "Symbolic or taint/" },
+    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ }, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
     { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },
