@@ -38,21 +38,21 @@
 #define RENAME_TAINTED_FUNCTIONS_PATTERN RENAME_TAINTED_FUNCTIONS_PREFIX"%03d_"
 #define RENAME_TAINTED_FUNCTIONS_PATTERN_LEN 6 
 
-struct action {
-    const action_desc_t* action_decs;
-    int view_type[44]; // This are the posible views
-    char const* menu_path; // this is where the item will be conteined in
-};
+//struct IDA_actions {   
+//    const action_desc_t* action_decs;
+//    int view_type[10]; // This are the posible views
+//    char const* menu_path; // this is where the item will be conteined in
+//};
 
 extern Snapshot snapshot;
 
 //All the global variables:
-extern struct action action_list[];
+//extern struct IDA_actions action_list[];
 extern bool hooked;
 
 //User options
 struct cmdOptionStruct {
-    bool auto_init = false;
+    bool auto_init = true;
     uint64 limitInstructionsTracingMode = 10000;
     uint64 limitTime = 60; //seconds
 

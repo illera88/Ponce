@@ -308,7 +308,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                         //We put the index at the beginning that we will use to get the bound from the action_name
                         qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
                         action_IDA_solve_formula_sub.name = name;                        
-                        qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
+                        qsnprintf(label, 255, "[%u] hit -> " MEM_FORMAT, bound, dstAddr);
                         action_IDA_solve_formula_sub.label = label;
                         success = register_action(action_IDA_solve_formula_sub);
                         //If the submenu is already registered, we should unregister it and re-register it
@@ -322,7 +322,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
                         qsnprintf(name, 255, "[%u]_Ponce:negate_formula_sub", bound);
                         action_IDA_negate_and_inject.name = name;
-                        qsnprintf(label, 255, "[%u]. " MEM_FORMAT " -> " MEM_FORMAT, bound, srcAddr, dstAddr);
+                        qsnprintf(label, 255, "[%u] hit -> " MEM_FORMAT, bound, dstAddr);
                         action_IDA_negate_and_inject.label = label;
                         success = register_action(action_IDA_negate_and_inject);
                         //If the submenu is already registered, we should unregister it and re-register it
@@ -330,7 +330,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                             unregister_action(action_IDA_negate_and_inject.name);
                             success = register_action(action_IDA_negate_and_inject);
                         }
-                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT Solver/Negate and Inject/", SETMENU_INS);
+                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT Solver/Negate & Inject/", SETMENU_INS);
 
 
                         break;

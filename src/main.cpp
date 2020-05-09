@@ -90,6 +90,11 @@ bool idaapi run(size_t)
             action_IDA_taint_symbolize_memory.label = symbolize_MEM;     
         }
 
+        /* Init the IDA actions depending on the IDA SDK version we build with*/
+        std::copy(std::begin(ponce_banner_views), std::end(ponce_banner_views), std::begin(action_list[0].view_type));
+        std::copy(std::begin(ponce_taint_symbolize_mem_views), std::end(ponce_taint_symbolize_mem_views), std::begin(action_list[2].view_type));
+        std::copy(std::begin(ponce_taint_symbolize_reg_views), std::end(ponce_taint_symbolize_reg_views), std::begin(action_list[3].view_type));
+
         //Loop to register all the actions used in the menus
         for (int i = 0;; i++) {
             if (action_list[i].action_decs == NULL) {

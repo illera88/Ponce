@@ -154,10 +154,12 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                 current_ea = get_screen_ea() != -1 ? get_screen_ea(): 0;
             }        
         }
+#if IDA_SDK_VERSION >= 730
         else if (ctx->widget_type == BWN_STKVIEW) {
             if(is_mapped(ctx->cur_value))
                 current_ea = ctx->cur_value;
         }
+#endif
         else if (ctx->widget_type == BWN_DUMP) {
             if (ctx->cur_flags & ACF_HAS_SELECTION){ // Only if there has been a valid selection
                 //We get the selection bounds from the action activation context
@@ -232,6 +234,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         else if (action_update_ctx_t->widget_type == BWN_DUMP) {
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;    
         }
+#if IDA_SDK_VERSION >= 730
         else if (action_update_ctx_t->widget_type == BWN_STKVIEW) {
             if (is_mapped(action_update_ctx_t->cur_value)) {
                 qsnprintf(label, sizeof(label), "%s memory at " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", action_update_ctx_t->cur_value);
@@ -240,6 +243,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             else
                 action_to_take = AST_DISABLE;
         }
+#endif
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx_t->widget_type == BWN_CPUREGS) {
             auto reg_name = action_update_ctx_t->regname;
@@ -296,7 +300,7 @@ struct ah_negate_and_inject_t : public action_handler_t
             assert(bound != -1); // impossible
 
             auto solutions = solve_formula(pc, bound);
-            Input* chosen_solution;
+            Input* chosen_solution = nullptr;
             if (solutions.size() > 0) {
                 if (solutions.size() == 1) {
                     chosen_solution = &solutions[0];
@@ -326,7 +330,6 @@ struct ah_negate_and_inject_t : public action_handler_t
                         }
                     }
                 }
-
                 // We negate necesary flags to go over the other branch
                 negate_flag_condition(ponce_runtime_status.last_triton_instruction);
 
@@ -364,7 +367,7 @@ static ah_negate_and_inject_t ah_negate_and_inject;
 
 action_desc_t action_IDA_negate_and_inject = ACTION_DESC_LITERAL(
     "Ponce:negate_and_inject", // The action name. This acts like an ID and must be unique
-    "Negate and Inject", //The action text.
+    "Negate & Inject", //The action text.
     &ah_negate_and_inject, //The action handler.
     "", //Optional: the action shortcut
     "Negate the current condition and inject the solution into memory", //Optional: the action tooltip (available in menus/toolbar)
@@ -379,22 +382,58 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
             ea_t pc = action_activation_ctx->cur_ea;
             msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
-            //We need to get the instruction associated with this address, we look for the addres in the map
-            //We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
+            /* We get the bound we are at by iterating over the pathConstraints*/
+            int bound = -1;
+            for (auto& path_constraint : api.getPathConstraints()) {
+                bound++;
+                auto constraint_address = std::get<1>(path_constraint.getBranchConstraints()[0]);
+                if (pc == constraint_address) {
+                    break;
+                }
+            }
+            assert(bound != -1); // impossible
 
-            /*unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto solutions = solve_formula(pc, bound);*/
-            //if (solutions != NULL)
-            //{
-            //    //Restore the snapshot
-            //    snapshot.restoreSnapshot();
+            auto solutions = solve_formula(pc, bound);
+            Input* chosen_solution = nullptr;
+            if (solutions.size() > 0) {
+                if (solutions.size() == 1) {
+                    chosen_solution = &solutions[0];
+                    triton::ast::SharedAbstractNode new_constraint;
+                    for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                        // Let's look for the constraint we have force to take wich is the a priori not taken one
+                        if (!taken) {
+                            new_constraint = constraint;
+                            break;
+                        }
+                    }
+                    // Once found we first pop the last path constraint
+                    api.popPathConstraint();
+                    // And replace it for the found previously
+                    api.pushPathConstraint(new_constraint);
+                }
+                else {
+                    // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
+                    for (const auto& solution : solutions) {
+                        // ask the user where he wants to go in popup or even better in the contextual menu
+                        // chosen_solution = &solutions[0];
+                        //We need to modify the last path constrain from api.getPathConstraints()
+                        for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                            if (!taken) {
 
-            //    // We set the results obtained from solve_formula
-            //    set_SMT_results(input_ptr);
+                            }
+                        }
+                    }
+                }
+                // We negate necesary flags to go over the other branch
+                negate_flag_condition(ponce_runtime_status.last_triton_instruction);
+                snapshot.restoreSnapshot();
+                set_SMT_solution(*chosen_solution);
+            }
 
-            //    //delete it after setting the proper results
-            //    delete input_ptr;
-            //}
+
+
+
+
         }
         return 0;
     }
@@ -731,18 +770,14 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
     0); //Optional: the action icon (shows when in menus/toolbars)
 
 /*This list defined all the actions for the plugin*/
-struct action action_list[] =
+struct IDA_actions action_list[] =
 {
-    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ }, "" },
+    { &action_IDA_ponce_banner, {0}, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
 
-#if IDA_SDK_VERSION >= 740
-    { &action_IDA_taint_symbolize_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, "Symbolic or taint/"},
-#else
-    { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
-#endif
-    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ }, "Symbolic or taint/" },
+    { &action_IDA_taint_symbolize_register, {0}, "Symbolic or taint/"},
+    { &action_IDA_taint_symbolize_memory, {0}, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
     { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },

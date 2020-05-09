@@ -57,7 +57,7 @@ int idaapi modcb(int fid, form_actions_t& fa)
 }
 
 /*IDA windows style is a FUMADA!! Will move soon to Qt :)
-I you want to create a new checkbox you should:
+If you want to create a new checkbox you should:
 - add it to the form variable that its in formChoser.hpp
 - Create the global variable in cmdOptions
 - if you want to inizialize it to something do it in the first if of the function (if (!cmdOptions.already_configured))
