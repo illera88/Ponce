@@ -65,6 +65,9 @@ bool idaapi run(size_t)
         //Registering action for the unload action
         register_action(action_IDA_unload);
         attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
+        register_action(action_IDA_clean);
+        attach_action_to_menu("Edit/Ponce/", action_IDA_clean.name, SETMENU_APP);
+
         //Some actions needs to use the api and the api need to have the architecture set
         if (!ponce_set_triton_architecture()) {
             return false;
@@ -193,6 +196,8 @@ void idaapi term(void)
     detach_action_from_menu("Edit/Ponce/", action_IDA_show_expressionsWindow.name);
     unregister_action(action_IDA_unload.name);
     detach_action_from_menu("Edit/Ponce/", action_IDA_unload.name);
+    unregister_action(action_IDA_clean.name);
+    detach_action_from_menu("Edit/Ponce/", action_IDA_clean.name);
     detach_action_from_menu("Edit/Ponce/", "");
     hooked = false;
 }

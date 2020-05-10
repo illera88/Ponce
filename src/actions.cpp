@@ -647,6 +647,30 @@ action_desc_t action_IDA_unload = ACTION_DESC_LITERAL(
     "Unload the plugin", //Optional: the action tooltip (available in menus/toolbar)
     138); //Optional: the action icon (shows when in menus/toolbars)
 
+
+struct ah_clean_comments_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        delete_ponce_comments();
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        return AST_ENABLE_ALWAYS;
+    }
+};
+static ah_unload_t ah_clean;
+
+action_desc_t action_IDA_clean = ACTION_DESC_LITERAL(
+    "Ponce:clean", // The action name. This acts like an ID and must be unique
+    "Clean comments & colors", //The action text.
+    &ah_clean, //The action handler.
+    "Ctrl+Shift+U", //Optional: the action shortcut
+    "Clean all the comments and colour created by Ponce", //Optional: the action tooltip (available in menus/toolbar)
+    118); //Optional: the action icon (shows when in menus/toolbars)
+
 struct ah_enable_disable_tracing_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)

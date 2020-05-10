@@ -51,6 +51,12 @@ int idaapi modcb(int fid, form_actions_t& fa)
         fa.enable_field(13, isActivated ? 1 : 0);
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
         break;
+    case 5:
+    case 6:
+        // if extra verbosity set then regular verbosity set too
+        fa.get_checkbox_value(6, &isActivated);
+        fa.enable_field(5, isActivated ? 1 : 0);
+        break;
     default:
         break;
     }
