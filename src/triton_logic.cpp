@@ -2,7 +2,6 @@
 #include "triton_logic.hpp"
 #include "globals.hpp"
 #include "utils.hpp"
-#include "tainting_n_symbolic.hpp"
 #include "context.hpp"
 #include "blacklist.hpp"
 
@@ -95,7 +94,7 @@ int tritonize(ea_t pc, thid_t threadID)
     }
 
     if (cmdOptions.addCommentsControlledOperands)
-        get_controlled_operands_and_add_comment(tritonInst, pc);
+        comment_controlled_operands(tritonInst, pc);
 
     if (cmdOptions.addCommentssymbolizexpresions)
         add_symbolic_expressions(tritonInst, pc);
@@ -220,7 +219,6 @@ void triton_restart_engines()
     ponce_runtime_status.total_number_symbolic_conditions = 0;
     ponce_runtime_status.current_trace_counter = 0;
     breakpoint_pending_actions.clear();
-    set_automatic_taint_n_simbolic();
 }
 
 

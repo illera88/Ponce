@@ -38,3 +38,4 @@ short read_unicode_char_from_ida(ea_t address);
 ea_t current_instruction();
 void delete_ponce_comments();
 bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble);
+void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc);

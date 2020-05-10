@@ -17,7 +17,6 @@
 #include "globals.hpp"
 #include "context.hpp"
 #include "utils.hpp"
-#include "tainting_n_symbolic.hpp"
 #include "blacklist.hpp"
 #include "actions.hpp"
 #include "triton_logic.hpp"
