@@ -60,8 +60,8 @@ bool idaapi run(size_t)
         register_action(action_IDA_show_config);
         attach_action_to_menu("Edit/Ponce/", action_IDA_show_config.name, SETMENU_APP);
         //Registering action for the Ponce taint window
-        register_action(action_IDA_show_taintWindow);
-        attach_action_to_menu("Edit/Ponce/", action_IDA_show_taintWindow.name, SETMENU_APP);
+        register_action(action_IDA_show_expressionsWindow);
+        attach_action_to_menu("Edit/Ponce/", action_IDA_show_expressionsWindow.name, SETMENU_APP);
         //Registering action for the unload action
         register_action(action_IDA_unload);
         attach_action_to_menu("Edit/Ponce/", action_IDA_unload.name, SETMENU_APP);
@@ -170,9 +170,10 @@ int idaapi init(void)
     if (!load_options(&cmdOptions))
         return PLUGIN_KEEP;
     //We want to autorun the plugin when IDA starts?
-    if (cmdOptions.auto_init)
-        run(0);
-    return PLUGIN_KEEP;
+    if(run(0))
+        return PLUGIN_KEEP;
+    else
+        return PLUGIN_SKIP;
 }
 
 //--------------------------------------------------------------------------
@@ -188,8 +189,8 @@ void idaapi term(void)
     // Unregister and detach menus
     unregister_action(action_IDA_show_config.name);
     detach_action_from_menu("Edit/Ponce/", action_IDA_show_config.name);
-    unregister_action(action_IDA_show_taintWindow.name);
-    detach_action_from_menu("Edit/Ponce/", action_IDA_show_taintWindow.name);
+    unregister_action(action_IDA_show_expressionsWindow.name);
+    detach_action_from_menu("Edit/Ponce/", action_IDA_show_expressionsWindow.name);
     unregister_action(action_IDA_unload.name);
     detach_action_from_menu("Edit/Ponce/", action_IDA_unload.name);
     detach_action_from_menu("Edit/Ponce/", "");

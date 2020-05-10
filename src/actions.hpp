@@ -36,7 +36,7 @@ extern struct IDA_actions action_list[];
 
 
 extern action_desc_t action_IDA_show_config;
-extern action_desc_t action_IDA_show_taintWindow;
+extern action_desc_t action_IDA_show_expressionsWindow;
 extern action_desc_t action_IDA_unload;
 extern action_desc_t action_IDA_solve_formula_sub;
 extern action_desc_t action_IDA_negate_and_inject;

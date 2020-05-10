@@ -433,14 +433,6 @@ qstring get_callee_name(ea_t address) {
     return name;
 }
 
-regval_t ida_get_reg_val_invalidate(char* reg_name)
-{
-    regval_t reg_value;
-    invalidate_dbg_state(DBGINV_REGS);
-    get_reg_val(reg_name, &reg_value);
-    return reg_value;
-}
-
 std::uint64_t GetTimeMs64(void)
 {
 #ifdef _WIN32

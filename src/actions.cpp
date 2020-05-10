@@ -589,7 +589,7 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
     "Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
     156); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_show_taintWindow_t : public action_handler_t
+struct ah_show_expressionsWindow_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
@@ -614,12 +614,12 @@ struct ah_show_taintWindow_t : public action_handler_t
         return AST_ENABLE;
     }
 };
-static ah_show_taintWindow_t ah_show_taintWindow;
+static ah_show_expressionsWindow_t ah_show_expressions_Window;
 
-action_desc_t action_IDA_show_taintWindow = ACTION_DESC_LITERAL(
-    "Ponce:show_taintWindows", // The action name. This acts like an ID and must be unique
+action_desc_t action_IDA_show_expressionsWindow = ACTION_DESC_LITERAL(
+    "Ponce:show_expressionsWindows", // The action name. This acts like an ID and must be unique
     "Show Taint/Symbolic items", //The action text.
-    &ah_show_taintWindow, //The action handler.
+    &ah_show_expressions_Window, //The action handler.
     "Alt+Shift+T", //Optional: the action shortcut
     "Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
     157); //Optional: the action icon (shows when in menus/toolbars)
