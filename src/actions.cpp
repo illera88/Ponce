@@ -195,7 +195,12 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         }
 
         if (cmdOptions.use_tainting_engine) {
-            api.taintMemory(triton::arch::MemoryAccess(selection_starts, selection_length));
+            for (unsigned int i = 0; i < selection_length; i++) {
+                auto taintVar = api.taintMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
+                if (taintVar) {
+                    ponce_set_cmt(selection_starts + i, "Tainted memory", true);
+                }
+            }
         }
         else{ // Symbolizing all the selected memory
             for (unsigned int i = 0; i < selection_length; i++) {
