@@ -15,7 +15,7 @@
 //IDA
 #include <ida.hpp>
 
-bool prompt_window_taint_symbolize(ea_t address, ea_t* selection_start, ea_t* selection_end);
+bool prompt_window_taint_symbolize(ea_t address, sval_t size, ea_t* selection_start, ea_t* selection_end);
 
 static const char formTaintSymbolizeInput[] =
 "STARTITEM 1\n"

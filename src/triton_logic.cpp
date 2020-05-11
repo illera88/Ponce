@@ -2,7 +2,6 @@
 #include "triton_logic.hpp"
 #include "globals.hpp"
 #include "utils.hpp"
-#include "tainting_n_symbolic.hpp"
 #include "context.hpp"
 #include "blacklist.hpp"
 
@@ -95,7 +94,7 @@ int tritonize(ea_t pc, thid_t threadID)
     }
 
     if (cmdOptions.addCommentsControlledOperands)
-        get_controlled_operands_and_add_comment(tritonInst, pc);
+        comment_controlled_operands(tritonInst, pc);
 
     if (cmdOptions.addCommentssymbolizexpresions)
         add_symbolic_expressions(tritonInst, pc);
@@ -195,28 +194,20 @@ void triton_restart_engines()
         ponce_runtime_status.last_triton_instruction = nullptr;
     }
 
-    // This optimization is veeery good for the size of the formulas
-    api.setMode(triton::modes::ALIGNED_MEMORY, true);
-    // We don't need to track non symbolic path constraints
+    // Set the optimizations selected by user
+    api.setMode(triton::modes::ALIGNED_MEMORY, cmdOptions.ALIGNED_MEMORY);
+    api.setMode(triton::modes::AST_OPTIMIZATIONS, cmdOptions.AST_OPTIMIZATIONS);
+    api.setMode(triton::modes::CONCRETIZE_UNDEFINED_REGISTERS, cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS);
+    api.setMode(triton::modes::CONSTANT_FOLDING, cmdOptions.CONSTANT_FOLDING);
+    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, cmdOptions.ONLY_ON_SYMBOLIZED);
+    api.setMode(triton::modes::ONLY_ON_TAINTED, cmdOptions.ONLY_ON_TAINTED);
+    api.setMode(triton::modes::SYMBOLIZE_INDEX_ROTATION, cmdOptions.SYMBOLIZE_INDEX_ROTATION);
+    api.setMode(triton::modes::TAINT_THROUGH_POINTERS, cmdOptions.TAINT_THROUGH_POINTERS);
+
+
+    // We don't want to track non symbolic path constraints
     api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
 
-    // We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
-    //if (cmdOptions.only_on_optimization)
-    //{
-    //	if (cmdOptions.use_symbolic_engine)
-    //	{
-    //		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
-    //		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, true); // seems not to exist any more
-    //		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);*/
-    //	}
-    //	if (cmdOptions.use_tainting_engine)
-    //	{
-    //		//We need to disable this optimization using the taint engine, if not a lot of RAM is consumed
-    //		api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true); 
-    //		/*api.enableSymbolicOptimization(triton::engines::symbolic::AST_DICTIONARIES, false);
-    //		api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);*/
-    //	}
-    //}
     ponce_runtime_status.runtimeTrigger.disable();
     ponce_runtime_status.is_ponce_tracing_enabled = false; // ToDo: Why using this instead of just ponce_runtime_status.runtimeTrigger
     ponce_runtime_status.tainted_functions_index = 0;
@@ -226,7 +217,6 @@ void triton_restart_engines()
     ponce_runtime_status.total_number_symbolic_conditions = 0;
     ponce_runtime_status.current_trace_counter = 0;
     breakpoint_pending_actions.clear();
-    set_automatic_taint_n_simbolic();
 }
 
 

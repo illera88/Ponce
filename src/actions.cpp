@@ -87,35 +87,34 @@ struct ah_taint_symbolize_register_t : public action_handler_t
 
     virtual action_state_t idaapi update(action_update_ctx_t* action_update_ctx)
     {
+        char label[50] = { 0 };
+        bool success;
+        action_state_t action_to_take = AST_DISABLE;
+        qsnprintf(label, sizeof(label), "%s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+        // Default
         if (action_update_ctx->widget_type == BWN_DISASM) {
             qstring selected;
             uint32 flags;
             if (get_highlight(&selected, get_current_viewer(), &flags)) {
                 if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
-                    char label[50] = { 0 };
                     qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", qstrupr((char*)selected.c_str()));
-
-                    bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
-                    success = update_action_tooltip(action_IDA_taint_symbolize_register.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_REG : COMMENT_SYMB_REG);
-                    if (is_debugger_on()) return AST_ENABLE;
+                    action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
                 }
-            }
+            }                
         }
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx->widget_type == BWN_CPUREGS) {
             auto reg_name = action_update_ctx->regname;
-            //uint64 reg_value;
-            //get_reg_val(reg_name, &reg_value); // Leave it here just in case
             if (str_to_register(reg_name) != triton::arch::register_e::ID_REG_INVALID) {
-                char label[50] = { 0 };
                 qsnprintf(label, sizeof(label), "%s %s register", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name);
-
-                bool success = update_action_label(action_IDA_taint_symbolize_register.name, label);
-                if (is_debugger_on()) return AST_ENABLE;
+                action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
             }
         }
 #endif
-        return AST_DISABLE;
+        success = update_action_label(action_IDA_taint_symbolize_register.name, label);
+        success = update_action_tooltip(action_IDA_taint_symbolize_register.name, cmdOptions.use_tainting_engine ? COMMENT_TAINT_REG : COMMENT_SYMB_REG);
+
+        return action_to_take;
     }
 };
 static ah_taint_symbolize_register_t ah_taint_symbolize_register;
@@ -136,28 +135,52 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         ea_t selection_starts = 0;
         ea_t selection_ends = 0;
         ea_t current_ea = 0;
+        sval_t size = 1;
         //We ask to the user for the memory and the size
         if (ctx->widget_type == BWN_DISASM) {
-            current_ea = get_screen_ea();
+            qstring selected;
+            uint32 flags;
+            /* Try to get register if selected*/
+            if (get_highlight(&selected, get_current_viewer(), &flags)) {
+                if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
+                    regval_t reg;
+                    auto sucess = get_reg_val(selected.c_str(), &reg);
+                    if (sucess && is_mapped(reg.ival)) {
+                        current_ea = reg.ival;                        
+                    }
+                }
+            }
+            else{
+                current_ea = get_screen_ea() != -1 ? get_screen_ea(): 0;
+            }        
         }
+#if IDA_SDK_VERSION >= 730
+        else if (ctx->widget_type == BWN_STKVIEW) {
+            if(is_mapped(ctx->cur_value))
+                current_ea = ctx->cur_value;
+        }
+#endif
         else if (ctx->widget_type == BWN_DUMP) {
-            current_ea = get_screen_ea();
-            //We get the selection bounds from the action activation context
-            auto selection_starts = ctx->cur_sel.from.at->toea();
-            auto selection_ends = ctx->cur_sel.to.at->toea();
-            int a = 2;
+            if (ctx->cur_flags & ACF_HAS_SELECTION){ // Only if there has been a valid selection
+                //We get the selection bounds from the action activation context
+                auto selection_starts = ctx->cur_sel.from.at->toea();
+                auto selection_ends = ctx->cur_sel.to.at->toea();
+                size = selection_ends - selection_starts + 1;
+                current_ea = selection_starts;
+            }
         }
        
 #if IDA_SDK_VERSION >= 740
         else if (ctx->widget_type == BWN_CPUREGS) {
-        auto reg_name = ctx->regname;
-        uint64 reg_value;
-        get_reg_val(reg_name, &reg_value);
-        current_ea = reg_value;
+            auto reg_name = ctx->regname;
+            uint64 reg_value;
+            get_reg_val(reg_name, &reg_value);
+            current_ea = reg_value;
         }
 #endif
+        auto success = jumpto(current_ea, -1, UIJMP_IDAVIEW);
 
-        if (!prompt_window_taint_symbolize(current_ea, &selection_starts, &selection_ends))
+        if (!prompt_window_taint_symbolize(current_ea, size, &selection_starts, &selection_ends))
             return 0;
 
         /* When the user taints something for the first time we should enable step_tracing*/
@@ -196,14 +219,36 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         char label[50] = { 0 };
         bool success;
         action_state_t action_to_take = AST_DISABLE;
+        qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
         if (action_update_ctx_t->widget_type == BWN_DISASM) {
-            qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
+            qstring selected;
+            uint32 flags;
+            /* Try to get register if selected*/
+            if (get_highlight(&selected, get_current_viewer(), &flags)) {
+                if (str_to_register(selected) != triton::arch::register_e::ID_REG_INVALID) {
+                    regval_t reg;
+                    //invalidate_dbg_state(DBGINV_REGS);
+                    auto sucess = get_reg_val(selected.c_str(), &reg);
+                    if (sucess && is_mapped(reg.ival)) {
+                        qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", qstrupr((char*)selected.c_str()), reg.ival);
+                    }
+                }
+            }
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
         }
         else if (action_update_ctx_t->widget_type == BWN_DUMP) {
-            qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;    
         }
+#if IDA_SDK_VERSION >= 730
+        else if (action_update_ctx_t->widget_type == BWN_STKVIEW) {
+            if (is_mapped(action_update_ctx_t->cur_value)) {
+                qsnprintf(label, sizeof(label), "%s memory at " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", action_update_ctx_t->cur_value);
+                action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
+            }
+            else
+                action_to_take = AST_DISABLE;
+        }
+#endif
 #if IDA_SDK_VERSION >= 740
         else if (action_update_ctx_t->widget_type == BWN_CPUREGS) {
             auto reg_name = action_update_ctx_t->regname;
@@ -211,7 +256,6 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             get_reg_val(reg_name, &reg_value);
 
             if (!is_mapped(reg_value)) {
-                qsnprintf(label, sizeof(label), "%s memory", cmdOptions.use_tainting_engine ? "Taint" : "Symbolize");
                 action_to_take = AST_DISABLE;
             }
             
@@ -261,7 +305,7 @@ struct ah_negate_and_inject_t : public action_handler_t
             assert(bound != -1); // impossible
 
             auto solutions = solve_formula(pc, bound);
-            Input* chosen_solution;
+            Input* chosen_solution = nullptr;
             if (solutions.size() > 0) {
                 if (solutions.size() == 1) {
                     chosen_solution = &solutions[0];
@@ -291,7 +335,6 @@ struct ah_negate_and_inject_t : public action_handler_t
                         }
                     }
                 }
-
                 // We negate necesary flags to go over the other branch
                 negate_flag_condition(ponce_runtime_status.last_triton_instruction);
 
@@ -329,7 +372,7 @@ static ah_negate_and_inject_t ah_negate_and_inject;
 
 action_desc_t action_IDA_negate_and_inject = ACTION_DESC_LITERAL(
     "Ponce:negate_and_inject", // The action name. This acts like an ID and must be unique
-    "Negate and Inject", //The action text.
+    "Negate & Inject", //The action text.
     &ah_negate_and_inject, //The action handler.
     "", //Optional: the action shortcut
     "Negate the current condition and inject the solution into memory", //Optional: the action tooltip (available in menus/toolbar)
@@ -344,22 +387,58 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
             ea_t pc = action_activation_ctx->cur_ea;
             msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
 
-            //We need to get the instruction associated with this address, we look for the addres in the map
-            //We want to negate the last path contraint at the current address, so we traverse the myPathconstraints in reverse
+            /* We get the bound we are at by iterating over the pathConstraints*/
+            int bound = -1;
+            for (auto& path_constraint : api.getPathConstraints()) {
+                bound++;
+                auto constraint_address = std::get<1>(path_constraint.getBranchConstraints()[0]);
+                if (pc == constraint_address) {
+                    break;
+                }
+            }
+            assert(bound != -1); // impossible
 
-            /*unsigned int bound = ponce_runtime_status.myPathConstraints.size() - 1;
-            auto solutions = solve_formula(pc, bound);*/
-            //if (solutions != NULL)
-            //{
-            //    //Restore the snapshot
-            //    snapshot.restoreSnapshot();
+            auto solutions = solve_formula(pc, bound);
+            Input* chosen_solution = nullptr;
+            if (solutions.size() > 0) {
+                if (solutions.size() == 1) {
+                    chosen_solution = &solutions[0];
+                    triton::ast::SharedAbstractNode new_constraint;
+                    for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                        // Let's look for the constraint we have force to take wich is the a priori not taken one
+                        if (!taken) {
+                            new_constraint = constraint;
+                            break;
+                        }
+                    }
+                    // Once found we first pop the last path constraint
+                    api.popPathConstraint();
+                    // And replace it for the found previously
+                    api.pushPathConstraint(new_constraint);
+                }
+                else {
+                    // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
+                    for (const auto& solution : solutions) {
+                        // ask the user where he wants to go in popup or even better in the contextual menu
+                        // chosen_solution = &solutions[0];
+                        //We need to modify the last path constrain from api.getPathConstraints()
+                        for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                            if (!taken) {
 
-            //    // We set the results obtained from solve_formula
-            //    set_SMT_results(input_ptr);
+                            }
+                        }
+                    }
+                }
+                // We negate necesary flags to go over the other branch
+                negate_flag_condition(ponce_runtime_status.last_triton_instruction);
+                snapshot.restoreSnapshot();
+                set_SMT_solution(*chosen_solution);
+            }
 
-            //    //delete it after setting the proper results
-            //    delete input_ptr;
-            //}
+
+
+
+
         }
         return 0;
     }
@@ -515,7 +594,7 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
     "Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
     156); //Optional: the action icon (shows when in menus/toolbars)
 
-struct ah_show_taintWindow_t : public action_handler_t
+struct ah_show_expressionsWindow_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
@@ -540,12 +619,12 @@ struct ah_show_taintWindow_t : public action_handler_t
         return AST_ENABLE;
     }
 };
-static ah_show_taintWindow_t ah_show_taintWindow;
+static ah_show_expressionsWindow_t ah_show_expressions_Window;
 
-action_desc_t action_IDA_show_taintWindow = ACTION_DESC_LITERAL(
-    "Ponce:show_taintWindows", // The action name. This acts like an ID and must be unique
+action_desc_t action_IDA_show_expressionsWindow = ACTION_DESC_LITERAL(
+    "Ponce:show_expressionsWindows", // The action name. This acts like an ID and must be unique
     "Show Taint/Symbolic items", //The action text.
-    &ah_show_taintWindow, //The action handler.
+    &ah_show_expressions_Window, //The action handler.
     "Alt+Shift+T", //Optional: the action shortcut
     "Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
     157); //Optional: the action icon (shows when in menus/toolbars)
@@ -572,6 +651,30 @@ action_desc_t action_IDA_unload = ACTION_DESC_LITERAL(
     "Ctrl+Shift+U", //Optional: the action shortcut
     "Unload the plugin", //Optional: the action tooltip (available in menus/toolbar)
     138); //Optional: the action icon (shows when in menus/toolbars)
+
+
+struct ah_clean_comments_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        delete_ponce_comments();
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        return AST_ENABLE_ALWAYS;
+    }
+};
+static ah_unload_t ah_clean;
+
+action_desc_t action_IDA_clean = ACTION_DESC_LITERAL(
+    "Ponce:clean", // The action name. This acts like an ID and must be unique
+    "Clean comments & colors", //The action text.
+    &ah_clean, //The action handler.
+    "Ctrl+Shift+U", //Optional: the action shortcut
+    "Clean all the comments and colour created by Ponce", //Optional: the action tooltip (available in menus/toolbar)
+    118); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_enable_disable_tracing_t : public action_handler_t
 {
@@ -696,18 +799,14 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
     0); //Optional: the action icon (shows when in menus/toolbars)
 
 /*This list defined all the actions for the plugin*/
-struct action action_list[] =
+struct IDA_actions action_list[] =
 {
-    { &action_IDA_ponce_banner, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "" },
+    { &action_IDA_ponce_banner, {0}, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
 
-#if IDA_SDK_VERSION >= 740
-    { &action_IDA_taint_symbolize_register, { BWN_DISASM, BWN_CPUREGS, __END__ }, "Symbolic or taint/"},
-#else
-    { &action_IDA_taint_symbolize_register, { BWN_DISASM, __END__ }, "Symbolic or taint/"},
-#endif
-    { &action_IDA_taint_symbolize_memory, { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, __END__ }, "Symbolic or taint/" },
+    { &action_IDA_taint_symbolize_register, {0}, "Symbolic or taint/"},
+    { &action_IDA_taint_symbolize_memory, {0}, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
     { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },
