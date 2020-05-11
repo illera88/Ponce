@@ -202,7 +202,6 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
         //unhook_from_notification_point(HT_DBG, tracer_callback, NULL);
         ponce_runtime_status.runtimeTrigger.disable();
         enable_step_trace(false);
-        ponce_runtime_status.is_ponce_tracing_enabled = false;
         //Removing snapshot if it exists
         if (snapshot.exists())
             snapshot.resetEngine();

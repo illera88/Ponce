@@ -209,7 +209,6 @@ void triton_restart_engines()
     api.setMode(triton::modes::TAINT_THROUGH_POINTERS, cmdOptions.TAINT_THROUGH_POINTERS);
 
     ponce_runtime_status.runtimeTrigger.disable();
-    ponce_runtime_status.is_ponce_tracing_enabled = false; // ToDo: Why using this instead of just ponce_runtime_status.runtimeTrigger
     ponce_runtime_status.tainted_functions_index = 0;
     //Reset instruction counter
     ponce_runtime_status.total_number_traced_ins = 0;
@@ -223,14 +222,13 @@ void triton_restart_engines()
 /*This function is call the first time we are tainting something to enable the trigger, the flags and the tracing*/
 void start_tainting_or_symbolic_analysis()
 {
-    if (!ponce_runtime_status.is_ponce_tracing_enabled)
+    if (!ponce_runtime_status.runtimeTrigger.getState())
     {
         triton_restart_engines();
         // Delete previous Ponce comments
         delete_ponce_comments();
         ponce_runtime_status.runtimeTrigger.enable();
         ponce_runtime_status.analyzed_thread = get_current_thread();
-        ponce_runtime_status.is_ponce_tracing_enabled = true;
         enable_step_trace(true);
         set_step_trace_options(0);
         ponce_runtime_status.tracing_start_time = 0;
