@@ -150,9 +150,9 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                     }
                 }
             }
-            else{
-                current_ea = get_screen_ea() != -1 ? get_screen_ea(): 0;
-            }        
+            if (current_ea == 0) {
+                current_ea = get_screen_ea() != -1 ? get_screen_ea() : 0;
+            }                
         }
 #if IDA_SDK_VERSION >= 730
         else if (ctx->widget_type == BWN_STKVIEW) {
