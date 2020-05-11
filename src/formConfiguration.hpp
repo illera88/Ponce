@@ -31,7 +31,6 @@ static const char form[] =
 "<#Show debug info#Verbosity#Show Ponce debug info in the output windows:C5>\n"
 "<#Max debug verbosity#Show EXTRA Ponce debug info in the output window:C6>>\n"
 //
-//"<#Keep a map of aligned memory#Optimizations#ALIGNED_MEMORY:C7>\n"
 "<#Concretize every registers tagged as undefined#Optimizations#CONCRETIZE_UNDEFINED_REGISTERS:C8>\n"
 "<#Perform a constant folding optimization of sub ASTs which do not contain symbolic variables#CONSTANT_FOLDING:C9>\n"
 "<#Symbolize index rotation for bvrol and bvror. This mode increases the complexity of solving#SYMBOLIZE_INDEX_ROTATION:C12>\n"

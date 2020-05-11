@@ -28,11 +28,8 @@ int idaapi modcb(int fid, form_actions_t& fa)
     {
     case -1: // called at the begining
         fa.get_checkbox_value(3, &isActivated); // get symbolic engine value
-        //fa.enable_field(7, isActivated ? 1 : 0);
         fa.enable_field(8, isActivated ? 1 : 0);
         fa.enable_field(9, isActivated ? 1 : 0);
-        //fa.enable_field(10, isActivated ? 1 : 0);
-        //fa.enable_field(11, isActivated ? 1 : 0);
         fa.enable_field(12, isActivated ? 1 : 0);
         fa.enable_field(13, isActivated ? 1 : 0);
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
@@ -42,11 +39,8 @@ int idaapi modcb(int fid, form_actions_t& fa)
     case 3:
     case 4:
         fa.get_checkbox_value(3, &isActivated); // get symbolic engine value
-        //fa.enable_field(7, isActivated ? 1 : 0);
         fa.enable_field(8, isActivated ? 1 : 0);
         fa.enable_field(9, isActivated ? 1 : 0);
-        //fa.enable_field(10, isActivated ? 1 : 0);
-        //fa.enable_field(11, isActivated ? 1 : 0);
         fa.enable_field(12, isActivated ? 1 : 0);
         fa.enable_field(13, isActivated ? 1 : 0);
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
