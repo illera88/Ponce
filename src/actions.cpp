@@ -253,9 +253,10 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             if (!is_mapped(reg_value)) {
                 action_to_take = AST_DISABLE;
             }
-            
-            qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name, reg_value);    
-            action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
+            else {
+                qsnprintf(label, sizeof(label), "%s memory at %s " MEM_FORMAT, cmdOptions.use_tainting_engine ? "Taint" : "Symbolize", reg_name, reg_value);    
+                action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
+            }
         }
 #endif
         else {

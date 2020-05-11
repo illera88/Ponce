@@ -519,12 +519,28 @@ void delete_ponce_comments() {
     }
 }
 
-
 /* Wrapper to keep track of added comments so we can delete them after*/
 bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble) {
+    qstring buf;
+    qstring new_comment;
+    if (get_cmt(&buf, ea, rptble) != -1) {
+        auto first_space = strchr(buf.c_str(), ' ');
+        //auto n_hit =  std::stoi(std::string(comm, first_space - comm));
+        // there is a previous comment. Let's try to get the hit count
+        if (first_space){
+            try {
+                auto n_hit = std::stoi(std::string(buf.c_str(), first_space - buf.c_str()));
+                new_comment.sprnt("%d hits. %s", ++n_hit, comm);
+                return set_cmt(ea, new_comment.c_str(), rptble);
+            }
+            catch (...) {}
+        }       
+        new_comment.sprnt("%d hits. %s", 2, comm);
+        return set_cmt(ea, new_comment.c_str(), rptble);             
+    }
+    //if it is a new comment we add it to ponce_comments
     ponce_comments.push_back(std::make_pair(ea, 1));
-
-    return append_cmt(ea, comm, rptble);
+    return set_cmt(ea, comm, rptble);
 }
 
 /*This function gets the tainted operands for an instruction and add a comment to that instruction with this info*/
@@ -533,37 +549,37 @@ void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc)
     std::stringstream comment;
     std::stringstream regs_controlled;
     std::stringstream mems_controlled;
+    std::stringstream coso;
+
+    if ((cmdOptions.use_symbolic_engine && !tritonInst->isSymbolized()) || (cmdOptions.use_tainting_engine && !tritonInst->isTainted())) {
+        return;
+    }
+
+    if (cmdOptions.use_tainting_engine)
+        comment << "Tainted instruction\n";
+    else
+        comment << "Symbolic instruction";
 
     /*Here we check all the registers and memory read to know which are tainted*/
     auto regs = tritonInst->getReadRegisters();
-    for (auto it = regs.begin(); it != regs.end(); it++) {
-        //api.registers.
-        auto reg = it->first;
-
+    for (const auto& [reg, expr] : tritonInst->getReadRegisters()) {
         if ((cmdOptions.use_tainting_engine && api.isRegisterTainted(reg)) ||
-            (cmdOptions.use_symbolic_engine && api.isRegisterSymbolized(reg)))
-            regs_controlled << reg.getName() << " ";
+            (cmdOptions.use_symbolic_engine && api.isRegisterSymbolized(reg))) {
+            regs_controlled << std::uppercase << reg.getName() << " ";
+        }
     }
     if (regs_controlled.str().size() > 0) {
-        if (cmdOptions.use_tainting_engine)
-            comment << "Tainted regs: " << regs_controlled.str() << "\n";
-        else
-            comment << "Symbolic regs: " << regs_controlled.str() << "\n";
+        comment << "\nRegister: " << regs_controlled.str();
     }
-    auto accesses = tritonInst->getLoadAccess();
-    for (auto it = accesses.begin(); it != accesses.end(); it++) {
-        auto mem = it->first;
 
-        //For the memory we can't use the operand because they don't have yet the real value of the address
+    for (const auto& [mem, expr] : tritonInst->getLoadAccess()) {
         if ((cmdOptions.use_tainting_engine && api.isMemoryTainted(mem)) ||
             (cmdOptions.use_symbolic_engine && api.isMemorySymbolized(mem)))
             mems_controlled << "0x" << std::hex << mem.getAddress() << " ";
     }
+
     if (mems_controlled.str().size() > 0) {
-        if (cmdOptions.use_tainting_engine)
-            comment << "Tainted memory: " << mems_controlled.str();
-        else
-            comment << "Symbolic memory: " << mems_controlled.str();
+        comment << "\nMemory: " << mems_controlled.str();
     }
 
     //We set the comment
