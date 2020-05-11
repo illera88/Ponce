@@ -28,11 +28,11 @@ int idaapi modcb(int fid, form_actions_t& fa)
     {
     case -1: // called at the begining
         fa.get_checkbox_value(3, &isActivated); // get symbolic engine value
-        fa.enable_field(7, isActivated ? 1 : 0);
+        //fa.enable_field(7, isActivated ? 1 : 0);
         fa.enable_field(8, isActivated ? 1 : 0);
         fa.enable_field(9, isActivated ? 1 : 0);
-        fa.enable_field(10, isActivated ? 1 : 0);
-        fa.enable_field(11, isActivated ? 1 : 0);
+        //fa.enable_field(10, isActivated ? 1 : 0);
+        //fa.enable_field(11, isActivated ? 1 : 0);
         fa.enable_field(12, isActivated ? 1 : 0);
         fa.enable_field(13, isActivated ? 1 : 0);
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
@@ -42,11 +42,11 @@ int idaapi modcb(int fid, form_actions_t& fa)
     case 3:
     case 4:
         fa.get_checkbox_value(3, &isActivated); // get symbolic engine value
-        fa.enable_field(7, isActivated ? 1 : 0);
+        //fa.enable_field(7, isActivated ? 1 : 0);
         fa.enable_field(8, isActivated ? 1 : 0);
         fa.enable_field(9, isActivated ? 1 : 0);
-        fa.enable_field(10, isActivated ? 1 : 0);
-        fa.enable_field(11, isActivated ? 1 : 0);
+        //fa.enable_field(10, isActivated ? 1 : 0);
+        //fa.enable_field(11, isActivated ? 1 : 0);
         fa.enable_field(12, isActivated ? 1 : 0);
         fa.enable_field(13, isActivated ? 1 : 0);
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
@@ -90,7 +90,7 @@ void prompt_conf_window(void) {
         don't do this the variables will be always initialized to  the previous lines
         NOTE: Parenthesis are mandatory or it won't work!*/
         chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0);
-        chkgroup2 = (cmdOptions.ALIGNED_MEMORY ? 1 : 0) | (cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS ? 2 : 0) | (cmdOptions.CONSTANT_FOLDING ? 4 : 0) | (cmdOptions.ONLY_ON_SYMBOLIZED ? 8 : 0) | (cmdOptions.ONLY_ON_TAINTED ? 16 : 0) | (cmdOptions.SYMBOLIZE_INDEX_ROTATION ? 32 : 0) | (cmdOptions.AST_OPTIMIZATIONS ? 64 : 0) | (cmdOptions.TAINT_THROUGH_POINTERS ? 128 : 0);
+        chkgroup2 = (cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS ? 1 : 0) | (cmdOptions.CONSTANT_FOLDING ? 2 : 0) | (cmdOptions.SYMBOLIZE_INDEX_ROTATION ? 4 : 0) | (cmdOptions.AST_OPTIMIZATIONS ? 8 : 0) | (cmdOptions.TAINT_THROUGH_POINTERS ? 16 : 0);
         chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentssymbolizexpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
         symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
@@ -129,14 +129,11 @@ void prompt_conf_window(void) {
         cmdOptions.showDebugInfo = chkgroup1 & 1 ? 1 : 0;
         cmdOptions.showExtraDebugInfo = chkgroup1 & 2 ? 1 : 0;
         //
-        cmdOptions.ALIGNED_MEMORY = chkgroup2 & 1 ? 1 : 0;
-        cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS = chkgroup2 & 2 ? 1 : 0;
-        cmdOptions.CONSTANT_FOLDING = chkgroup2 & 4 ? 1 : 0;
-        cmdOptions.ONLY_ON_SYMBOLIZED = chkgroup2 & 8 ? 1 : 0;
-        cmdOptions.ONLY_ON_TAINTED = chkgroup2 & 16 ? 1 : 0;
-        cmdOptions.SYMBOLIZE_INDEX_ROTATION = chkgroup2 & 32 ? 1 : 0;
-        cmdOptions.AST_OPTIMIZATIONS = chkgroup2 & 64 ? 1 : 0;
-        cmdOptions.TAINT_THROUGH_POINTERS = chkgroup2 & 128 ? 1 : 0;
+        cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS = chkgroup2 & 1 ? 1 : 0;
+        cmdOptions.CONSTANT_FOLDING = chkgroup2 & 2 ? 1 : 0;
+        cmdOptions.SYMBOLIZE_INDEX_ROTATION = chkgroup2 & 4 ? 1 : 0;
+        cmdOptions.AST_OPTIMIZATIONS = chkgroup2 & 8 ? 1 : 0;
+        cmdOptions.TAINT_THROUGH_POINTERS = chkgroup2 & 16 ? 1 : 0;
         
         // Make sure that modes are correctly set since some engines
         // can't have some modes activated
@@ -144,11 +141,8 @@ void prompt_conf_window(void) {
             cmdOptions.TAINT_THROUGH_POINTERS = false;
         }
         else {
-            cmdOptions.ALIGNED_MEMORY = false;
             cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS = false;
             cmdOptions.CONSTANT_FOLDING = false;
-            cmdOptions.ONLY_ON_SYMBOLIZED = false;
-            cmdOptions.ONLY_ON_TAINTED = false;
             cmdOptions.SYMBOLIZE_INDEX_ROTATION = false;
             cmdOptions.AST_OPTIMIZATIONS = false;
         }
@@ -178,11 +172,8 @@ void prompt_conf_window(void) {
                 "use_symbolic_engine: %s\n"
                 "showDebugInfo: %s\n"
                 "showExtraDebugInfo: %s\n"
-                "ALIGNED_MEMORY: %s\n"
                 "CONCRETIZE_UNDEFINED_REGISTERS: %s\n"
                 "CONSTANT_FOLDING: %s\n"
-                "ONLY_ON_SYMBOLIZED: %s\n"
-                "ONLY_ON_TAINTED: %s\n"
                 "SYMBOLIZE_INDEX_ROTATION: %s\n"
                 "AST_OPTIMIZATIONS: %s\n"
                 "TAINT_THROUGH_POINTERS: %s\n"
@@ -198,11 +189,8 @@ void prompt_conf_window(void) {
                 cmdOptions.use_symbolic_engine ? "symbolic engine enabled" : "tainting engine enabled",
                 cmdOptions.showDebugInfo ? "true" : "false",
                 cmdOptions.showExtraDebugInfo ? "true" : "false",
-                cmdOptions.ALIGNED_MEMORY ? "true" : "false",
                 cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS ? "true" : "false",
                 cmdOptions.CONSTANT_FOLDING ? "true" : "false",
-                cmdOptions.ONLY_ON_SYMBOLIZED ? "true" : "false",
-                cmdOptions.ONLY_ON_TAINTED ? "true" : "false",
                 cmdOptions.SYMBOLIZE_INDEX_ROTATION ? "true" : "false",
                 cmdOptions.AST_OPTIMIZATIONS ? "true" : "false",
                 cmdOptions.TAINT_THROUGH_POINTERS ? "true" : "false",

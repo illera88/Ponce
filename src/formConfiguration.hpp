@@ -31,11 +31,9 @@ static const char form[] =
 "<#Show debug info#Verbosity#Show Ponce debug info in the output windows:C5>\n"
 "<#Max debug verbosity#Show EXTRA Ponce debug info in the output window:C6>>\n"
 //
-"<#Keep a map of aligned memory#Optimizations#ALIGNED_MEMORY:C7>\n"
-"<#Concretize every registers tagged as undefined#CONCRETIZE_UNDEFINED_REGISTERS:C8>\n"
+//"<#Keep a map of aligned memory#Optimizations#ALIGNED_MEMORY:C7>\n"
+"<#Concretize every registers tagged as undefined#Optimizations#CONCRETIZE_UNDEFINED_REGISTERS:C8>\n"
 "<#Perform a constant folding optimization of sub ASTs which do not contain symbolic variables#CONSTANT_FOLDING:C9>\n"
-"<#Perform symbolic execution only on symbolized expressions#ONLY_ON_SYMBOLIZED:C10>\n"
-"<#Perform symbolic execution only on tainted instructions#ONLY_ON_TAINTED:C11>\n"
 "<#Symbolize index rotation for bvrol and bvror. This mode increases the complexity of solving#SYMBOLIZE_INDEX_ROTATION:C12>\n"
 "<#Classical arithmetic optimisations to reduce the depth of the trees#AST_OPTIMIZATIONS:C13>\n"
 "<#Spread the taint if an index pointer is already tainted#TAINT_THROUGH_POINTERS:C14>>\n"

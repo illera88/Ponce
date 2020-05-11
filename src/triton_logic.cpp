@@ -188,25 +188,25 @@ void triton_restart_engines()
     api.addCallback(needConcreteRegisterValue_cb);
     //If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
     api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
-    api.getSymbolicEngine()->enable(cmdOptions.use_symbolic_engine);
+    api.getSymbolicEngine()->enable(true);
     if (ponce_runtime_status.last_triton_instruction) {
         delete ponce_runtime_status.last_triton_instruction;
         ponce_runtime_status.last_triton_instruction = nullptr;
     }
 
+    // This modes cannot be configured by the user. They are allways on
+    api.setMode(triton::modes::ALIGNED_MEMORY, true);
+    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, cmdOptions.use_symbolic_engine);
+    api.setMode(triton::modes::ONLY_ON_TAINTED, cmdOptions.use_tainting_engine);
+    // We don't want to track non symbolic path constraints
+    api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
+
     // Set the optimizations selected by user
-    api.setMode(triton::modes::ALIGNED_MEMORY, cmdOptions.ALIGNED_MEMORY);
     api.setMode(triton::modes::AST_OPTIMIZATIONS, cmdOptions.AST_OPTIMIZATIONS);
     api.setMode(triton::modes::CONCRETIZE_UNDEFINED_REGISTERS, cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS);
     api.setMode(triton::modes::CONSTANT_FOLDING, cmdOptions.CONSTANT_FOLDING);
-    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, cmdOptions.ONLY_ON_SYMBOLIZED);
-    api.setMode(triton::modes::ONLY_ON_TAINTED, cmdOptions.ONLY_ON_TAINTED);
     api.setMode(triton::modes::SYMBOLIZE_INDEX_ROTATION, cmdOptions.SYMBOLIZE_INDEX_ROTATION);
     api.setMode(triton::modes::TAINT_THROUGH_POINTERS, cmdOptions.TAINT_THROUGH_POINTERS);
-
-
-    // We don't want to track non symbolic path constraints
-    api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
 
     ponce_runtime_status.runtimeTrigger.disable();
     ponce_runtime_status.is_ponce_tracing_enabled = false; // ToDo: Why using this instead of just ponce_runtime_status.runtimeTrigger

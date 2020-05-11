@@ -69,12 +69,9 @@ struct cmdOptionStruct {
     bool showDebugInfo = false;
     bool showExtraDebugInfo = false;
 
-    bool ALIGNED_MEMORY = true;
     bool AST_OPTIMIZATIONS = false;
     bool CONCRETIZE_UNDEFINED_REGISTERS = false;
     bool CONSTANT_FOLDING = false;
-    bool ONLY_ON_SYMBOLIZED = false;
-    bool ONLY_ON_TAINTED = false;
     bool SYMBOLIZE_INDEX_ROTATION = false;
     bool TAINT_THROUGH_POINTERS = false;
 
