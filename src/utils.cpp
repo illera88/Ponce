@@ -556,7 +556,7 @@ void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc)
     }
 
     if (cmdOptions.use_tainting_engine)
-        comment << "Tainted instruction\n";
+        comment << "Tainted instruction";
     else
         comment << "Symbolic instruction";
 
