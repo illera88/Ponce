@@ -49,7 +49,11 @@ int get_compile_coord_by_ea(cfunc_t* cfunc, ea_t addr) {
 
 }
 
+#if IDA_SDK_VERSION == 700
+int idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
+#else
 ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
+#endif
 {
     int y = -1;
     switch (event)
@@ -58,7 +62,11 @@ ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
     {
         cfunc_t* cfunc = va_arg(va, cfunc_t*);
         ctree_maturity_t mat = va_argi(va, ctree_maturity_t);
+#if IDA_SDK_VERSION == 700
+        func_t* func = get_func(cfunc->entry_ea);
+#else
         func_t* func = cfunc->mba->get_curfunc();
+#endif
         std::list<int> already_commented_lines;
         for (const auto& [address, insinfo] : ponce_comments) {
             if (func_contains(func, address)) {
