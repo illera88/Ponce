@@ -18,7 +18,7 @@ jobs:
             
             - name: Install Triton dependencies (delete and move to vcpkg when https://github.com/Z3Prover/z3/pull/4043 gets merged and vcpkg gets updated to use the merged z3 version)
               run: |
-                 grep -c ^processor /proc/cpuinfo
+                 vcpkg version
                  cd ..
                  git clone https://github.com/illera88/z3
                  cd z3
