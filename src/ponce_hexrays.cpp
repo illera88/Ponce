@@ -25,7 +25,6 @@ int get_compile_coord_by_ea(cfunc_t* cfunc, ea_t addr) {
             y = -1;
     }
 #else
-
     std::map<ea_t, int> lnmap;
     int i = 0;
     y = -1;
@@ -40,7 +39,7 @@ int get_compile_coord_by_ea(cfunc_t* cfunc, ea_t addr) {
     }
     ea_t closest_ea = BADADDR;
     for (const auto& [ea, line] : lnmap) {
-        if (closest_ea == BADADDR || _abs64(closest_ea - addr) > _abs64(ea - addr)) {
+        if (closest_ea == BADADDR || abs(int(closest_ea - addr)) > abs(int(ea - addr))) {
             closest_ea = ea;
             y = lnmap[ea];
         }
