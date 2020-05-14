@@ -41,78 +41,56 @@ void fill_entryList() {
     global_list->clear();
 
     if (cmdOptions.use_tainting_engine) {
-        auto taintedMemoryList = api.getTaintedMemory();
-        auto taintedRegistersList = api.getTaintedRegisters();
-
         //Iterate over tainted memory
-        for (auto iterator = taintedMemoryList.begin(); iterator != taintedMemoryList.end(); ++iterator) {
+        for (const auto& addr : api.getTaintedMemory()) {
             item_t* list_entry = new item_t();
 
-            list_entry->address = *iterator;
+            list_entry->address = addr;
             list_entry->isTainted_or_symbolized = true;
-            list_entry->value = api.getConcreteMemoryValue(*iterator);
+            list_entry->value = api.getConcreteMemoryValue(addr, false);
 
             global_list->push_back(list_entry);
         }
 
         //Iterate over tainted registers
-        for (auto iterator = taintedRegistersList.begin(); iterator != taintedRegistersList.end(); ++iterator) {
+        for (const auto& reg : api.getTaintedRegisters()) {
             item_t* list_entry = new item_t();
-            auto reg = *(*iterator);
 
-            list_entry->register_name = reg.getName();
+            list_entry->register_name = reg->getName();
             list_entry->isTainted_or_symbolized = true;
-            list_entry->value = api.getConcreteRegisterValue(reg, false);
+            list_entry->value = api.getConcreteRegisterValue(*reg, false);
 
             global_list->push_back(list_entry);
         }
     }
     else if (cmdOptions.use_symbolic_engine) {
-        auto symMemMap = api.getSymbolicMemory();
-        auto symRegMap = api.getSymbolicRegisters();
-        
-        //for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
-        //    if (SymVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
-        //        auto mem = triton::arch::MemoryAccess(SymVar->getOrigin(), SymVar->getSize() / 8);
-        //        newinput.memOperand.push_back(mem);
-        //        api.setConcreteMemoryValue(mem, model_value); // Why
-        //    }
-        //    else if (SymVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
-        //        (triton::arch::register_e)SymVar->getOrigin()
-        //        auto reg = triton::arch::Register(*api.getCpuInstance(), );
-        //        newinput.regOperand.push_back(reg);
-        //        api.setConcreteRegisterValue(reg, model_value); // Why?
-        //        //ToDo: add concretizeRegister()??
-        //    }
-        //}
-
         //Iterate over symbolic memory
-        for (auto iterator = symMemMap.begin(); iterator != symMemMap.end(); iterator++) {
-            auto symbExpr = iterator->second;
+        for (const auto& [Addr, SymExpr] : api.getSymbolicMemory()) {
             item_t* list_entry = new item_t();
-
-            auto variables = triton::ast::search(symbExpr->getAst(), triton::ast::ast_e::VARIABLE_NODE);
-
-            list_entry->isTainted_or_symbolized = symbExpr->isSymbolized();
-            list_entry->id = symbExpr->getId();
-            list_entry->address = iterator->first;
-            list_entry->comment = symbExpr->getComment();
-            list_entry->value = api.getConcreteMemoryValue(symbExpr->getOriginMemory(), false);
-            //list_entry->value = symbExpr->getOriginMemory().getConcreteValue();
+            
+            list_entry->isTainted_or_symbolized = SymExpr->isSymbolized();
+            list_entry->id = SymExpr->getId();
+            list_entry->address = Addr;
+            for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
+                if (SymVar->getOrigin() == Addr) {
+                    auto SymVar_name = SymVar->getName(); // this should be SymVar_0 ...
+                    break;
+                }
+            }
+            list_entry->comment = SymExpr->getComment();
+            list_entry->value = api.getConcreteMemoryValue(SymExpr->getOriginMemory(), false);
 
             global_list->push_back(list_entry);
         }
 
-        //Iterate over symbolic registers
-        for (auto iterator = symRegMap.begin(); iterator != symRegMap.end(); iterator++) {
-            auto symbExpr = iterator->second;
-            auto reg = symbExpr->getOriginRegister();
+        for (const auto& [reg_id, SymExpr] : api.getSymbolicRegisters()) {
             item_t* list_entry = new item_t();
-
-            list_entry->isTainted_or_symbolized = symbExpr->isSymbolized();
-            list_entry->id = symbExpr->getId();
+            auto reg = api.getRegister(reg_id);
+ 
+            list_entry->isTainted_or_symbolized = SymExpr->isSymbolized();
+            list_entry->id = SymExpr->getId();
             list_entry->register_name = reg.getName();
-            list_entry->comment = symbExpr->getComment();
+            list_entry->comment = SymExpr->getComment();
             list_entry->value = api.getConcreteRegisterValue(reg, false);
 
             global_list->push_back(list_entry);
@@ -180,7 +158,7 @@ const int entry_chooser_t::widths_[] = { CHCOL_DEC | 8,
 };
 
 inline entry_chooser_t::entry_chooser_t()
-    : chooser_t(CH_CAN_REFRESH, qnumber(widths_), widths_, header_, cmdOptions.use_tainting_engine? "Taint Items" :"Symbolic Items") {
+    : chooser_t(CH_CAN_REFRESH, qnumber(widths_), widths_, header_, cmdOptions.use_tainting_engine ? "Ponce Taint Items" : "Ponce Symbolic Items") {
     CASSERT(qnumber(widths_) == qnumber(header_));
 
     if (global_list == NULL) {
@@ -202,10 +180,13 @@ void idaapi entry_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_attrs_
         cols[1].sprnt("%s", "");
     else
         cols[1].sprnt(MEM_FORMAT, li->address);
-    cols[2].sprnt("%s", li->register_name.c_str());
+    if(!li->register_name.empty())
+        cols[2].sprnt("%s", li->register_name.c_str());
     cols[3].sprnt(MEM_FORMAT, li->value.convert_to<ea_t>()); // ToDo: this should not be converted
     cols[4].sprnt("%s", li->isTainted_or_symbolized ? "x" : "");
-    cols[6].sprnt("%s", li->comment.c_str());
+    msg("comment %s", li->comment.c_str());
+    //if(!li->comment.empty())
+    //    cols[6].sprnt("%s", li->comment.c_str());
 
 }
 

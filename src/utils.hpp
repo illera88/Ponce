@@ -36,5 +36,6 @@ void concretizeAndUntaintVolatileRegisters();
 short read_unicode_char_from_ida(ea_t address);
 ea_t current_instruction();
 void delete_ponce_comments();
-bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble);
+bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble, bool snapshot = false);
+void ponce_set_item_color(ea_t ea, bgcolor_t color);
 void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc);

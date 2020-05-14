@@ -13,6 +13,7 @@
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
+#include <hexrays.hpp>
 
 //Ponce
 #include "callbacks.hpp"
@@ -24,29 +25,13 @@
 #include "formConfiguration.hpp"
 #include "triton_logic.hpp"
 #include "actions.hpp"
+#include "ponce_hexrays.hpp"
 
 //Triton
 #include <triton/api.hpp>
 
-/*This function is called once in the IDA plugin init event to set the static configuration for triton. Architecture and memory/registry callbacks.*/
-//void triton_init()
-//{	
-//	//We need to set the architecture for Triton
-//	api.setArchitecture(TRITON_ARCH);
-//	// Memory access callback
-//	api.addCallback(needConcreteMemoryValue);
-//	// Register access callback
-//	api.addCallback(needConcreteRegisterValue);
-//	// This optimization is veeery good for the size of the formulas
-//	api.enableSymbolicOptimization(triton::engines::symbolic::ALIGNED_MEMORY, true);
-//	// We only are symbolic or taint executing an instruction if it is tainted, so it is a bit faster and we save a lot of memory
-//	api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_SYMBOLIZED, true);
-//	api.enableSymbolicOptimization(triton::engines::symbolic::ONLY_ON_TAINTED, true);
-//}
-
-// "C:\Program Files\IDA 7.1\ida64.exe" -A "C:\Users\default.DESKTOP-Q4FDM2G\Documents\code\Ponce\build_x64\Debug\crackme_xor.exe"
-
-//--------------------------------------------------------------------------
+// Hex-Rays API pointer
+hexdsp_t* hexdsp = NULL;
 
 bool idaapi run(size_t)
 {
@@ -169,6 +154,14 @@ int idaapi init(void)
         warning("[!] Ponce plugin can't run with IDA version < 7. Please use a newer IDA version");
         return PLUGIN_SKIP;
     }
+
+    /* try to use hexrays if possible*/
+    if (init_hexrays_plugin()) {
+        install_hexrays_callback(ponce_hexrays_callback, NULL);
+        msg("[+] Hex-rays version %s has been detected, Ponce will use it to provide more info\n", get_hexrays_version());
+        hexrays_present = true;
+    }
+    
     //Error loading config?
     if (!load_options(&cmdOptions))
         return PLUGIN_KEEP;

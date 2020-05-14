@@ -15,6 +15,7 @@
 #include "runtime_status.hpp"
 //IDA
 #include <kernwin.hpp>
+
 //Triton
 #include <triton/api.hpp>
 //Version number
@@ -77,7 +78,7 @@ struct cmdOptionStruct {
 
     bool addCommentsControlledOperands = false;
     bool RenameTaintedFunctionNames = false;
-    bool addCommentssymbolizexpresions = false;
+    bool addCommentsSymbolicExpresions = false;
     bool paintExecutedInstructions = false;
 
     char blacklist_path[QMAXPATH];
@@ -90,8 +91,13 @@ extern void idaapi term(void);
 
 extern triton::API api;
 
-extern std::list<std::pair<ea_t, int>> ponce_comments;
+struct instruction_info {
+    std::string comment;
+    std::string snapshot_comment;
+    bgcolor_t color = DEFCOLOR;
 
+};
+extern std::map<ea_t, struct instruction_info> ponce_comments;
 /* For backwards compatibility with IDA SDKs < 7.3 */
 #if IDA_SDK_VERSION < 730
 #define inf_get_min_ea()        inf.min_ea
@@ -107,3 +113,6 @@ extern std::list<std::pair<ea_t, int>> ponce_comments;
 #define MEM_FORMAT "%#" PRIx32
 #define REG_XIP api.registers.x86_eip
 #endif // __EA64__
+
+
+extern bool hexrays_present;

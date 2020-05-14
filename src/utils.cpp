@@ -226,11 +226,9 @@ void rename_tainted_function(ea_t address)
     //First we get the current function name
     size = get_func_name(&func_name, address);
 
-    if (size > 0)
-    {
+    if (size > 0) {
         //If the function isn't already renamed
-        if (strstr(func_name.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) != func_name.c_str())
-        {
+        if (strstr(func_name.c_str(), RENAME_TAINTED_FUNCTIONS_PREFIX) != func_name.c_str()) {
             char new_func_name[MAXSTR];
             //This is a bit tricky, the prefix contains the format string, so if the user modified it and removes the format string isn't going to work
             qsnprintf(new_func_name, sizeof(new_func_name), RENAME_TAINTED_FUNCTIONS_PATTERN"%s", ponce_runtime_status.tainted_functions_index, func_name.c_str());
@@ -245,21 +243,12 @@ void rename_tainted_function(ea_t address)
 
 void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
 {
-    //auto size = get_extra_cmt(&buf, address, E_NEXT);
-    if (get_extra_cmt(nullptr, address, E_NEXT) != -1) {
-        delete_extra_cmts(address, E_NEXT);
-        ponce_comments.remove({ address,2 });
+    std::ostringstream oss;
+    for (const auto& expr : tritonInst->symbolicExpressions) {       
+        oss << expr << "\n";
     }
 
-    for (unsigned int exp_index = 0; exp_index != tritonInst->symbolicExpressions.size(); exp_index++)
-    {
-        auto expr = tritonInst->symbolicExpressions[exp_index];
-        std::ostringstream oss;
-        oss << expr;
-
-        add_extra_cmt(address, false, "%s", oss.str().c_str());
-        ponce_comments.push_back(std::make_pair(address, 2));
-    }
+    ponce_set_cmt(address, oss.str().c_str(), false);
 }
 
 std::string notification_code_to_string(int notification_code)
@@ -488,26 +477,19 @@ void delete_ponce_comments() {
     unsigned int count_comments = 0;
     unsigned int count_colors = 0;
     ea_t snapshot_address = 0;
-    for (auto& [address, type]: ponce_comments) {
-        if (type == 1) { //comment
+    for (auto& [address, insinfo]: ponce_comments) {      
+        if (!insinfo.comment.empty()) { //comment
             set_cmt(address, "", false);
             count_comments++;
         }
-        else if (type == 2) { //extra comment
-            delete_extra_cmts(address, E_NEXT);
-            count_comments++;
-        }
-        else if (type == 3) { //color
-            del_item_color(address);
-            count_colors++;
-        }
-        else if (type == 4) { //snapshot comment
-            if (snapshot.exists()) 
+        if (!insinfo.snapshot_comment.empty()) { //extra comment
+            if (snapshot.exists())
                 snapshot_address = address;
             set_cmt(address, "", false);
         }
-        else {
-            assert(0);
+        if (insinfo.color != DEFCOLOR) { //color
+            del_item_color(address);
+            count_colors++;
         }
     }
     ponce_comments.clear();
@@ -515,32 +497,73 @@ void delete_ponce_comments() {
 
     // If snapshot exists lets put it back
     if (snapshot_address) {
-        set_cmt(snapshot_address, "Snapshot taken here", false);
+        ponce_set_cmt(snapshot_address, "Snapshot taken here", false, true);
     }
 }
 
+void ponce_set_item_color(ea_t ea, bgcolor_t color) {
+    //if it is a new color we add it to ponce_comments
+    if (ponce_comments.count(ea) > 0) {
+        ponce_comments[ea].color = color;
+    }
+    else {
+        struct instruction_info insinfo;
+        insinfo.color = color;
+        ponce_comments[ea] = insinfo;
+    }
+    set_item_color(ea, color);
+}
+
 /* Wrapper to keep track of added comments so we can delete them after*/
-bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble) {
+bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble, bool snapshot) {
     qstring buf;
     qstring new_comment;
     if (get_cmt(&buf, ea, rptble) != -1) {
         auto first_space = strchr(buf.c_str(), ' ');
-        //auto n_hit =  std::stoi(std::string(comm, first_space - comm));
         // there is a previous comment. Let's try to get the hit count
         if (first_space){
             try {
                 auto n_hit = std::stoi(std::string(buf.c_str(), first_space - buf.c_str()));
                 new_comment.sprnt("%d hits. %s", ++n_hit, comm);
-                return set_cmt(ea, new_comment.c_str(), rptble);
+                //return set_cmt(ea, new_comment.c_str(), rptble);
             }
             catch (...) {}
-        }       
-        new_comment.sprnt("%d hits. %s", 2, comm);
-        return set_cmt(ea, new_comment.c_str(), rptble);             
+        }
+        if(new_comment.empty()){
+            new_comment.sprnt("%d hits. %s", 2, comm);
+            //return set_cmt(ea, new_comment.c_str(), rptble);     
+        }
     }
+    else { //its a new comment
+        new_comment = comm;
+    }
+
+    auto new_line_pos = new_comment.find('\n');
+    /* Lets only get the text about Symbolic/Taint instruction not the memory or
+        registers involved since thats not relevant info for the pseudocode*/
+    std::string pseudocode_comment;
+    if (new_line_pos != std::string::npos) 
+        pseudocode_comment = std::string(new_comment.c_str(), new_line_pos);
+    else
+        pseudocode_comment = std::string(new_comment.c_str());
+
     //if it is a new comment we add it to ponce_comments
-    ponce_comments.push_back(std::make_pair(ea, 1));
-    return set_cmt(ea, comm, rptble);
+    if (ponce_comments.count(ea) > 0) {
+        if (snapshot)
+            ponce_comments[ea].snapshot_comment = pseudocode_comment;
+        else
+            ponce_comments[ea].comment = pseudocode_comment;
+    }
+    else  {
+        struct instruction_info insinfo;
+        if (snapshot)
+            insinfo.snapshot_comment = pseudocode_comment;
+        else
+            insinfo.comment = pseudocode_comment;
+
+        ponce_comments[ea] = insinfo;
+    }
+    return set_cmt(ea, new_comment.c_str(), rptble);
 }
 
 /*This function gets the tainted operands for an instruction and add a comment to that instruction with this info*/
@@ -556,7 +579,7 @@ void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc)
     }
 
     if (cmdOptions.use_tainting_engine)
-        comment << "Tainted instruction\n";
+        comment << "Tainted instruction";
     else
         comment << "Symbolic instruction";
 

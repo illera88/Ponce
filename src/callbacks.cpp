@@ -34,8 +34,8 @@
 
 ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list va)
 {
-    if (cmdOptions.showExtraDebugInfo)
-        msg("[+] Notification code: %d str: %s\n", notification_code, notification_code_to_string(notification_code).c_str());
+    //if (cmdOptions.showExtraDebugInfo)
+    //    msg("[+] Notification code: %d str: %s\n", notification_code, notification_code_to_string(notification_code).c_str());
     switch (notification_code)
     {
     case dbg_process_start:

@@ -46,10 +46,15 @@ int idaapi modcb(int fid, form_actions_t& fa)
         fa.enable_field(14, !isActivated ? 1 : 0); // TAINT_THROUGH_POINTERS only when tainting engine
         break;
     case 5:
+        fa.get_checkbox_value(5, &isActivated);
+        if (!isActivated)
+            fa.set_checkbox_value(6, &isActivated);
+        break;
     case 6:
         // if extra verbosity set then regular verbosity set too
         fa.get_checkbox_value(6, &isActivated);
-        fa.enable_field(5, isActivated ? 1 : 0);
+        if(isActivated)
+            fa.set_checkbox_value(5, &isActivated);
         break;
     default:
         break;
@@ -71,10 +76,10 @@ void prompt_conf_window(void) {
     ushort symbolic_or_taint_engine = 0;
 
     if (!cmdOptions.already_configured) {
-        //Here we can initialize the checkboxes by group
+        //Here we can initialize the checkboxes by group. use 1 | 2 .. to select multiple 
         chkgroup1 = 2;
         chkgroup2 = 1;
-        chkgroup3 = 1 | 2 | 8;
+        chkgroup3 = 0;
 
         cmdOptions.blacklist_path[0] = '\0'; // Will use this to check if the user set some path for the blacklist
     }
@@ -85,7 +90,7 @@ void prompt_conf_window(void) {
         NOTE: Parenthesis are mandatory or it won't work!*/
         chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0);
         chkgroup2 = (cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS ? 1 : 0) | (cmdOptions.CONSTANT_FOLDING ? 2 : 0) | (cmdOptions.SYMBOLIZE_INDEX_ROTATION ? 4 : 0) | (cmdOptions.AST_OPTIMIZATIONS ? 8 : 0) | (cmdOptions.TAINT_THROUGH_POINTERS ? 16 : 0);
-        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentssymbolizexpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
+        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
 
         symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
     }
@@ -143,7 +148,7 @@ void prompt_conf_window(void) {
 
         cmdOptions.addCommentsControlledOperands = chkgroup3 & 1 ? 1 : 0;
         cmdOptions.RenameTaintedFunctionNames = chkgroup3 & 2 ? 1 : 0;
-        cmdOptions.addCommentssymbolizexpresions = chkgroup3 & 4 ? 1 : 0;
+        cmdOptions.addCommentsSymbolicExpresions = chkgroup3 & 4 ? 1 : 0;
         cmdOptions.paintExecutedInstructions = chkgroup3 & 8 ? 1 : 0;
 
         if (cmdOptions.blacklist_path[0] != '\0') {
@@ -190,7 +195,7 @@ void prompt_conf_window(void) {
                 cmdOptions.TAINT_THROUGH_POINTERS ? "true" : "false",
                 cmdOptions.addCommentsControlledOperands ? "true" : "false",
                 cmdOptions.RenameTaintedFunctionNames ? "true" : "false",
-                cmdOptions.addCommentssymbolizexpresions ? "true" : "false",
+                cmdOptions.addCommentsSymbolicExpresions ? "true" : "false",
                 cmdOptions.paintExecutedInstructions ? "true" : "false",
                 cmdOptions.color_tainted,
                 cmdOptions.color_executed_instruction,

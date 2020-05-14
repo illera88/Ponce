@@ -17,7 +17,6 @@
 #include <triton/api.hpp>
 
 #include <ida.hpp>
-
 //A variable to store if the plugin has hooked the ui and debugger events
 bool hooked = false;
 
@@ -36,4 +35,6 @@ std::vector<std::string>* blacklkistedUserFunctions = nullptr;
 
 triton::API api;
 
-std::list<std::pair<ea_t, int>> ponce_comments;
+std::map<ea_t, struct instruction_info> ponce_comments;
+
+bool hexrays_present = false;

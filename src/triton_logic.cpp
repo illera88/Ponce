@@ -71,18 +71,13 @@ int tritonize(ea_t pc, thid_t threadID)
     }
 
     /*In the case that the snapshot engine is in use we should track every memory write access*/
-    if (snapshot.exists())
-    {
-        auto store_access_list = tritonInst->getStoreAccess();
-        for (auto it = store_access_list.begin(); it != store_access_list.end(); it++)
-        {
-            triton::arch::MemoryAccess memory_access = it->first;
+    if (snapshot.exists())  {
+        for (const auto& [memory_access, node]: tritonInst->getStoreAccess()){
             auto addr = memory_access.getAddress();
             //This is the way to force IDA to read the value from the debugger
             //More info here: https://www.hex-rays.com/products/ida/support/sdkdoc/dbg_8hpp.html#ac67a564945a2c1721691aa2f657a908c
             invalidate_dbgmem_contents((ea_t)addr, memory_access.getSize()); //ToDo: Do I have to call this for every byte in memory I want to read?
-            for (unsigned int i = 0; i < memory_access.getSize(); i++)
-            {
+            for (unsigned int i = 0; i < memory_access.getSize(); i++) {
                 triton::uint128 value = 0;
                 //We get the memory readed
                 get_bytes(&value, 1, (ea_t)addr + i, GMB_READALL, NULL);
@@ -93,17 +88,18 @@ int tritonize(ea_t pc, thid_t threadID)
         }
     }
 
-    if (cmdOptions.addCommentsControlledOperands)
+    /* Don't write nothing on symbolic/tainted branch instructions instructions because I'll do it later*/
+    if (cmdOptions.addCommentsControlledOperands && !tritonInst->isBranch()){
         comment_controlled_operands(tritonInst, pc);
+    }
 
-    if (cmdOptions.addCommentssymbolizexpresions)
+    if (cmdOptions.addCommentsSymbolicExpresions)
         add_symbolic_expressions(tritonInst, pc);
 
     if (cmdOptions.paintExecutedInstructions) {
         //We only paint the executed instructions if they don't have a previous color
-        if (get_item_color(pc) == 0xffffffff) {
-            set_item_color(pc, cmdOptions.color_executed_instruction);
-            ponce_comments.push_back(std::make_pair(pc, 3));
+        if (get_item_color(pc) == DEFCOLOR) {
+            ponce_set_item_color(pc, cmdOptions.color_executed_instruction);
         }
     }
 
@@ -120,19 +116,17 @@ int tritonize(ea_t pc, thid_t threadID)
         // We only color with a different color the symbolic conditions, to show the user he could do additional actions like solve
         if (tritonInst->isBranch()) {
             if (tritonInst->isTainted())
-                ponce_set_cmt(pc, "Tainted branch!", false);
+                ponce_set_cmt(pc, "Tainted branch!", false, false);
             else
-                ponce_set_cmt(pc, "Symbolic branch, make your choice!", false);
+                ponce_set_cmt(pc, "Symbolic branch, make your choice!", false, false);
 
             ponce_runtime_status.total_number_symbolic_conditions++;
-            set_item_color(pc, cmdOptions.color_tainted_condition);
+            ponce_set_item_color(pc, cmdOptions.color_tainted_condition);
         }
-        else
-        {
+        else  {
             //It paints every tainted/symbolic instruction
-            set_item_color(pc, cmdOptions.color_tainted);
+            ponce_set_item_color(pc, cmdOptions.color_tainted);
         }
-        ponce_comments.push_back(std::make_pair(pc, 3));
     }
 
     if (tritonInst->isBranch() && tritonInst->isSymbolized()) {

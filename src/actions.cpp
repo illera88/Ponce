@@ -13,6 +13,7 @@
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
+#include <hexrays.hpp>
 
 //Ponce
 #include "globals.hpp"
@@ -30,7 +31,6 @@
 //Triton
 #include "triton/api.hpp"
 #include "triton/x86Specifications.hpp"
-
 
 int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* action_activation_ctx) {
     auto reg_id_to_symbolize = str_to_register(selected);
@@ -56,6 +56,7 @@ int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* a
         else{ // Symbolize register            
             api.symbolizeRegister(register_to_symbolize, std::string(comment));
         }
+
 
         tritonize(pc);
         return 0;
@@ -487,9 +488,9 @@ struct ah_create_snapshot_t : public action_handler_t
             msg("Could not get the XIP value. This should never happen\n");
             return 0;
         }
-        ponce_set_cmt(xip, "Snapshot taken here", false);
-        set_item_color(xip, 0x00FFFF);
-        ponce_comments.push_back(std::make_pair(xip, 3));
+
+        ponce_set_cmt(xip, "Snapshot taken here", false, true);
+        ponce_set_item_color(xip, 0x00FFFF);
 
         snapshot.takeSnapshot();
         snapshot.setAddress(xip); // We will use this address later to delete the comment
@@ -600,7 +601,7 @@ struct ah_show_expressionsWindow_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         //So we don't reopen twice the same window
-        auto form = find_widget("Taint Window");
+        auto form = find_widget(cmdOptions.use_tainting_engine ? "Ponce Taint Items" : "Ponce Symbolic Items");
         if (form != NULL) {
             //let's update it and change to it
             fill_entryList();
@@ -667,15 +668,40 @@ struct ah_clean_comments_t : public action_handler_t
         return AST_ENABLE_ALWAYS;
     }
 };
-static ah_unload_t ah_clean;
+static ah_clean_comments_t ah_clean;
 
 action_desc_t action_IDA_clean = ACTION_DESC_LITERAL(
     "Ponce:clean", // The action name. This acts like an ID and must be unique
-    "Clean comments & colors", //The action text.
+    "Clean comments & colours", //The action text.
     &ah_clean, //The action handler.
     "Ctrl+Shift+U", //Optional: the action shortcut
-    "Clean all the comments and colour created by Ponce", //Optional: the action tooltip (available in menus/toolbar)
-    118); //Optional: the action icon (shows when in menus/toolbars)
+    "Clean all the comments and colours created by Ponce", //Optional: the action tooltip (available in menus/toolbar)
+    65); //Optional: the action icon (shows when in menus/toolbars)
+
+
+template <typename T,
+    typename TIter = decltype(std::begin(std::declval<T>())),
+    typename = decltype(std::end(std::declval<T>()))>
+    constexpr auto enumerate(T&& iterable)
+{
+    struct iterator
+    {
+        size_t i;
+        TIter iter;
+        bool operator != (const iterator& other) const { return iter != other.iter; }
+        void operator ++ () { ++i; ++iter; }
+        auto operator * () const { return std::tie(i, *iter); }
+    };
+    struct iterable_wrapper
+    {
+        T iterable;
+        auto begin() { return iterator{ 0, std::begin(iterable) }; }
+        auto end() { return iterator{ 0, std::end(iterable) }; }
+    };
+    return iterable_wrapper{ std::forward<T>(iterable) };
+}
+
+
 
 struct ah_enable_disable_tracing_t : public action_handler_t
 {
