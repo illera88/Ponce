@@ -19,7 +19,7 @@ Symbolic execution is not a new concept in the security community. It has been a
 We addressed these needs by creating Ponce, an IDA plugin that implements symbolic execution and taint analysis within the most used disassembler/debugger for reverse engineers.
 
 ## Installation
-Ponce works with both x86 and x64 binaries in any IDA version >= 7.0. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory.
+Ponce works with both x86 and x64 binaries in any IDA version >= 7.0. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the `plugins\` folder in your IDA installation directory.
 
 Make sure you use the Ponce binary compiled for your IDA version to avoid any incompatibilities.
 
@@ -39,6 +39,7 @@ The plugin will automatically run, guiding you through the initial configuration
 - **Symbolic engine**: This engine maintains a symbolic state of registers and part of memory at each step in a binary's execution path. 
 
 ## Examples
+
 ### Use symbolic execution to solve a crackMe
 Here we can see the use of the symbolic engine and how we can solve constrains:
 - Passing simple ```aaaaa``` as argument.
@@ -133,7 +134,9 @@ In this section we will list the different Ponce options as well as keyboard sho
 Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan](http://shell-storm.org/) with a rich library. We would like to thank and endorse Jonathan's work with Triton. You rock! :)
 
 ## Building
-Since Ponce v0.3 we have moved the building the compilation process to use `CMake`. This way we unify the way that configuration and building happens for Linux, Windows and OSX. We use Github actions as our CI environment. Check the [action files](.github/workflows/) if you want to understand how the building process happens.
+Since Ponce v0.3 we have moved the building compilation process to use `CMake`. Doing this we unify the way that configuration and building happens for Linux, Windows and OSX. 
+We now support providing feedback on the pseudocode about symbolic or taint instructions. For this feature to work you need to add `hexrays.hpp` to your IDA SDK include folder. `hexrays.hpp` can be found on `plugins/hexrays_sdk/` on your IDA installation path. If you have not purchased the hex-rays decompiler you can still build Pnce by using `-DBUILD_HEXRAYS_SUPPORT=OFF`.
+We use Github actions as our CI environment. Check the [action files](.github/workflows/) if you want to understand how the building process happens.
 
 ## FAQ
 ### Why the name of Ponce?

@@ -13,7 +13,9 @@
 #include <dbg.hpp>
 #include <loader.hpp>
 #include <kernwin.hpp>
-#include <hexrays.hpp>
+
+//Triton
+#include <triton/api.hpp>
 
 //Ponce
 #include "callbacks.hpp"
@@ -25,13 +27,13 @@
 #include "formConfiguration.hpp"
 #include "triton_logic.hpp"
 #include "actions.hpp"
-#include "ponce_hexrays.hpp"
 
-//Triton
-#include <triton/api.hpp>
+#ifdef BUILD_HEXRAYS_SUPPORT
+#include "ponce_hexrays.hpp"
 
 // Hex-Rays API pointer
 hexdsp_t* hexdsp = NULL;
+#endif
 
 bool idaapi run(size_t)
 {
@@ -155,13 +157,15 @@ int idaapi init(void)
         return PLUGIN_SKIP;
     }
 
+#ifdef BUILD_HEXRAYS_SUPPORT
     /* try to use hexrays if possible*/
     if (init_hexrays_plugin()) {
         install_hexrays_callback(ponce_hexrays_callback, NULL);
         msg("[+] Hex-rays version %s has been detected, Ponce will use it to provide more info\n", get_hexrays_version());
         hexrays_present = true;
     }
-    
+#endif
+
     //Error loading config?
     if (!load_options(&cmdOptions))
         return PLUGIN_KEEP;
@@ -179,6 +183,9 @@ void idaapi term(void)
     snapshot.resetEngine();
     // We want to delete Ponce comments and colours before terminating
     delete_ponce_comments();
+#ifdef BUILD_HEXRAYS_SUPPORT
+    remove_hexrays_callback(ponce_hexrays_callback, NULL);
+#endif
     // Unhook notifications
     unhook_from_notification_point(HT_UI, ui_callback, NULL);
     unhook_from_notification_point(HT_DBG, tracer_callback, NULL);

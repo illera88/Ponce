@@ -8,6 +8,7 @@
 **  This program is under the terms of the BSD License.
 */
 
+#ifdef BUILD_HEXRAYS_SUPPORT
 #include "ponce_hexrays.hpp"
 #include "globals.hpp"
 
@@ -56,6 +57,7 @@ ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
 #endif
 {
     int y = -1;
+    
     switch (event)
     {
     case hxe_func_printed:
@@ -107,3 +109,4 @@ ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
 
     return 0;
 }
+#endif

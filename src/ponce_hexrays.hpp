@@ -10,9 +10,11 @@
 
 #pragma once
 
+#ifdef BUILD_HEXRAYS_SUPPORT
 #include <hexrays.hpp>
 #if IDA_SDK_VERSION == 700
 int idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va);
 #else
 ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va);
+#endif
 #endif
