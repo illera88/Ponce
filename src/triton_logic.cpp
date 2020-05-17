@@ -7,6 +7,7 @@
 
 #include <ida.hpp>
 #include <dbg.hpp>
+#include <auto.hpp>
 
 /*This function will create and fill the Triton object for every instruction
     Returns:
@@ -25,6 +26,9 @@ int tritonize(ea_t pc, thid_t threadID)
         msg("[!] Some error at tritonize since pc is 0\n");
         return 2;
     }
+
+    // Show analized instruction in IDA UI
+    show_addr(pc);
 
     //We delete the last_instruction
     if (ponce_runtime_status.last_triton_instruction != nullptr) {
