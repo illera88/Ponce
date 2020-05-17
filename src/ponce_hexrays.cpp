@@ -80,9 +80,7 @@ ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
                         // We have already commented this line. Don't do it again
                         continue;
                     }
-                    cfunc->sv[y].line += "\t\t\t/*";
-                    cfunc->sv[y].line += insinfo.comment.c_str();
-                    cfunc->sv[y].line += "*/";
+                    cfunc->sv[y].line.cat_sprnt("\t\t\t" COLSTR("// %s", SCOLOR_NUMBER), insinfo.comment.c_str());
                     already_commented_lines.push_back(y);
                 }
                 if (!insinfo.snapshot_comment.empty()) { //extra comment

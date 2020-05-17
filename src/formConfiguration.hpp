@@ -46,7 +46,7 @@ static const char form[] =
 "<#comment#Color Executed Instruction    :K20:::>\n"
 "<#comment#Color Tainted Condition       :K21:::>\n"
 
-"<#Ponce will blacklist some functions that do not modify the passed parameters. You can select a file with the functions you want to blacklist#Blacklist file path:f22::40:>\n"
+"<#Ponce will blacklist some functions that do not modify the passed parameters. You can select a file with the functions you want to blacklist#Function blacklist file path:f22::40:>\n"
 
 "\n"
 ;

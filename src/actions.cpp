@@ -22,7 +22,7 @@
 #include "formConfiguration.hpp"
 #include "formTaintSymbolizeInput.hpp"
 #include "actions.hpp"
-#include "formTaintWindow.hpp"
+#include "symVarTable.hpp"
 #include "blacklist.hpp"
 #include "context.hpp"
 #include "solver.hpp"
@@ -152,7 +152,15 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                 }
             }
             if (current_ea == 0) {
-                current_ea = get_screen_ea() != -1 ? get_screen_ea() : 0;
+                if (ctx->cur_flags & ACF_HAS_SELECTION) { // Only if there has been a valid selection
+                //We get the selection bounds from the action activation context
+                    auto selection_starts = ctx->cur_sel.from.at->toea();
+                    auto selection_ends = ctx->cur_sel.to.at->toea();
+                    size = selection_ends - selection_starts + 1;
+                    current_ea = selection_starts;
+                }
+                else
+                    current_ea = get_screen_ea() != -1 ? get_screen_ea() : 0;
             }                
         }
 #if IDA_SDK_VERSION >= 730
@@ -181,7 +189,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
 #endif
         auto success = jumpto(current_ea, -1, UIJMP_IDAVIEW);
 
-        if (!prompt_window_taint_symbolize(current_ea, size, &selection_starts, &selection_ends))
+        if (!prompt_window_taint_symbolize(current_ea, abs(size), &selection_starts, &selection_ends))
             return 0;
 
         /* When the user taints something for the first time we should enable step_tracing*/
@@ -596,6 +604,8 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
     "Show the Ponce configuration", //Optional: the action tooltip (available in menus/toolbar)
     156); //Optional: the action icon (shows when in menus/toolbars)
 
+
+/* The following two actions are going to be present in the formTaintWindow*/
 struct ah_show_expressionsWindow_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
@@ -604,19 +614,20 @@ struct ah_show_expressionsWindow_t : public action_handler_t
         auto form = find_widget(cmdOptions.use_tainting_engine ? "Ponce Taint Items" : "Ponce Symbolic Items");
         if (form != NULL) {
             //let's update it and change to it
-            fill_entryList();
+            ponce_table_chooser->fill_entryList();
             activate_widget(form, true);
         }
 
         else
-            create_taint_window();
+            ponce_table_chooser = new ponce_table_chooser_t();
+            ponce_table_chooser->choose();
 
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Show Taint expressions": "Show Symbolic expressions");
+        update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Show Taint expressions" : "Show Symbolic expressions");
         update_action_tooltip(ctx->action, cmdOptions.use_tainting_engine ? "Show all the taint expressions" : "Show all the symbolic expressions");
         return AST_ENABLE;
     }
@@ -630,6 +641,100 @@ action_desc_t action_IDA_show_expressionsWindow = ACTION_DESC_LITERAL(
     "Alt+Shift+T", //Optional: the action shortcut
     "Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
     157); //Optional: the action icon (shows when in menus/toolbars)
+
+
+struct ah_action_chooser_add_constrain_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        auto selection_row = ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]);
+
+        qstring response;
+        if (ask_text(&response, 0, response.c_str(), "ACCEPT TABS\nEnter constrain for %s", selection_row.var_name.c_str())) {          
+            msg("user said %s\n", response.c_str());
+        }
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        update_action_label(ctx->action, "Set constraint");
+
+        if (ctx->action, cmdOptions.use_tainting_engine || 
+            ctx->chooser_selection.empty() || 
+            ctx->chooser_selection.size()!=1)
+            return AST_DISABLE;
+
+        char label[100] = { 0 };
+        qsnprintf(label, sizeof(label), "Set constraint to %s", ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]).var_name.c_str());       
+        return AST_ENABLE;
+    }
+};
+static ah_action_chooser_add_constrain_t ah_action_chooser_add_constrain;
+
+action_desc_t action_chooser_add_constrain = ACTION_DESC_LITERAL(
+    "Ponce:action_chooser_add_constrain", // The action name. This acts like an ID and must be unique
+    "Set constraint", //The action text.
+    &ah_action_chooser_add_constrain, //The action handler.
+    "Alt+Shift+5", //Optional: the action shortcut
+    "Set a constraint to a symbolic variable", //Optional: the action tooltip (available in menus/toolbar)
+    111); //Optional: the action icon (shows when in menus/toolbars)
+
+
+struct ah_action_chooser_comment_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        qstring response;
+        if (ask_str(&response, 3, "New comment")) {
+            for (const auto& index : ctx->chooser_selection) {
+                
+                auto list_item = ponce_table_chooser->table_item_list.at(index);
+                api.getSymbolicVariable(list_item.id)->setComment(std::string(response.c_str()));
+                msg("[+] Comment %s set to %s\n", response.c_str(), list_item.var_name.c_str());
+            }
+            ponce_table_chooser->fill_entryList();
+            ponce_table_chooser->refresh(&ctx->chooser_selection);
+            //activate_widget(ctx->widget, true);
+        }      
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        update_action_label(ctx->action, "Set comment to symbolic variable");
+
+        if (ctx->chooser_selection.empty())
+            return AST_DISABLE;
+
+        if (ctx->chooser_selection.size() == 1) {
+            char label[100] = { 0 };
+            auto selection_row = ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]);
+            qsnprintf(label, sizeof(label), "Set comment to %s", selection_row.var_name.c_str());
+            update_action_label(ctx->action, label);
+        }
+
+        else if(ctx->chooser_selection.size() > 1){
+            char label[100] = { 0 };
+            qsnprintf(label, sizeof(label), "Set comment to %d symbolic variables", ctx->chooser_selection.size());
+            update_action_label(ctx->action, label);
+        }
+        return AST_ENABLE;
+    }
+};
+static ah_action_chooser_comment_t ah_action_chooser_comment;
+
+action_desc_t action_chooser_comment = ACTION_DESC_LITERAL(
+    "Ponce:action_chooser_comment", // The action name. This acts like an ID and must be unique
+    "Set a comment for variable", //The action text.
+    &ah_action_chooser_comment, //The action handler.
+    "Alt+Shift+4", //Optional: the action shortcut
+    "Set comments to variable", //Optional: the action tooltip (available in menus/toolbar)
+    111); //Optional: the action icon (shows when in menus/toolbars)
+
+
+////////////////////////////
+
 
 struct ah_unload_t : public action_handler_t
 {
@@ -677,30 +782,6 @@ action_desc_t action_IDA_clean = ACTION_DESC_LITERAL(
     "Ctrl+Shift+U", //Optional: the action shortcut
     "Clean all the comments and colours created by Ponce", //Optional: the action tooltip (available in menus/toolbar)
     65); //Optional: the action icon (shows when in menus/toolbars)
-
-
-template <typename T,
-    typename TIter = decltype(std::begin(std::declval<T>())),
-    typename = decltype(std::end(std::declval<T>()))>
-    constexpr auto enumerate(T&& iterable)
-{
-    struct iterator
-    {
-        size_t i;
-        TIter iter;
-        bool operator != (const iterator& other) const { return iter != other.iter; }
-        void operator ++ () { ++i; ++iter; }
-        auto operator * () const { return std::tie(i, *iter); }
-    };
-    struct iterable_wrapper
-    {
-        T iterable;
-        auto begin() { return iterator{ 0, std::begin(iterable) }; }
-        auto end() { return iterator{ 0, std::end(iterable) }; }
-    };
-    return iterable_wrapper{ std::forward<T>(iterable) };
-}
-
 
 
 struct ah_enable_disable_tracing_t : public action_handler_t
@@ -842,6 +923,9 @@ struct IDA_actions action_list[] =
     { &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, "Snapshot/"},
     { &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, "Snapshot/" },
     { &action_IDA_deleteSnapshot, { BWN_DISASM, __END__ }, "Snapshot/" },
+
+    { &action_chooser_comment, { BWN_CHOOSER, __END__ }, "" },
+    { &action_chooser_add_constrain, { BWN_CHOOSER, __END__ }, "" },
 
     { NULL, __END__, __END__ }
 };
