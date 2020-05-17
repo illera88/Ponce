@@ -62,8 +62,6 @@ public:
         return ALL_CHANGED;
     }
 
-    virtual cbres_t idaapi enter(sizevec_t* sel);
-    virtual void select(const sizevec_t& sel) const;
 public:
     std::vector<list_item_t> table_item_list;
 

@@ -141,28 +141,3 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
         cols[5].sprnt("%s", li.comment.c_str());
 
 }
-
-
-
-/// Selection changed
-/// \note This callback is not supported in the txt-version.
-/// \param sel  new selected items
-void idaapi ponce_table_chooser_t::select(const sizevec_t& sel) const
-{
-    //void* thisPtr = (void*)this; //serious hack to get around the const
-    //((Ponce_table_chooser_t*)thisPtr)->sv = (sizevec_t*)sel;
-    //*sv = sel;
-   // sv = new sizevec_t(sel);
-    
-
-    //*sv = *sdsv;
-    //*sv = std::addressof(sel);
-
-}
-
-chooser_base_t::cbres_t idaapi ponce_table_chooser_t::enter(sizevec_t* sel)
-{
-    //sv = *sel;
-   // *sv = *sel;
-    return cbres_t(callui(ui_chooser_default_enter, this, sel).i);
-}
