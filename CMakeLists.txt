@@ -6,7 +6,7 @@ cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0067 NEW)
 
 option(BUILD_EXAMPLES "Build examples" ON)
-#option(BUILD_HEXRAYS_SUPPORT "Use the Hex-Rays SDK to provide Ponce feedback on the psudocode" OFF)
+option(BUILD_HEXRAYS_SUPPORT "Use the Hex-Rays SDK to provide Ponce feedback on the pseudocode" ON)
 
 set(IDA_INSTALLED_DIR "" CACHE PATH "Path to directory where IDA is installed. If set, triton plugin will be moved there after building")
 
