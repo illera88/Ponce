@@ -135,7 +135,16 @@ endif()
 # Find z3
 find_package(Z3 CONFIG REQUIRED)
 
-
+# Look for hexrays SDK to provide Ponce feedback in the pseudocode	
+find_file(HEXRAYS_PATH hexrays.hpp PATHS ${IDA_INCLUDE_DIR} NO_DEFAULT_PATH)	
+if(BUILD_HEXRAYS_SUPPORT)	
+	if (NOT HEXRAYS_PATH)	
+		message(FATAL_ERROR "You should add hexrays.hpp to ${IDA_INCLUDE_DIR}")	
+	else()	
+		target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_HEXRAYS_SUPPORT)	
+		target_compile_definitions(${PROJECT_NAME}64 PRIVATE BUILD_HEXRAYS_SUPPORT)	
+	endif()	
+endif()
 
 get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
 
