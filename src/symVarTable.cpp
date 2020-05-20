@@ -100,7 +100,7 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
 
     list_item_t li = table_item_list.at(n);
 
-    cols[0].sprnt("%d", li.id);
+    cols[0].sprnt("%lu", li.id);
     cols[1].sprnt("%s", li.var_name.c_str());
     if(!li.register_name.empty()){
         // its a register entry
@@ -145,8 +145,10 @@ int idaapi check_params_cb(int fid, form_actions_t& fa)
     {
         fa.get_checkbox_value(fid, &isActivated);
         if (isActivated){
-            fa.set_string_value(1, &qstring("0x20"));
-            fa.set_string_value(2, &qstring("0x7e"));
+            qstring lower("0x20");
+            qstring upper("0x7e");
+            fa.set_string_value(1, &lower);
+            fa.set_string_value(2, &upper);
             fa.enable_field(1, 0);
             fa.enable_field(2, 0);
         }       
@@ -156,8 +158,10 @@ int idaapi check_params_cb(int fid, form_actions_t& fa)
     {
         fa.get_checkbox_value(fid, &isActivated);
         if (isActivated) {
-            fa.set_string_value(1, &qstring("0x30"));
-            fa.set_string_value(2, &qstring("0x39"));
+            qstring lower("0x30");
+            qstring upper("0x39");
+            fa.set_string_value(1, &lower);
+            fa.set_string_value(2, &upper);
             fa.enable_field(1, 0);
             fa.enable_field(2, 0);
         }
@@ -167,8 +171,10 @@ int idaapi check_params_cb(int fid, form_actions_t& fa)
     {
         fa.get_checkbox_value(fid, &isActivated);
         if (isActivated) {
-            fa.set_string_value(1, &qstring("0x41"));
-            fa.set_string_value(2, &qstring("0x5a"));
+            qstring lower("0x41");
+            qstring upper("0x5a");
+            fa.set_string_value(1, &lower);
+            fa.set_string_value(2, &upper);
             fa.enable_field(1, 0);
             fa.enable_field(2, 0);
         }
@@ -178,8 +184,10 @@ int idaapi check_params_cb(int fid, form_actions_t& fa)
     {
         fa.get_checkbox_value(fid, &isActivated);
         if (isActivated) {
-            fa.set_string_value(1, &qstring("0x61"));
-            fa.set_string_value(2, &qstring("0x7a"));
+            qstring lower("0x61");
+            qstring upper("0x7a");
+            fa.set_string_value(1, &lower);
+            fa.set_string_value(2, &upper);
             fa.enable_field(1, 0);
             fa.enable_field(2, 0);
         }
