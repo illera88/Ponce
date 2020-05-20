@@ -1,26 +1,27 @@
+
+<p align="center">
+  <img src="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png">
+</p>
+
+
+
+<p align="center">
+  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22"><img alt="Toolkit audit status" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg"></a>  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22"><img alt="Toolkit unit tests status" src="https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg"></a>  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22"><img alt="Toolkit audit status" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg"></a>
+</p>
+
 # Ponce
 
-<p align="center"><img src ="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png" /></p>
- 
-## Definition
 Ponce (pronounced *[ 'poN θe ]* pon-they ) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are one click away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
 
 ## Why?
-Symbolic execution is not a new concept in the security community. It has been around for years but it is not until the last couple of years that open source projects like [Triton](https://github.com/JonathanSalwan/Triton) and [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users are often  left to implement specific use cases themselves.
+Symbolic execution is not a new concept in the security community. It has been around for many years but it is not until around 2015 that open source projects like [Triton](https://github.com/JonathanSalwan/Triton) and [Angr](http://angr.io/) have been created to address this need. Despite the availability of these projects, end users are often  left to implement specific use cases themselves.
 
 We addressed these needs by creating Ponce, an IDA plugin that implements symbolic execution and taint analysis within the most used disassembler/debugger for reverse engineers.
 
 ## Installation
-Ponce works with both x86 and x64 binaries in IDA 6.8 and IDA 6.9x. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory.
+Ponce works with both x86 and x64 binaries in any IDA version >= 7.0. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the `plugins\` folder in your IDA installation directory.
 
-### IDA 7.0.
-Ponce has initial support of IDA 7.0 for both x86 and x64 binaries in Windows. The plugin named ```Ponce64.dll``` should be copied from the [latest_builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the ```plugins\``` folder in your IDA installation directory. Starting from version 7.0, IDA64 should be used to work with both x86 and x64 binaries.
-
-Don't forget to register Ponce in ```plugins.cfg``` located in the same folder by adding the following line:
-
-```
-Ponce                            Ponce         Ctrl+Shift+Z 0  WIN
-```
+Make sure you use the Ponce binary compiled for your IDA version to avoid any incompatibilities.
 
 ## OS Support
 Ponce works on Windows, Linux and OSX natively! 
@@ -38,6 +39,7 @@ The plugin will automatically run, guiding you through the initial configuration
 - **Symbolic engine**: This engine maintains a symbolic state of registers and part of memory at each step in a binary's execution path. 
 
 ## Examples
+
 ### Use symbolic execution to solve a crackMe
 Here we can see the use of the symbolic engine and how we can solve constrains:
 - Passing simple ```aaaaa``` as argument.
@@ -78,7 +80,7 @@ In the next example we are using the snapshot engine:
 - When a condition is evaluated we negate it, inject the solution in memory and restore the snapshot with it.
 - The solution will be "valid" so we will satisfy the existent conditions.
 
-![fread_test_negate_restore_inject](https://github.com/illera88/Ponce/blob/master/examples/animated_videos/x64_fread_test_negate_restore_inject.gif?raw=true)
+![fread_test_negate_restore_inject](media/x64_fread_test_negate_restore_inject.gif?raw=true)
 The example source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/fread_SAGE.cpp)
 
 ## Usage
@@ -128,25 +130,13 @@ In this section we will list the different Ponce options as well as keyboard sho
 
 ![2016-09-15 12_07_10-](https://cloud.githubusercontent.com/assets/5193128/18563579/fc95339a-7b3c-11e6-9947-971e0510eba4.png)
 
-##Triton
+## Triton
 Ponce relies on  the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan](http://shell-storm.org/) with a rich library. We would like to thank and endorse Jonathan's work with Triton. You rock! :)
 
 ## Building
-We provide compiled binaries for Ponce, but if you want to build your own plugin you can do so using Visual Studio 2013. We tried to make the building process as easy as possible:
-- Clone the project with submodules: ```git clone --recursive https://github.com/illera88/PonceProject.git```
-- Open ```Build\PonceBuild\Ponce.sln```: The project configuration is ready to use the includes and libraries shipped with the project that reside in ```external-libs\```.
-- The VS project has a ```Post-Build Event``` that will move the created binary plugin to the IDA plugin folder for you. ```copy /Y $(TargetPath) "C:\Program Files (x86)\IDA 6.9\plugins"```. NOTE: use your IDA installation path.
-
-The project has 4 build configurations:
-- x86ReleaseStatic: will create the 32 bits version statically linking every third party library into a whole large plugin file.
-- x86ReleaseZ3dyn: will create the 32 bits version statically linking every third party library but z3.lib.
-- x64ReleaseStatic: will create the 64 bits version statically linking every third party library into a whole large plugin file.
-- x64ReleaseZ3dyn: will create the 64 bits version statically linking every third party library but z3.lib.
-
-The static version of ```z3.lib``` is ~ 1.1Gb and the linking time is considerable. That's the main reason why we have a building version that uses z3 dynamically (as a dll). If you are using z3 dynamically don't forget to copy the [libz3.dll](https://github.com/illera88/Ponce/blob/master/external-libs/libs/Z3_dyn_rest_static_MT_x86/libz3.dll) file into the IDA's directory.
-
-If you want to build Triton for linux or MacOsX check this file:
-https://github.com/illera88/Ponce/tree/master/builds/PonceBuild/nix/README.md
+Since Ponce v0.3 we have moved the building compilation process to use `CMake`. Doing this we unify the way that configuration and building happens for Linux, Windows and OSX. 
+We now support providing feedback on the pseudocode about symbolic or taint instructions. For this feature to work you need to add `hexrays.hpp` to your IDA SDK include folder. `hexrays.hpp` can be found on `plugins/hexrays_sdk/` on your IDA installation path. If you have not purchased the hex-rays decompiler you can still build Pnce by using `-DBUILD_HEXRAYS_SUPPORT=OFF`.
+We use Github actions as our CI environment. Check the [action files](.github/workflows/) if you want to understand how the building process happens.
 
 ## FAQ
 ### Why the name of Ponce?
@@ -164,7 +154,19 @@ Sure! Please do pull requests and work in the opened issues. We will pay you in 
 Concolic execution and Ponce have some problems:
 - Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input. 
 - Triton doesn't work very well with [floating point instructions](https://github.com/illera88/Ponce/issues/59).
+- Concolic execution only analyzed the executed instructions. That means that symbolic tracking is lost in cases like the following:
+```c
+int check(char myinput)  // Input is symbolic/tainted
+{
+  int flag = 0;
+  if (myinput == 'A')  //This condition is symbolic/tainted
+    flag = 1
+  else
+    flag =- 1;
+  return flag; // flag is not symbolic/tainted!
+}
+```
 
 ## Authors
-- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) alberto.garcia@salesforce.com
-- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) foca@salesforce.com
+- Alberto Garcia Illera ([@algillera](https://twitter.com/algillera)) agarciaillera@gmail.com
+- Francisco Oca ([@francisco_oca](https://twitter.com/francisco_oca)) francisco.oca.gonzalez@gmail.com

@@ -1,0 +1,181 @@
+name: Build for Linux
+on: 
+    push:
+    pull_request:
+    release:
+      types: # This configuration does not affect the page_build event above
+        - created
+
+jobs:
+    build:
+        #cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"              
+        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+        runs-on: ubuntu-latest
+        steps:           
+            - uses: actions/checkout@v1
+              with:
+                  submodules: true
+            
+            - name: Install Triton dependencies (delete and move to vcpkg when https://github.com/Z3Prover/z3/pull/4043 gets merged and vcpkg gets updated to use the merged z3 version)
+              run: |
+                 vcpkg version
+                 cd ..
+                 git clone https://github.com/illera88/z3
+                 cd z3
+                 mkdir build_x64
+                 cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DZ3_BUILD_LIBZ3_SHARED=OFF
+                 cmake --build build_x64 --target install --config Release --parallel 2
+            
+            - name: Install Triton dependencies
+              run: |
+                 sudo apt install -y libboost-all-dev
+                 echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
+                 vcpkg install capstone[x86,arm,arm64]
+                  
+            - name: Download and build Triton x64
+              run: |
+                  cd ..
+                  git clone --single-branch --branch dev-v0.9 https://github.com/JonathanSalwan/Triton
+                  cd Triton                 
+                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="../z3/install_dir/include/" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"
+                  cmake --build build_x64 --target install --config Release --parallel 2
+                      
+            - name: Dowload IDA SDKs
+              shell: bash
+              env:
+                IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
+              run: |
+                  cd ..
+                  curl -O -J -L "$IDA_SDK"
+                  unzip IDA_SDKs.zip -d IDA_SDKs              
+            
+            - name: Build Ponce IDA 7.0
+              run: |
+                  unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.0 --config Release --parallel 2
+                  
+            - name: Build Ponce IDA 7.1
+              run: |
+                  unzip ../IDA_SDKs/idasdk71.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.1 --config Release --parallel 2
+            
+            - name: Build Ponce IDA 7.2
+              run: |
+                  unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.2 --config Release --parallel 2
+            
+            - name: Build Ponce IDA 7.3
+              run: |
+                  unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.3 --config Release --parallel 2
+            
+            - name: Build Ponce IDA 7.4
+              run: |
+                  unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.4 --config Release --parallel 2
+                      
+            - name: Build Ponce IDA 7.5
+              run: |
+                  unzip ../IDA_SDKs/idasdk75.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.5 --config Release --parallel 2
+
+            
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.0.so
+                  path: build_x64_7.0/libPonce64.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.0.so
+                  path: build_x64_7.0/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.1.so
+                  path: build_x64_7.1/libPonce64.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.1.so
+                  path: build_x64_7.1/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.2.so
+                  path: build_x64_7.2/libPonce64.so
+            
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.2.so
+                  path: build_x64_7.2/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.3.so
+                  path: build_x64_7.3/libPonce64.so
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.3.so
+                  path: build_x64_7.3/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.4.so
+                  path: build_x64_7.4/libPonce64.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.4.so
+                  path: build_x64_7.4/libPonce.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce64_7.5.so
+                  path: build_x64_7.5/libPonce64.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_7.5.so
+                  path: build_x64_7.5/libPonce.so
+                  
+    # release:
+        # runs-on: ubuntu-latest
+        # if: github.event_name == 'release'
+        # needs: build
+        # steps:
+            # - name: Download CidSSH ssh version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ssh_x64.exe
+            
+            # - name: Upload ssh arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ssh_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ssh_x64.exe
+                  # asset_content_type: application/octet-stream
+                  
+            # - name: Download CidSSH ws version
+              # uses: actions/download-artifact@v1
+              # with:
+                  # name: CidSSH_win_ws_x64.exe
+            # - name: Upload ws arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: CidSSH_win_ws_x64.exe/CidSSH.exe
+                  # asset_name: CidSSH_win_ws_x64.exe
+                  # asset_content_type: application/octet-stream    

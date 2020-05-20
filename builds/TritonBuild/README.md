@@ -1,1 +1,0 @@
-VS2013x86 contains both x86 and x64 builds.
