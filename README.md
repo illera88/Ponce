@@ -6,7 +6,7 @@ description: IDA 2016 plugin contest winner! Symbolic Execution just one-click a
 
 ![](https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png)
 
- [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22) [![Toolkit unit tests status](https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22) [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22)
+                                 [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22) [![Toolkit unit tests status](https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22) [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22)
 
 ## Ponce
 
@@ -44,18 +44,6 @@ The plugin will automatically run, guiding you through the initial configuration
 
 ### Examples
 
-#### Use symbolic execution to solve a crackMe
-
-Here we can see the use of the symbolic engine and how we can solve constrains:
-
-* Passing simple `aaaaa` as argument.
-* We first select the symbolic engine.
-* We convert to symbolic the memory pointed by argv\[1\] \(`aaaaa`\)
-* Identify the symbolic condition that make us win and solve it.
-* Test the solution.
-
-![manual\_symbolize\_and\_solve\_crackme\_hash2](https://cloud.githubusercontent.com/assets/5193128/18558235/32561cb2-7b27-11e6-846f-9fde03e88df5.gif) The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_hash.cpp)
-
 #### Negate and inject a condition
 
 In the next gif we can see the use of automatic tainting and how we can negate a condition and inject it in memory while debugging:
@@ -65,7 +53,9 @@ In the next gif we can see the use of automatic tainting and how we can negate a
 * We negate an inject the solution everytime a byte of our input is checked against the key.
 * Finally we get the key `elite` that has been injected in memory and therefore reach the `Win` code.
 
-![crackmexor\_negate\_and\_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif) The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp)
+ The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp)
+
+![crackmexor\_negate\_and\_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
 
 #### Using the tainting engine to track user controlled input
 
