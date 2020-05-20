@@ -100,12 +100,11 @@ int tritonize(ea_t pc, thid_t threadID)
     if (cmdOptions.addCommentsSymbolicExpresions)
         add_symbolic_expressions(tritonInst, pc);
 
-    if (cmdOptions.paintExecutedInstructions) {
-        //We only paint the executed instructions if they don't have a previous color
-        if (get_item_color(pc) == DEFCOLOR) {
-            ponce_set_item_color(pc, cmdOptions.color_executed_instruction);
-        }
+    //We only paint the executed instructions if they don't have a previous color
+    if (get_item_color(pc) == DEFCOLOR && cmdOptions.color_executed_instruction != DEFCOLOR) {
+        ponce_set_item_color(pc, cmdOptions.color_executed_instruction);
     }
+    
 
     //ToDo: The isSymbolized is missidentifying like "user-controlled" some instructions: https://github.com/JonathanSalwan/Triton/issues/383
     if (tritonInst->isTainted() || tritonInst->isSymbolized()) {
@@ -125,11 +124,13 @@ int tritonize(ea_t pc, thid_t threadID)
                 ponce_set_cmt(pc, "Symbolic branch, make your choice!", false, false);
 
             ponce_runtime_status.total_number_symbolic_conditions++;
-            ponce_set_item_color(pc, cmdOptions.color_tainted_condition);
+            if (cmdOptions.color_tainted_condition != DEFCOLOR)
+                ponce_set_item_color(pc, cmdOptions.color_tainted_condition);
         }
         else  {
             //It paints every tainted/symbolic instruction
-            ponce_set_item_color(pc, cmdOptions.color_tainted);
+            if (cmdOptions.color_tainted != DEFCOLOR)
+                ponce_set_item_color(pc, cmdOptions.color_tainted);
         }
     }
 
@@ -214,6 +215,9 @@ void triton_restart_engines()
     ponce_runtime_status.total_number_symbolic_conditions = 0;
     ponce_runtime_status.current_trace_counter = 0;
     breakpoint_pending_actions.clear();
+    if(ponce_table_chooser) ponce_table_chooser->constrains.clear();
+    clear_requests_queue();
+
 }
 
 

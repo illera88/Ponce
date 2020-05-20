@@ -28,6 +28,11 @@ std::vector<Input> solve_formula(ea_t pc, int bound)
     // We can not initializate this to null, so we do it to a true condition (based on code_coverage_crackme_xor.py from the triton project)
     auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
 
+    // Add user define constraints (borrar en reejecuccion, poner mensaje if not sat, 
+    for (const auto& [id, user_constrain] : ponce_table_chooser->constrains) {
+        previousConstraints = ast->land(previousConstraints, user_constrain);
+    }
+
     // First we iterate through the previous path constrains to add the predicates of the taken path
     unsigned int j;
     for (j = 0; j < bound; j++)

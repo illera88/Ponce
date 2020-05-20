@@ -166,10 +166,7 @@ int idaapi init(void)
     }
 #endif
 
-    //Error loading config?
-    if (!load_options(&cmdOptions))
-        return PLUGIN_KEEP;
-    //We want to autorun the plugin when IDA starts?
+    // Start Ponce when IDA starts
     if(run(0))
         return PLUGIN_KEEP;
     else
@@ -217,6 +214,6 @@ plugin_t PLUGIN =
     "Ponce, a concolic execution plugin for IDA", // long comment about the plugin
     "", // multiline help about the plugin
     "Ponce", // the preferred short name of the plugin
-    "Ctrl+Shift+Z" // the preferred hotkey to run the plugin
+    "" // the preferred hotkey to run the plugin
 };
 

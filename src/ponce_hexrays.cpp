@@ -97,8 +97,7 @@ ssize_t idaapi ponce_hexrays_callback(void*, hexrays_event_t event, va_list va)
                     cfunc->sv[y].bgcolor = insinfo.color;
                 }
             }
-        }
-        //cfunc->refresh_func_ctext(); //crash
+        }       
         break;
     }
     default:

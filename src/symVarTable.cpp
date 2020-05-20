@@ -53,36 +53,15 @@ void ponce_table_chooser_t::fill_entryList() {
         list_entry.var_name = SymVar->getName();
         list_entry.comment = SymVar->getComment();
         table_item_list.push_back(list_entry);
-    }
 
+        // fill the constrains
+        for (const auto& [id, constrain] : constrains) {
+            if (list_entry.id == id) {
+                list_entry.constrains += constrain->str() + " ";
+            }
+        }
+    }
     return;
-
-    if (cmdOptions.use_tainting_engine) {
-        //Iterate over tainted memory
-        for (const auto& addr : api.getTaintedMemory()) {
-            //list_item_t* list_entry = new list_item_t();
-            list_item_t list_entry;
-
-            list_entry.address = addr;
-            list_entry.value = api.getConcreteMemoryValue(addr, false);
-
-            table_item_list.push_back(list_entry);
-        }
-
-        //Iterate over tainted registers
-        for (const auto& reg : api.getTaintedRegisters()) {
-            //list_item_t* list_entry = new list_item_t();
-            list_item_t list_entry;
-
-            list_entry.register_name = reg->getName();
-            list_entry.value = api.getConcreteRegisterValue(*reg, false);
-
-            table_item_list.push_back(list_entry);
-        }
-    }
-    else if (cmdOptions.use_symbolic_engine) {
-        
-    }
 }
 
 
@@ -130,14 +109,139 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
     else{    
         // Its a memory entry
         cols[2].sprnt(MEM_FORMAT, li.address);
-        //cols[4].sprnt(MEM_FORMAT, li.value.convert_to<ea_t>()); // ToDo: this should not be converted
     }
-    
-    
-    //cols[4].sprnt(MEM_FORMAT, li.value.convert_to<ea_t>()); // Concrete value
+
     cols[4].sprnt("%s", li.value.str().c_str()); // Concrete value
     msg("comment %s", li.comment.c_str());
     if(!li.comment.empty())
         cols[5].sprnt("%s", li.comment.c_str());
 
+}
+
+
+//This function is used to activate or deactivate other items in the form while using it
+int idaapi check_params_cb(int fid, form_actions_t& fa)
+{
+    ushort isActivated = 0;
+    switch (fid)
+    {
+    case -1: // called at the begining
+        fa.get_checkbox_value(3, &isActivated); // get symbolic engine value
+
+        break;
+    case -2:
+        break;
+
+    case 3:
+    {
+        fa.get_checkbox_value(fid, &isActivated);
+        if (isActivated) {
+            fa.enable_field(1, 1);
+            fa.enable_field(2, 1);
+        }
+        break;
+    }
+    case 4:
+    {
+        fa.get_checkbox_value(fid, &isActivated);
+        if (isActivated){
+            fa.set_string_value(1, &qstring("0x20"));
+            fa.set_string_value(2, &qstring("0x7e"));
+            fa.enable_field(1, 0);
+            fa.enable_field(2, 0);
+        }       
+        break;
+    }
+    case 5:
+    {
+        fa.get_checkbox_value(fid, &isActivated);
+        if (isActivated) {
+            fa.set_string_value(1, &qstring("0x30"));
+            fa.set_string_value(2, &qstring("0x39"));
+            fa.enable_field(1, 0);
+            fa.enable_field(2, 0);
+        }
+        break;
+    }
+    case 6:
+    {
+        fa.get_checkbox_value(fid, &isActivated);
+        if (isActivated) {
+            fa.set_string_value(1, &qstring("0x41"));
+            fa.set_string_value(2, &qstring("0x5a"));
+            fa.enable_field(1, 0);
+            fa.enable_field(2, 0);
+        }
+        break;
+    }
+    case 7:
+    {
+        fa.get_checkbox_value(fid, &isActivated);
+        if (isActivated) {
+            fa.set_string_value(1, &qstring("0x61"));
+            fa.set_string_value(2, &qstring("0x7a"));
+            fa.enable_field(1, 0);
+            fa.enable_field(2, 0);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Let's deactivate all the check
+
+    return 1;
+}
+
+int ask_constrain(sizevec_t& choser_selection, int* upper_limit_int, int* lower_limit_int) {
+    qstring upper_limit = "None";
+    qstring lower_limit = "None";
+
+    bool lower_set = false, upper_set = false;
+    ushort chkgroup1 = 0;
+    if (ask_form(constrain_form,
+        check_params_cb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
+        &lower_limit,
+        &upper_limit,
+        &chkgroup1
+    ) > 0)
+    {
+        if (upper_limit != "None" && !upper_limit.empty()) {
+            try {
+                int base = 10;
+                char* ptr = (char*)upper_limit.c_str();
+                if (upper_limit.substr(0, 2) == "0x") {
+                    // its hex
+                    base = 16;
+                    ptr += 2;
+                }
+                *upper_limit_int = std::stoi(ptr, 0, base);
+                upper_set = true;
+            }
+            catch (...) {}
+        }
+        if (lower_limit != "None" && !lower_limit.empty()) {
+            try{
+                int base = 10;
+                char* ptr = (char*)lower_limit.c_str();
+                if (lower_limit.substr(0, 2) == "0x") {
+                    // its hex
+                    base = 16;
+                    ptr += 2;
+                }
+                *lower_limit_int = std::stoi(ptr, 0, base);
+                lower_set = true;
+            }
+            catch (...) {}
+        }
+
+        if (lower_set && upper_set)
+            return 2;
+        else if (lower_set)
+            return 1;
+        else if (upper_set)
+            return 0;
+    }
+    return -1;
 }

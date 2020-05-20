@@ -27,11 +27,14 @@ protected:
         triton::uint512 value = 0;
         std::string comment;
         std::string var_name;
+        std::string constrains;
+        
     }list_item_t;
    
     
 public:
-    
+
+    std::map<triton::usize, triton::ast::SharedAbstractNode> constrains;
 
     virtual ~ponce_table_chooser_t() {
         if (!table_item_list.empty()) {
@@ -80,7 +83,9 @@ CHCOL_HEX,
 16,
 6,
 6,
-16 };
+16,
+16
+};
 
 // column headers
 static const char* header[] =
@@ -91,5 +96,27 @@ static const char* header[] =
     "Value",
     "Is Tainted",
     "Comment",
+    "Constrains"
 };
 #endif
+
+
+static const char constrain_form[]=
+"STARTITEM 0\n"
+"Add constrain to symbolic variable(s)\n\n"
+"%/"
+"Set limits:\n"
+"<#Lower bound restriction#Lower bound:q1:16:16>\n"
+"<#Upper bound restriction#Upper bound:q2:16:16>\n"
+
+"<#Common constraints#Custom:R3>\n"
+"<#ASCII only:R4>\n"
+"<#Numeric only:R5>\n"
+"<#Uppercase letters only:R6>\n"
+"<#Lowercase letters only:R7>>\n"
+
+"\n"
+;
+
+
+int ask_constrain(sizevec_t& choser_selection, int* upper_limit_int, int* lower_limit_int);

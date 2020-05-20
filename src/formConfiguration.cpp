@@ -77,9 +77,9 @@ void prompt_conf_window(void) {
 
     if (!cmdOptions.already_configured) {
         //Here we can initialize the checkboxes by group. use 1 | 2 .. to select multiple 
-        chkgroup1 = 2;
-        chkgroup2 = 1;
-        chkgroup3 = 0;
+        chkgroup1 = 1;
+        chkgroup2 = 0;
+        chkgroup3 = 1 | 2;
 
         cmdOptions.blacklist_path[0] = '\0'; // Will use this to check if the user set some path for the blacklist
     }
@@ -90,18 +90,18 @@ void prompt_conf_window(void) {
         NOTE: Parenthesis are mandatory or it won't work!*/
         chkgroup1 = (cmdOptions.showDebugInfo ? 1 : 0) | (cmdOptions.showExtraDebugInfo ? 2 : 0);
         chkgroup2 = (cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS ? 1 : 0) | (cmdOptions.CONSTANT_FOLDING ? 2 : 0) | (cmdOptions.SYMBOLIZE_INDEX_ROTATION ? 4 : 0) | (cmdOptions.AST_OPTIMIZATIONS ? 8 : 0) | (cmdOptions.TAINT_THROUGH_POINTERS ? 16 : 0);
-        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0) | (cmdOptions.paintExecutedInstructions ? 8 : 0);
+        chkgroup3 = (cmdOptions.addCommentsControlledOperands ? 1 : 0) | (cmdOptions.RenameTaintedFunctionNames ? 2 : 0) | (cmdOptions.addCommentsSymbolicExpresions ? 4 : 0);
 
         symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
     }
     if (ask_form(form,
         modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
-        &cmdOptions.limitTime,
-        &cmdOptions.limitInstructionsTracingMode,
         &symbolic_or_taint_engine,
         &chkgroup1,
         &chkgroup2,
         &chkgroup3,
+        &cmdOptions.limitTime,
+        &cmdOptions.limitInstructionsTracingMode,
         &cmdOptions.color_tainted,
         &cmdOptions.color_executed_instruction,
         &cmdOptions.color_tainted_condition,
@@ -149,7 +149,6 @@ void prompt_conf_window(void) {
         cmdOptions.addCommentsControlledOperands = chkgroup3 & 1 ? 1 : 0;
         cmdOptions.RenameTaintedFunctionNames = chkgroup3 & 2 ? 1 : 0;
         cmdOptions.addCommentsSymbolicExpresions = chkgroup3 & 4 ? 1 : 0;
-        cmdOptions.paintExecutedInstructions = chkgroup3 & 8 ? 1 : 0;
 
         if (cmdOptions.blacklist_path[0] != '\0') {
             //Means that the user set a path for custom blacklisted functions
@@ -179,7 +178,6 @@ void prompt_conf_window(void) {
                 "addCommentsControlledOperands: %s\n"
                 "RenameTaintedFunctionNames: %s\n"
                 "addCommentssymbolizexpresions: %s\n"
-                "paintExecutedInstructions: %s\n"
                 "color_tainted: %x\n"
                 "color_tainted_execution: %x\n"
                 "color_tainted_condition: %x\n",
@@ -196,7 +194,6 @@ void prompt_conf_window(void) {
                 cmdOptions.addCommentsControlledOperands ? "true" : "false",
                 cmdOptions.RenameTaintedFunctionNames ? "true" : "false",
                 cmdOptions.addCommentsSymbolicExpresions ? "true" : "false",
-                cmdOptions.paintExecutedInstructions ? "true" : "false",
                 cmdOptions.color_tainted,
                 cmdOptions.color_executed_instruction,
                 cmdOptions.color_tainted_condition

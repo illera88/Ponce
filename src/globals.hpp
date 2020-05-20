@@ -41,16 +41,9 @@
 #define RENAME_TAINTED_FUNCTIONS_PATTERN RENAME_TAINTED_FUNCTIONS_PREFIX"%03d_"
 #define RENAME_TAINTED_FUNCTIONS_PATTERN_LEN 6 
 
-//struct IDA_actions {   
-//    const action_desc_t* action_decs;
-//    int view_type[10]; // This are the posible views
-//    char const* menu_path; // this is where the item will be conteined in
-//};
-
 extern Snapshot snapshot;
 
 //All the global variables:
-//extern struct IDA_actions action_list[];
 extern bool hooked;
 
 //User options
@@ -81,7 +74,6 @@ struct cmdOptionStruct {
     bool addCommentsControlledOperands = false;
     bool RenameTaintedFunctionNames = false;
     bool addCommentsSymbolicExpresions = false;
-    bool paintExecutedInstructions = false;
 
     char blacklist_path[QMAXPATH];
 };

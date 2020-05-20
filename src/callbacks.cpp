@@ -43,8 +43,7 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
     {
         if (cmdOptions.showDebugInfo)
             msg("[+] Starting the debugged process. Reseting all the engines.\n");
-        triton_restart_engines();
-        clear_requests_queue();
+        triton_restart_engines();        
         break;
     }
     case dbg_step_into:
@@ -302,7 +301,6 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                         char label[256];
                         bool success;
                         
-
                         //We put the index at the beginning that we will use to get the bound from the action_name
                         qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
                         action_IDA_solve_formula_sub.name = name;                        

@@ -638,7 +638,7 @@ action_desc_t action_IDA_show_expressionsWindow = ACTION_DESC_LITERAL(
     "Ponce:show_expressionsWindows", // The action name. This acts like an ID and must be unique
     "Show Taint/Symbolic items", //The action text.
     &ah_show_expressions_Window, //The action handler.
-    "Alt+Shift+T", //Optional: the action shortcut
+    "Ctrl+Shift+Z", //Optional: the action shortcut
     "Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
     157); //Optional: the action icon (shows when in menus/toolbars)
 
@@ -647,26 +647,46 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
-        auto selection_row = ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]);
+        int upper_limit_int, lower_limit_int;
+        bool upper_set = false, lower_set = false;
+        int res = ask_constrain(ctx->chooser_selection, &upper_limit_int, &lower_limit_int);
 
-        qstring response;
-        if (ask_text(&response, 0, response.c_str(), "ACCEPT TABS\nEnter constrain for %s", selection_row.var_name.c_str())) {          
-            msg("user said %s\n", response.c_str());
+        if (res == -1) // user did not set any contrain
+            return 0;
+        else if (res == 2) { // user set both limits
+            upper_set = true;
+            lower_set = true;
+        }
+        else if (res == 1) {
+            lower_set = true;
+        }
+        else if (res == 0) {
+            upper_set = true;
+        }
+
+        auto ast = api.getAstContext();
+        for (const auto& index : ctx->chooser_selection) {
+            triton::ast::SharedAbstractNode ge, le;
+            auto list_item = ponce_table_chooser->table_item_list.at(index);
+            auto SymVar = ast->getVariableNode(list_item.var_name);
+            if (upper_set) {
+                ge = ast->bvsge(SymVar, ast->bv(lower_limit_int, SymVar->getBitvectorSize()));
+                ponce_table_chooser->constrains[list_item.id] = ge;
+            }
+            if (lower_set) {
+                le = ast->bvsle(SymVar, ast->bv(upper_limit_int, SymVar->getBitvectorSize()));
+                ponce_table_chooser->constrains[list_item.id] = le;
+            }
         }
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        update_action_label(ctx->action, "Set constraint");
-
         if (ctx->action, cmdOptions.use_tainting_engine || 
-            ctx->chooser_selection.empty() || 
-            ctx->chooser_selection.size()!=1)
+            ctx->chooser_selection.empty())
             return AST_DISABLE;
-
-        char label[100] = { 0 };
-        qsnprintf(label, sizeof(label), "Set constraint to %s", ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]).var_name.c_str());       
+     
         return AST_ENABLE;
     }
 };
@@ -674,7 +694,7 @@ static ah_action_chooser_add_constrain_t ah_action_chooser_add_constrain;
 
 action_desc_t action_chooser_add_constrain = ACTION_DESC_LITERAL(
     "Ponce:action_chooser_add_constrain", // The action name. This acts like an ID and must be unique
-    "Set constraint", //The action text.
+    "Set constraint to symbolic variable", //The action text.
     &ah_action_chooser_add_constrain, //The action handler.
     "Alt+Shift+5", //Optional: the action shortcut
     "Set a constraint to a symbolic variable", //Optional: the action tooltip (available in menus/toolbar)
@@ -687,15 +707,16 @@ struct ah_action_chooser_comment_t : public action_handler_t
     {
         qstring response;
         if (ask_str(&response, 3, "New comment")) {
-            for (const auto& index : ctx->chooser_selection) {
-                
+            for (const auto& index : ctx->chooser_selection) {             
                 auto list_item = ponce_table_chooser->table_item_list.at(index);
                 api.getSymbolicVariable(list_item.id)->setComment(std::string(response.c_str()));
                 msg("[+] Comment %s set to %s\n", response.c_str(), list_item.var_name.c_str());
             }
-            ponce_table_chooser->fill_entryList();
+            //ponce_table_chooser->fill_entryList();
             ponce_table_chooser->refresh(&ctx->chooser_selection);
-            //activate_widget(ctx->widget, true);
+
+            refresh_custom_viewer(ctx->widget);
+            activate_widget(ctx->widget, true);
         }      
         return 0;
     }
@@ -704,7 +725,7 @@ struct ah_action_chooser_comment_t : public action_handler_t
     {
         update_action_label(ctx->action, "Set comment to symbolic variable");
 
-        if (ctx->chooser_selection.empty())
+        if (!ponce_table_chooser || ctx->chooser_selection.empty())
             return AST_DISABLE;
 
         if (ctx->chooser_selection.size() == 1) {

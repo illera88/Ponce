@@ -19,7 +19,7 @@ bool prompt_window_taint_symbolize(ea_t address, sval_t size, ea_t* selection_st
 
 static const char formTaintSymbolizeInput[] =
 "STARTITEM 1\n"
-"Taint or symbolize memory range\n\n"
+"Symbolize/Taint memory range\n\n"
 "%/"
 "<#The memory address in hex#Address\t:M1:16:16>\n"
 "<#The size#Size   \t:D2:16:16>\n"
