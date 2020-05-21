@@ -41,6 +41,7 @@ extern action_desc_t action_IDA_clean;
 extern action_desc_t action_IDA_unload;
 extern action_desc_t action_IDA_solve_formula_sub;
 extern action_desc_t action_IDA_negate_and_inject;
+extern action_desc_t action_IDA_negate_inject_and_restore;
 extern action_desc_t action_IDA_taint_symbolize_register;
 extern action_desc_t action_IDA_taint_symbolize_memory;
 extern action_desc_t action_IDA_ponce_banner;

@@ -299,22 +299,19 @@ struct ah_negate_and_inject_t : public action_handler_t
     {
         //This is only working from the disassembly windows
         if (action_activation_ctx->widget_type == BWN_DISASM) {
-            ea_t pc = action_activation_ctx->cur_ea;
-            msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
+            // We get the symbolic condition index from the tooltip
+            qstring tooltip;
+            get_action_tooltip(&tooltip, action_activation_ctx->action);
+            auto offset = tooltip.find("Index: ");
+            assert(offset != -1);
+            //We extract the symbolic condition index from the action name
+            unsigned int symbolic_condition_index = atoi((tooltip.c_str() + offset + 7)); // skip "Index: "
+            
+            if (cmdOptions.showDebugInfo)
+                msg("[+] Negating condition at " MEM_FORMAT "\n", action_activation_ctx->cur_ea);
 
-            /* We get the bound we are at by iterating over the pathConstraints*/
-            int bound = -1;
-            for (auto& path_constraint : api.getPathConstraints()) {
-                bound++;
-                auto constraint_address = std::get<1>(path_constraint.getBranchConstraints()[0]);
-                if (pc == constraint_address) {
-                    break;
-                }
-            }
+            auto solutions = solve_formula(action_activation_ctx->cur_ea, symbolic_condition_index);
 
-            assert(bound != -1); // impossible
-
-            auto solutions = solve_formula(pc, bound);
             Input* chosen_solution = nullptr;
             if (solutions.size() > 0) {
                 if (solutions.size() == 1) {
@@ -363,18 +360,28 @@ struct ah_negate_and_inject_t : public action_handler_t
                 ponce_runtime_status.last_triton_instruction->getAddress() == ctx->cur_ea &&
                 ponce_runtime_status.last_triton_instruction->isBranch() &&
                 ponce_runtime_status.last_triton_instruction->isSymbolized()) {
+
+                unsigned int path_constraint_index = 0;
                 for (const auto& pc : api.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                        if (ctx->cur_ea == srcAddr) {
+                        if (ctx->cur_ea == srcAddr && !taken) {
+                            char tooltip[256];
+                            //We need the path constraint index during the action activate
+                            qsnprintf(tooltip, 255, "Index: %u", path_constraint_index);
+                            update_action_tooltip(ctx->action, tooltip);
+
                             char label[100] = { 0 };
                             qsnprintf(label, sizeof(label), "Negate and Inject to reach " MEM_FORMAT, dstAddr);
                             update_action_label(ctx->action, label);
                             return AST_ENABLE;
                         }
                     }
+                    path_constraint_index++;
                 }
             }
         }
+        // Using the default value
+        update_action_label(ctx->action, action_IDA_negate_and_inject.label);
         return AST_DISABLE;
     }
 };
@@ -394,21 +401,19 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
     {
         //This is only working from the disassembly windows
         if (action_activation_ctx->widget_type == BWN_DISASM) {
-            ea_t pc = action_activation_ctx->cur_ea;
-            msg("[+] Negating condition at " MEM_FORMAT "\n", pc);
+            // We get the symbolic condition index from the tooltip
+            qstring tooltip;
+            get_action_tooltip(&tooltip, action_activation_ctx->action);
+            auto offset = tooltip.find("Index: ");
+            assert(offset != -1);
+            //We extract the symbolic condition index from the action name
+            unsigned int symbolic_condition_index = atoi((tooltip.c_str() + offset + 7)); // skip "Index: "
 
-            /* We get the bound we are at by iterating over the pathConstraints*/
-            int bound = -1;
-            for (auto& path_constraint : api.getPathConstraints()) {
-                bound++;
-                auto constraint_address = std::get<1>(path_constraint.getBranchConstraints()[0]);
-                if (pc == constraint_address) {
-                    break;
-                }
-            }
-            assert(bound != -1); // impossible
+            if (cmdOptions.showDebugInfo)
+                msg("[+] Negating condition at " MEM_FORMAT "\n", action_activation_ctx->cur_ea);
 
-            auto solutions = solve_formula(pc, bound);
+            auto solutions = solve_formula(action_activation_ctx->cur_ea, symbolic_condition_index);
+
             Input* chosen_solution = nullptr;
             if (solutions.size() > 0) {
                 if (solutions.size() == 1) {
@@ -444,11 +449,6 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
                 snapshot.restoreSnapshot();
                 set_SMT_solution(*chosen_solution);
             }
-
-
-
-
-
         }
         return 0;
     }
@@ -462,6 +462,8 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
                 ponce_runtime_status.last_triton_instruction->getAddress() == ctx->cur_ea &&
                 ponce_runtime_status.last_triton_instruction->isBranch() &&
                 ponce_runtime_status.last_triton_instruction->isSymbolized()) {
+
+
                 for (const auto& pc : api.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                         if (ctx->cur_ea == srcAddr) {
@@ -474,12 +476,14 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
                 }
             }
         }
+        // Using the default value
+        update_action_label(ctx->action, action_IDA_negate_inject_and_restore.label);
         return AST_DISABLE;
     }
 };
 static ah_negate_inject_and_restore_t ah_negate_inject_and_restore;
 
-static const action_desc_t action_IDA_negateInjectRestore = ACTION_DESC_LITERAL(
+action_desc_t action_IDA_negate_inject_and_restore = ACTION_DESC_LITERAL(
     "Ponce:negate_inject_restore", // The action name. This acts like an ID and must be unique
     "Negate, Inject & Restore snapshot", //The action text.
     &ah_negate_inject_and_restore, //The action handler.
@@ -863,33 +867,25 @@ struct ah_solve_formula_sub_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
+        // We get the symbolic condition index from the tooltip
+        qstring tooltip;
+        get_action_tooltip(&tooltip, ctx->action);
+        auto offset = tooltip.find("Index: ");
+        assert(offset != -1);
         //We extract the solved index from the action name
-        unsigned int condition_index = atoi((ctx->action+1)); // sikp [ in action name
+        unsigned int path_constraint_index = atoi((tooltip.c_str() + offset + 7)); // skip "Index: "
         if (cmdOptions.showDebugInfo)
-            msg("[+] Solving condition at address " MEM_FORMAT " with bound %d\n", ctx->cur_ea, condition_index);
-        auto solutions = solve_formula(ctx->cur_ea, condition_index);
+            msg("[+] Solving condition at address " MEM_FORMAT " with symbolic condition index %d\n", ctx->cur_ea, path_constraint_index);
+        auto solutions = solve_formula(ctx->cur_ea, path_constraint_index);
         
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
-    {    
-        char label[100] = { 0 };
-        if (ctx->widget_type == BWN_DISASM &&
-            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) {
-            // Don't let solve formulas if user is debugging natively
-            for (const auto& pc : api.getPathConstraints()) {
-                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                    if (ctx->cur_ea == srcAddr) {                       
-                        qsnprintf(label, sizeof(label), "Solve formula to take " MEM_FORMAT, dstAddr);
-                        update_action_label(ctx->action, label);
-                        return AST_ENABLE;
-                    }
-                }
-            }
-        }
-        qsnprintf(label, sizeof(label), "Solve formula");
-        update_action_label(ctx->action, label);
+    {
+        msg("at update for solve menu\n"); 
+        // The solve menus are added dynamically, this event is never called for them
+        // We have still an menu action for solve that is always disabled to show the user that the option is there.
         return AST_DISABLE;
     }
 };
@@ -900,7 +896,7 @@ action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
     "Solve formula", //The action text.
     &ah_solve_formula_sub, //The action handler.
     "", //Optional: the action shortcut
-    "This solves a specific conditions and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
+    "This solves a specific condition and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
     13); //Optional: the action icon (shows when in menus/toolbars)
 
 struct ah_ponce_banner_t : public action_handler_t
@@ -938,8 +934,10 @@ struct IDA_actions action_list[] =
     { &action_IDA_taint_symbolize_memory, {0}, "Symbolic or taint/" },
 
     { &action_IDA_negate_and_inject, { BWN_DISASM, __END__ }, "SMT Solver/" },
-    { &action_IDA_negateInjectRestore, { BWN_DISASM, __END__ }, "SMT Solver/" },
-    { &action_IDA_solve_formula_sub, { BWN_DISASM, __END__ }, "SMT Solver/" },
+    { &action_IDA_negate_inject_and_restore, { BWN_DISASM, __END__ }, "SMT Solver/" },
+    // Solve formula is handled separatly to be more user friendly
+    // But still we want to register it in advance so it is always disable, so we define no views
+    { &action_IDA_solve_formula_sub, { __END__ }, "SMT Solver/" },
 
     { &action_IDA_createSnapshot, { BWN_DISASM, __END__ }, "Snapshot/"},
     { &action_IDA_restoreSnapshot, { BWN_DISASM, __END__ }, "Snapshot/" },

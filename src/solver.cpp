@@ -5,23 +5,18 @@
 #include <dbg.hpp>
 
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
-std::vector<Input> solve_formula(ea_t pc, int bound)
+std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
 {
-    // Triton records every condition as a path constraint, we only care about the symbolized ones
-    std::vector<const triton::engines::symbolic::PathConstraint*> symbolizedPathConstrains;
-    for (auto &path_constrain : api.getPathConstraints()) {
-        symbolizedPathConstrains.push_back(&path_constrain);
-    }
-
+    auto pathConstrains = api.getPathConstraints();
     std::vector<Input> solutions;
     
-    if (bound > symbolizedPathConstrains.size() - 1) {
-        msg("Error. Requested bound %u is larger than PathConstraints vector size (%lu)\n", bound, symbolizedPathConstrains.size());
+    if (path_constraint_index > pathConstrains.size() - 1) {
+        msg("Error. Requested path constraint index %u is larger than PathConstraints vector size (%lu)\n", path_constraint_index, pathConstrains.size());
         return solutions;
     }
 
-    // Double check that the condition at the bound is at the address the user selected
-    assert(std::get<1>(symbolizedPathConstrains[bound]->getBranchConstraints()[0]) == pc);
+    // Double check that the condition at the path constraint index is at the address the user selected
+    assert(std::get<1>(pathConstrains[path_constraint_index].getBranchConstraints()[0]) == pc);
 
     auto ast = api.getAstContext();
     // We are going to store here the constraints for the previous conditions
@@ -29,25 +24,26 @@ std::vector<Input> solve_formula(ea_t pc, int bound)
     auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
 
     // Add user define constraints (borrar en reejecuccion, poner mensaje if not sat, 
-    for (const auto& [id, user_constrain] : ponce_table_chooser->constrains) {
-        previousConstraints = ast->land(previousConstraints, user_constrain);
-    }
+    // ToDo: Alberto, right now it crashes here
+    //for (const auto& [id, user_constrain] : ponce_table_chooser->constrains) {
+    //    previousConstraints = ast->land(previousConstraints, user_constrain);
+    //}
 
     // First we iterate through the previous path constrains to add the predicates of the taken path
     unsigned int j;
-    for (j = 0; j < bound; j++)
+    for (j = 0; j < path_constraint_index; j++)
     {
         if (cmdOptions.showExtraDebugInfo)
             msg("[+] Keeping condition %d\n", j);
 
         // We add to the previous constraints the predicate for the taken branch 
-        auto predicate = symbolizedPathConstrains[j]->getTakenPredicate();
+        auto predicate = pathConstrains[j].getTakenPredicate();
         previousConstraints = ast->land(previousConstraints, predicate);
     }
 
     // Then we use the predicate for the non taken path so we "solve" that condition.
     // We try to solve every non taken branch (more than one is possible under certain situations
-    for (auto const& [taken, srcAddr, dstAddr, constraint] : symbolizedPathConstrains[bound]->getBranchConstraints()) {
+    for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstrains[path_constraint_index].getBranchConstraints()) {
         if (!taken) {
             // We concatenate the previous constraints for the taken path plus the non taken constrain of the user selected condition
             auto final_expr = ast->land(previousConstraints, constraint);
@@ -74,7 +70,7 @@ std::vector<Input> solve_formula(ea_t pc, int bound)
             if (model.size() > 0) {
                 Input newinput;
                 //Clone object 
-                newinput.bound = bound;
+                newinput.path_constraint_index = path_constraint_index;
                 newinput.dstAddr = dstAddr;
                 newinput.srcAddr = srcAddr;
 

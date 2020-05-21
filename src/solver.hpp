@@ -9,7 +9,7 @@
 class Input
 {
 public:
-    int bound;
+    int path_constraint_index;
 
     // Memory or register operands involved on the Input
     std::vector <triton::arch::MemoryAccess> memOperand;
@@ -18,7 +18,7 @@ public:
     triton::uint64 srcAddr, dstAddr;
 
     //! Constructor.
-    Input() : bound(0), srcAddr(0), dstAddr(0)
+    Input() : path_constraint_index(0), srcAddr(0), dstAddr(0)
     {
     }
 
@@ -30,4 +30,4 @@ public:
 
 void set_SMT_solution(const Input& input_ptr);
 void negate_flag_condition(triton::arch::Instruction* triton_instruction);
-std::vector<Input> solve_formula(ea_t pc, int bound);
+std::vector<Input> solve_formula(ea_t pc, int path_constraint_index);

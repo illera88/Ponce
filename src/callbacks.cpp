@@ -220,6 +220,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         // Here dynamic context-depending user menu items can be added.
     case ui_populating_widget_popup:
     {
+        msg("at ui_populating_widget_popup\n");
         TWidget* form = va_arg(va, TWidget*);
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
@@ -258,83 +259,102 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success ? "true" : "false");
                 }
             }
-        }       
+        }   
 
         //Adding a separator
         success = attach_action_to_popup(form, popup_handle, "", SETMENU_INS);
 
-        break;
-    }
-
-    case ui_finish_populating_widget_popup:
-    {
-        //This event is call after all the Ponce menus have been added and updated
-        //It is the perfect point to add the multiple condition solve submenus
-        TWidget* form = va_arg(va, TWidget*);
-        TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
-        int view_type = get_widget_type(form);
         ea_t cur_ea = get_screen_ea();
 
         /* Here we fill the posible SMT branches to solve if there is multiple*/
-        if (view_type == BWN_DISASM && 
+        if (view_type == BWN_DISASM &&
             !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
-            
+
             /* For the selected address(cur_ea), let's count how many branches we can reach (how many non taken addresses are in reach)*/
-            int non_taken_branches_n = std::count_if(api.getPathConstraints().begin(), api.getPathConstraints().end(), [cur_ea](const auto& pc)  {
+            int non_taken_branches_n = std::count_if(api.getPathConstraints().begin(), api.getPathConstraints().end(), [cur_ea](const auto& pc) {
                 for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                     if (cur_ea == srcAddr && !taken) return true;
                 }
                 return false;
-            });
+                });
 
-            if (non_taken_branches_n <= 1) {
-                /* There is no submenus needed to be added*/
-                break;
+
+            if (non_taken_branches_n == 0) {
+                // Disabled menu (so the user knows it's an option in some cases), already registered, we just need to attach it to the popup
+                attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT Solver/Solve formula", SETMENU_INS);
             }
+            else if (non_taken_branches_n == 1) {
+                // There is only one non taken branch, no need to add submenus
+                // But we need to modify the Solve Formula menu with more info and the path constraint index
+                // The tooltip is not updated on the update event, we need to unregister the Solve formula submenu and add a new one
+                unsigned int path_constraint_index = 0;
+                for (const auto& pc : api.getPathConstraints()) {
+                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                        if (cur_ea == srcAddr && !taken) { // get the non taken branch for the path constraint the user clicked on          
+                            // Using the solve formula as template
+                            action_desc_t action = action_IDA_solve_formula_sub;
+                            action.name = "Ponce:solve_formula_one_branch";
 
-            /**/
-            unsigned int bound = 0;
-            for (const auto& pc : api.getPathConstraints()) {
-                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                    if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
-                        char name[256];
-                        char label[256];
-                        bool success;
-                        
-                        //We put the index at the beginning that we will use to get the bound from the action_name
-                        qsnprintf(name, 255, "[%u]_Ponce:solve_formula_sub", bound);
-                        action_IDA_solve_formula_sub.name = name;                        
-                        qsnprintf(label, 255, "[%u] hit -> " MEM_FORMAT, bound, dstAddr);
-                        action_IDA_solve_formula_sub.label = label;
-                        success = register_action(action_IDA_solve_formula_sub);
-                        //If the submenu is already registered, we should unregister it and re-register it
-                        if (!success) {
-                            unregister_action(action_IDA_solve_formula_sub.name);
-                            success = register_action(action_IDA_solve_formula_sub);
+                            
+                            char label[256];
+                            qsnprintf(label, sizeof(label), "Solve formula to take " MEM_FORMAT, dstAddr);
+                            action.label = label;
+
+                            //We need the path constraint index during the action activate
+                            char tooltip[256];
+                            qsnprintf(tooltip, 255, "%s. Index: %u", action_IDA_solve_formula_sub.tooltip, path_constraint_index);
+                            action.tooltip = tooltip;
+
+                            bool success = register_action(action);
+                            //If the submenu is already registered, we should unregister it and re-register it
+                            if (!success) {
+                                unregister_action(action.name);
+                                success = register_action(action);
+                            }
+                            assert(success);
+                            success = attach_action_to_popup(form, popup_handle, action.name, "SMT Solver/Solve formula", SETMENU_INS);
+                            assert(success);
+                            break;
                         }
-                        success = attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT Solver/Solve formula/", SETMENU_INS);
-
-
-
-                        qsnprintf(name, 255, "[%u]_Ponce:negate_formula_sub", bound);
-                        action_IDA_negate_and_inject.name = name;
-                        qsnprintf(label, 255, "[%u] hit -> " MEM_FORMAT, bound, dstAddr);
-                        action_IDA_negate_and_inject.label = label;
-                        success = register_action(action_IDA_negate_and_inject);
-                        //If the submenu is already registered, we should unregister it and re-register it
-                        if (!success) {
-                            unregister_action(action_IDA_negate_and_inject.name);
-                            success = register_action(action_IDA_negate_and_inject);
-                        }
-                        success = attach_action_to_popup(form, popup_handle, action_IDA_negate_and_inject.name, "SMT Solver/Negate & Inject/", SETMENU_INS);
-
-
-                        break;
                     }
+                    path_constraint_index++;
                 }
-                bound++;
+            }
+            else {
+                // There are more than one non taken branches, we add submenus
+                unsigned int path_constraint_index = 0;
+                for (const auto& pc : api.getPathConstraints()) {
+                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+                        if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
+                            // Using the solve formula as template (If not we modify the name of the main solve formula menu)
+                            action_desc_t action = action_IDA_solve_formula_sub;
+                            char name[256];
+                            qsnprintf(name, 255, "[%u]Ponce:solve_formula_sub", path_constraint_index);
+                            action.name = name;
+                            //We need the path constrain index during the action activate
+                            char tooltip[256];
+                            qsnprintf(tooltip, 255, "%s. Index: %u", action_IDA_solve_formula_sub.tooltip, path_constraint_index);
+                            action.tooltip = tooltip;
+                            char label[256];
+                            qsnprintf(label, 255, "Hit %u, taken -> " MEM_FORMAT, path_constraint_index, dstAddr);
+                            action.label = label;
+
+                            bool success = register_action(action);
+                            //If the submenu is already registered, we should unregister it and re-register it
+                            if (!success) {
+                                unregister_action(action.name);
+                                success = register_action(action);
+                            }
+                            assert(success);
+                            success = attach_action_to_popup(form, popup_handle, action.name, "SMT Solver/Solve formula (Multiple hits)/", SETMENU_INS);
+                            assert(success);
+                        }
+                    }
+                    path_constraint_index++;
+                }
             }
         }
+
         break;
     }
     case dbg_process_exit:
