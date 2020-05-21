@@ -883,7 +883,6 @@ struct ah_solve_formula_sub_t : public action_handler_t
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        msg("at update for solve menu\n"); 
         // The solve menus are added dynamically, this event is never called for them
         // We have still an menu action for solve that is always disabled to show the user that the option is there.
         return AST_DISABLE;

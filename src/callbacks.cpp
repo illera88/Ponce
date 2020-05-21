@@ -220,7 +220,6 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         // Here dynamic context-depending user menu items can be added.
     case ui_populating_widget_popup:
     {
-        msg("at ui_populating_widget_popup\n");
         TWidget* form = va_arg(va, TWidget*);
         TPopupMenu* popup_handle = va_arg(va, TPopupMenu*);
         int view_type = get_widget_type(form);
@@ -256,7 +255,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                 }
                 if (action_list[i].view_type[j] == view_type) {  
                     success = attach_action_to_popup(form, popup_handle, action_list[i].action_decs->name, action_list[i].menu_path, SETMENU_INS);
-                    msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success ? "true" : "false");
+                    //msg("name: %s menu path: %s success: %s\n", action_list[i].action_decs->name, action_list[i].menu_path, success ? "true" : "false");
                 }
             }
         }   
@@ -267,9 +266,12 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         ea_t cur_ea = get_screen_ea();
 
         /* Here we fill the posible SMT branches to solve if there is multiple*/
-        if (view_type == BWN_DISASM &&
-            !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
+        if (view_type == BWN_DISASM) {
+            //&& !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
 
+            for (const auto& pc : api.getPathConstraints()) {
+                auto temp = pc.getBranchConstraints();
+            }
             /* For the selected address(cur_ea), let's count how many branches we can reach (how many non taken addresses are in reach)*/
             int non_taken_branches_n = std::count_if(api.getPathConstraints().begin(), api.getPathConstraints().end(), [cur_ea](const auto& pc) {
                 for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
