@@ -1,14 +1,14 @@
-<p align="center">
-  <img src="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png">
-</p>
-
-<p align="center">
-  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22"><img alt="Build for Windows" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg"></a>
-  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22"><img alt="Build for OSX" src="https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg"></a>
-  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22"><img alt="Build for Linux" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg"></a>
-</p>
+---
+description: IDA 2016 plugin contest winner! Symbolic Execution just one-click away!
+---
 
 # Ponce
+
+![](https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png)
+
+                              [![Build for Windows](https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22) [![Build for OSX](https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22) [![Build for Linux](https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22)
+
+## Ponce
 
 Ponce \(pronounced _\[ 'poN θe \]_ pon-they \) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are one click away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
 
@@ -53,7 +53,7 @@ In the next gif we can see the use of automatic tainting and how we can negate a
 * We negate an inject the solution everytime a byte of our input is checked against the key.
 * Finally we get the key `elite` that has been injected in memory and therefore reach the `Win` code.
 
- The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp)
+  The crackme source code can be found [here](https://github.com/illera88/Ponce/blob/master/examples/crackme_xor.cpp)
 
 ![crackmexor\_negate\_and\_inject](https://cloud.githubusercontent.com/assets/5193128/18558282/5dd1cbca-7b27-11e6-81d7-13044bfc0b59.gif)
 

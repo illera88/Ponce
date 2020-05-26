@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Ponce](README.md)
+* [illera88/Ponce](./)
 * [Table of contents](summary.md)
 
 ## EXAMPLES
