@@ -1,6 +1,11 @@
 # Table of contents
 * [Ponce](./)
 
+## USAGE
+* [Enable/Disable Ponce](usage/enable-disable.md)
+* [Taint and Symbolize](usage/taint-symbolize.md)
+* [Blacklist](usage/blacklist.md)
+
 ## EXAMPLES
 * [Symbolic engine](examples/symbolic-engine.md)
 * [Taint engine](examples/taint-engine.md)
