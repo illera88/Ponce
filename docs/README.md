@@ -1,16 +1,10 @@
-# illera88/Ponce
-
-| description |
-| :--- |
-| IDA 2016 plugin contest winner! Symbolic Execution just one-click away! |
-
 ## Ponce
 
 [![](https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png)](https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png)
 
-```text
+
                                [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22) [![Toolkit unit tests status](https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22) [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22)
-```
+
 
 ### Ponce
 

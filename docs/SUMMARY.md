@@ -1,14 +1,16 @@
 # Table of contents
 
 * [illera88/Ponce](README.md)
-* [Table of contents](summary2.md)
+* [Table of contents](SUMMARY.md)
 
 ## EXAMPLES
 
-* [Symbolic engine](examples/symbolic-engine.md)
-* [Taint engine](examples/taint-engine.md)
-* [Negate & Inject](examples/negate-and-inject.md)
-* [Negate, Inject & Restore](examples/negate-inject-and-restore.md)
+* [Symbolic engine](symbolic-engine.md)
+* [Taint engine](taint-engine.md)
+* [Negate & Inject](negate-and-inject.md)
+* [Negate, Inject & Restore](negate-inject-and-restore.md)
+
+## MISC
 * [Ponce limitations](ponce-limitations.md)
 * [FAQ](faq.md)
 
