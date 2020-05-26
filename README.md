@@ -1,14 +1,14 @@
----
-description: IDA 2016 plugin contest winner! Symbolic Execution just one-click away!
----
+<p align="center">
+  <img src="https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png">
+</p>
+
+<p align="center">
+  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22"><img alt="Build for Windows" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg"></a>
+  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22"><img alt="Build for OSX" src="https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg"></a>
+  <a href="https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22"><img alt="Build for Linux" src="https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg"></a>
+</p>
 
 # Ponce
-
-![](https://cloud.githubusercontent.com/assets/5193128/18534105/f27da220-7a9c-11e6-8d2e-a940d94b404b.png)
-
-                                   [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Windows/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Windows%22) [![Toolkit unit tests status](https://github.com/illera88/Ponce/workflows/Build%20for%20OSX/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+OSX%22) [![Toolkit audit status](https://github.com/illera88/Ponce/workflows/Build%20for%20Linux/badge.svg)](https://github.com/illera88/Ponce/actions?query=workflow%3A%22Build+for+Linux%22)
-
-## Ponce
 
 Ponce \(pronounced _\[ 'poN θe \]_ pon-they \) is an IDA Pro plugin that provides users the ability to perform taint analysis and symbolic execution over binaries in an easy and intuitive fashion. With Ponce you are one click away from getting all the power from cutting edge symbolic execution. Entirely written in C/C++.
 
