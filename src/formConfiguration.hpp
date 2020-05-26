@@ -1,6 +1,6 @@
 //! \file
 /*
-**  Copyright (c) 2016 - Ponce
+**  Copyright (c) 2020 - Ponce
 **  Authors:
 **         Alberto Garcia Illera        agarciaillera@gmail.com
 **         Francisco Oca                francisco.oca.gonzalez@gmail.com
@@ -19,7 +19,7 @@ void prompt_conf_window(void);
 
 static const char form[] =
 "STARTITEM 0\n"
-"Ponce Configuration v" VERSION "\n\n"
+"Ponce Configuration\n\n"
 "%/"
 
 // Choser between using only the tainting engine or the symbolic one

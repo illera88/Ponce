@@ -1,6 +1,6 @@
 ﻿//! \file
 /*
-**  Copyright (c) 2016 - Ponce
+**  Copyright (c) 2020 - Ponce
 **  Authors:
 **         Alberto Garcia Illera        agarciaillera@gmail.com
 **         Francisco Oca                francisco.oca.gonzalez@gmail.com
@@ -614,11 +614,14 @@ struct ah_show_expressionsWindow_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
+        
         //So we don't reopen twice the same window
-        auto form = find_widget(cmdOptions.use_tainting_engine ? "Ponce Taint Items" : "Ponce Symbolic Items");
-        if (form != NULL) {
+        if (ponce_table_chooser != nullptr) {
             //let's update it and change to it
             ponce_table_chooser->fill_entryList();
+            
+            refresh_chooser(ponce_table_chooser->title);
+            auto form = find_widget(ponce_table_chooser->title);             
             activate_widget(form, true);
         }
 
@@ -716,11 +719,7 @@ struct ah_action_chooser_comment_t : public action_handler_t
                 api.getSymbolicVariable(list_item.id)->setComment(std::string(response.c_str()));
                 msg("[+] Comment %s set to %s\n", response.c_str(), list_item.var_name.c_str());
             }
-            //ponce_table_chooser->fill_entryList();
-            ponce_table_chooser->refresh(&ctx->chooser_selection);
-
-            refresh_custom_viewer(ctx->widget);
-            activate_widget(ctx->widget, true);
+            refresh_chooser(ponce_table_chooser->title);
         }      
         return 0;
     }

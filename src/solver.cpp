@@ -93,16 +93,31 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
                     switch (symbVar->getSize())
                     {
                     case 8:
-                        msg(" - %s (%s): %#02x (%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uchar>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
+                        msg(" - %s%s: %#02x (%c)\n", 
+                            model.getVariable()->getName().c_str(), 
+                            !symbVarComment.empty()? (" ("+symbVarComment+")").c_str():"",
+                            model_value.convert_to<uchar>(), 
+                            model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
                         break;
                     case 16:
-                        msg(" - %s (%s): %#04x (%c%c)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<ushort>(), model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
+                        msg(" - %s%s: %#04x (%c%c)\n", 
+                            !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
+                            symbVarComment.c_str(), 
+                            model_value.convert_to<ushort>(), 
+                            model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), 
+                            (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
                         break;
                     case 32:
-                        msg(" - %s (%s): %#08x\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint32>());
+                        msg(" - %s%s: %#08x\n", 
+                            !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
+                            symbVarComment.c_str(), 
+                            model_value.convert_to<uint32>());
                         break;
                     case 64:
-                        msg(" - %s (%s): %#16llx\n", model.getVariable()->getName().c_str(), symbVarComment.c_str(), model_value.convert_to<uint64>());
+                        msg(" - %s%s: %#16llx\n", 
+                            model.getVariable()->getName().c_str(), 
+                            !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
+                            model_value.convert_to<uint64>());
                         break;
                     default:
                         msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 

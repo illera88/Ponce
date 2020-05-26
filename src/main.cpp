@@ -1,6 +1,6 @@
 //! \file
 /*
-**  Copyright (c) 2016 - Ponce
+**  Copyright (c) 2020 - Ponce
 **  Authors:
 **         Alberto Garcia Illera        agarciaillera@gmail.com
 **         Francisco Oca                francisco.oca.gonzalez@gmail.com
@@ -111,7 +111,7 @@ bool idaapi run(size_t)
             return false;
         }
 
-        msg("[+] Ponce plugin version: %s running!\n", VERSION);
+        msg("[+] Ponce plugin running!\n");
         hooked = true;
     }
     return true;

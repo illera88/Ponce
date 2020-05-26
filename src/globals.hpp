@@ -1,6 +1,6 @@
 //! \file
 /*
-**  Copyright (c) 2016 - Ponce
+**  Copyright (c) 2020 - Ponce
 **  Authors:
 **         Alberto Garcia Illera        agarciaillera@gmail.com
 **         Francisco Oca                francisco.oca.gonzalez@gmail.com
@@ -20,8 +20,6 @@
 
 //Triton
 #include <triton/api.hpp>
-//Version number
-#include "../VERSION_NUMBER"
 
 #define strtol_m strtoll
 
