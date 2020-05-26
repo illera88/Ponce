@@ -226,14 +226,18 @@ void start_tainting_or_symbolic_analysis()
 {
     if (!ponce_runtime_status.runtimeTrigger.getState())
     {
-        triton_restart_engines();
+        //triton_restart_engines();
         // Delete previous Ponce comments
-        delete_ponce_comments();
+        if (ponce_runtime_status.last_triton_instruction == nullptr){
+            /* We don't want to delete the comments in case we are re-enabling 
+            an current Ponce tracing like when the user just disables Ponce
+            to prevent instrumenting a function but he's gonna reenabling in after it*/
+            delete_ponce_comments();
+        }
         ponce_runtime_status.runtimeTrigger.enable();
         ponce_runtime_status.analyzed_thread = get_current_thread();
         enable_step_trace(true);
         set_step_trace_options(0);
         ponce_runtime_status.tracing_start_time = 0;
     }
-
 }

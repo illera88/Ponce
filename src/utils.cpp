@@ -465,7 +465,7 @@ ea_t current_instruction()
     }
     ea_t xip = 0;
     if (!get_ip_val(&xip)) {
-        msg("Could not get the XIP value. This should never happen\n");
+        msg("[-] Could not get the XIP value. This should never happen\n");
         return 0;
     }
     return xip;

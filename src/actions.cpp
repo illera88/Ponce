@@ -813,6 +813,7 @@ struct ah_enable_disable_tracing_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         if (ponce_runtime_status.runtimeTrigger.getState()) {
+            // Ponce was already running (disable tracing)
             if (ask_for_execute_native()) {
                 //Deleting previous snapshot
                 snapshot.resetEngine();
@@ -820,10 +821,11 @@ struct ah_enable_disable_tracing_t : public action_handler_t
                 disable_step_trace();
                 ponce_runtime_status.runtimeTrigger.disable();
                 if (cmdOptions.showDebugInfo)
-                    msg("Disabling step tracing\n");
+                    msg("[+] Disabling step tracing\n");
             }
         }
         else {
+            // Ponce was not running (enable tracing)
             start_tainting_or_symbolic_analysis();
             tritonize(current_instruction());
             if (cmdOptions.showDebugInfo)

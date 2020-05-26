@@ -145,7 +145,7 @@ void Snapshot::restoreSnapshot() {
 
     /* 8 - We need to set to NULL the last instruction. We are deleting the last instructions in the Tritonize callback.
     So after restore a snapshot if last_instruction is not NULL is double freeing the same instruction */
-    ponce_runtime_status.last_triton_instruction = NULL;
+    ponce_runtime_status.last_triton_instruction = nullptr;
 }
 
 /* Disable the snapshot engine. */
