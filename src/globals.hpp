@@ -106,5 +106,3 @@ extern std::map<ea_t, struct instruction_info> ponce_comments;
 #define REG_XIP api.registers.x86_eip
 #endif // __EA64__
 
-extern ponce_table_chooser_t* ponce_table_chooser;
-extern bool hexrays_present;

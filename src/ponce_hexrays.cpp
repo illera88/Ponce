@@ -14,6 +14,8 @@
 
 #include <hexrays.hpp>
 
+bool hexrays_present = false;
+
 /* Returns the pseudocode line corresponding to an address or -1 if fail*/
 int get_compile_coord_by_ea(cfunc_t* cfunc, ea_t addr) {
     int y = -1;

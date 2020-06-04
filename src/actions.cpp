@@ -610,43 +610,44 @@ action_desc_t action_IDA_show_config = ACTION_DESC_LITERAL(
 
 
 /* The following two actions are going to be present in the formTaintWindow*/
-struct ah_show_expressionsWindow_t : public action_handler_t
+struct ah_show_symbolicVarsWindow_t : public action_handler_t
 {
     virtual int idaapi activate(action_activation_ctx_t* ctx)
-    {
-        
+    {       
         //So we don't reopen twice the same window
         if (ponce_table_chooser != nullptr) {
             //let's update it and change to it
             ponce_table_chooser->fill_entryList();
             
-            refresh_chooser(ponce_table_chooser->title);
-            auto form = find_widget(ponce_table_chooser->title);             
+            auto form = find_widget(ponce_table_chooser->title);
+            if (!form) {
+                msg("[!!] Could not find %s widget\n", ponce_table_chooser->title);
+                return 0;
+            }
+            refresh_chooser(ponce_table_chooser->title);                      
             activate_widget(form, true);
         }
-
-        else
+        else{
             ponce_table_chooser = new ponce_table_chooser_t();
             ponce_table_chooser->choose();
+        }
 
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        update_action_label(ctx->action, cmdOptions.use_tainting_engine ? "Show Taint expressions" : "Show Symbolic expressions");
-        update_action_tooltip(ctx->action, cmdOptions.use_tainting_engine ? "Show all the taint expressions" : "Show all the symbolic expressions");
         return AST_ENABLE;
     }
 };
-static ah_show_expressionsWindow_t ah_show_expressions_Window;
+static ah_show_symbolicVarsWindow_t ah_show_symbolicVars_Window;
 
 action_desc_t action_IDA_show_expressionsWindow = ACTION_DESC_LITERAL(
-    "Ponce:show_expressionsWindows", // The action name. This acts like an ID and must be unique
-    "Show Taint/Symbolic items", //The action text.
-    &ah_show_expressions_Window, //The action handler.
+    "Ponce:show_SymbolicVarsWindows", // The action name. This acts like an ID and must be unique
+    "Show symbolic variables", //The action text.
+    &ah_show_symbolicVars_Window, //The action handler.
     "Ctrl+Shift+Z", //Optional: the action shortcut
-    "Show all the taint or symbolic items", //Optional: the action tooltip (available in menus/toolbar)
+    "Show all the symbolic variables", //Optional: the action tooltip (available in menus/toolbar)
     157); //Optional: the action icon (shows when in menus/toolbars)
 
 
@@ -657,6 +658,14 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
         int upper_limit_int, lower_limit_int;
         bool upper_set = false, lower_set = false;
         int res = ask_constrain(ctx->chooser_selection, &upper_limit_int, &lower_limit_int);
+
+        // Let's clean the previous constrains if they exist
+        for (const auto& index : ctx->chooser_selection) {
+            auto list_item = ponce_table_chooser->table_item_list.at(index);
+            if (ponce_table_chooser->constrains.count(list_item.id) > 0) {
+                ponce_table_chooser->constrains.erase(list_item.id);
+            }
+        }
 
         if (res == -1) // user did not set any contrain
             return 0;
@@ -671,6 +680,7 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
             upper_set = true;
         }
 
+
         auto ast = api.getAstContext();
         for (const auto& index : ctx->chooser_selection) {
             triton::ast::SharedAbstractNode ge, le;
@@ -678,22 +688,38 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
             auto SymVar = ast->getVariableNode(list_item.var_name);
             if (upper_set) {
                 ge = ast->bvsge(SymVar, ast->bv(lower_limit_int, SymVar->getBitvectorSize()));
-                ponce_table_chooser->constrains[list_item.id] = ge;
+                ponce_table_chooser->constrains[list_item.id].push_back(std::make_tuple(ge, list_item.var_name + " >= "+std::to_string(lower_limit_int)));
             }
             if (lower_set) {
                 le = ast->bvsle(SymVar, ast->bv(upper_limit_int, SymVar->getBitvectorSize()));
-                ponce_table_chooser->constrains[list_item.id] = le;
+                ponce_table_chooser->constrains[list_item.id].push_back(std::make_tuple(le, list_item.var_name + " <= " + std::to_string(upper_limit_int)));
             }
         }
+        refresh_chooser(ponce_table_chooser->title);
         return 0;
     }
 
     virtual action_state_t idaapi update(action_update_ctx_t* ctx)
     {
-        if (ctx->action, cmdOptions.use_tainting_engine || 
-            ctx->chooser_selection.empty())
+        update_action_label(ctx->action, "Set constraint to symbolic variable");
+
+        if (!ponce_table_chooser || 
+            ctx->chooser_selection.empty() ||
+            cmdOptions.use_tainting_engine)
             return AST_DISABLE;
-     
+
+        if (ctx->chooser_selection.size() == 1) {
+            char label[100] = { 0 };
+            auto selection_row = ponce_table_chooser->table_item_list.at(ctx->chooser_selection[0]);
+            qsnprintf(label, sizeof(label), "Set constraint to %s", selection_row.var_name.c_str());
+            update_action_label(ctx->action, label);
+        }
+
+        else if (ctx->chooser_selection.size() > 1) {
+            char label[100] = { 0 };
+            qsnprintf(label, sizeof(label), "Set constraint to %d symbolic variables", ctx->chooser_selection.size());
+            update_action_label(ctx->action, label);
+        }
         return AST_ENABLE;
     }
 };
@@ -728,7 +754,9 @@ struct ah_action_chooser_comment_t : public action_handler_t
     {
         update_action_label(ctx->action, "Set comment to symbolic variable");
 
-        if (!ponce_table_chooser || ctx->chooser_selection.empty())
+        if (!ponce_table_chooser ||
+            ctx->chooser_selection.empty() ||
+            cmdOptions.use_tainting_engine)
             return AST_DISABLE;
 
         if (ctx->chooser_selection.size() == 1) {

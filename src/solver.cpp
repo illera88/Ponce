@@ -22,12 +22,18 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
     // We are going to store here the constraints for the previous conditions
     // We can not initializate this to null, so we do it to a true condition (based on code_coverage_crackme_xor.py from the triton project)
     auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
+    //auto previousConstraints = ast->bvtrue();
 
     // Add user define constraints (borrar en reejecuccion, poner mensaje if not sat, 
     // ToDo: Alberto, right now it crashes here
-    //for (const auto& [id, user_constrain] : ponce_table_chooser->constrains) {
-    //    previousConstraints = ast->land(previousConstraints, user_constrain);
-    //}
+    if (ponce_table_chooser){
+        for (const auto& [id, constrain] : ponce_table_chooser->constrains) {
+            for (const auto& [abstract_node_constrain, str_constrain] : constrain) {
+                previousConstraints = ast->land(previousConstraints, abstract_node_constrain);
+            }
+        }
+    }
+    
 
     // First we iterate through the previous path constrains to add the predicates of the taken path
     unsigned int j;
@@ -46,21 +52,11 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
     for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstrains[path_constraint_index].getBranchConstraints()) {
         if (!taken) {
             // We concatenate the previous constraints for the taken path plus the non taken constrain of the user selected condition
-            auto final_expr = ast->land(previousConstraints, constraint);
-            if (cmdOptions.showExtraDebugInfo) {
+            triton::ast::SharedAbstractNode final_expr = ast->land(previousConstraints, constraint);
+            if (cmdOptions.showExtraDebugInfo) {  
                 std::stringstream ss;
-                /*Create the full formula*/
-                ss << "(set-logic QF_AUFBV)\n";
-                /* Then, delcare all symbolic variables */
-                for (auto it : api.getSymbolicVariables()) {
-                    ss << ast->declare(ast->variable(it.second));
-
-                }
-                /* And concat the user expression */
-                ss << "\n\n";
-                ss << final_expr;
-                ss << "\n(check-sat)";
-                ss << "\n(get-model)";
+                ss << "(set-logic QF_AUFBV)" << std::endl;
+                api.printSlicedExpressions(ss, api.newSymbolicExpression(final_expr), true);      
                 msg("[+] Formula:\n%s\n\n", ss.str().c_str());
             }
 

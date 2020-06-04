@@ -215,7 +215,6 @@ void triton_restart_engines()
     ponce_runtime_status.total_number_symbolic_conditions = 0;
     ponce_runtime_status.current_trace_counter = 0;
     breakpoint_pending_actions.clear();
-    if(ponce_table_chooser) ponce_table_chooser->constrains.clear();
     clear_requests_queue();
 
 }

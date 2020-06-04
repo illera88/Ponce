@@ -9,9 +9,12 @@
 */
 
 #pragma once
+
 #include <vector>
 #include "kernwin.hpp"
 
+
+extern struct ponce_table_chooser_t* ponce_table_chooser;
 
 // column widths
 struct ponce_table_chooser_t : public chooser_multi_t
@@ -31,10 +34,11 @@ protected:
         
     }list_item_t;
    
+    TWidget* widget;
     
 public:
 
-    std::map<triton::usize, triton::ast::SharedAbstractNode> constrains;
+    std::map<triton::usize, std::vector<std::tuple<triton::ast::SharedAbstractNode, std::string>>> constrains;
 
     virtual ~ponce_table_chooser_t() {
         if (!table_item_list.empty()) {
@@ -56,13 +60,12 @@ public:
         return ALL_CHANGED;
     }
 
+
     // function that is called when the user wants to close the chooser
-    virtual cbres_t idaapi destroy(ssize_t n) {
-        if (!table_item_list.empty()) {
-            table_item_list.clear();
-        }
-        // return adjust_last_item(n);  // try to preserve the cursor
-        return ALL_CHANGED;
+    virtual void idaapi closed() {
+        table_item_list.clear();
+        constrains.clear();
+        ponce_table_chooser = nullptr;
     }
 
 public:
@@ -73,32 +76,6 @@ public:
 };
 
 
-
-#ifndef __IDA70__
-
-// column widths
-static const int widths[] = { CHCOL_DEC | 8,
-CHCOL_HEX,
-5,
-16,
-6,
-6,
-16,
-16
-};
-
-// column headers
-static const char* header[] =
-{
-    "Id",
-    "Address",
-    "Reg Name",
-    "Value",
-    "Is Tainted",
-    "Comment",
-    "Constrains"
-};
-#endif
 
 
 static const char constrain_form[]=

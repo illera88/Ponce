@@ -37,6 +37,4 @@ triton::API api;
 
 std::map<ea_t, struct instruction_info> ponce_comments;
 
-bool hexrays_present = false;
 
-ponce_table_chooser_t* ponce_table_chooser = nullptr;

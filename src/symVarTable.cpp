@@ -26,12 +26,7 @@
 #include "symVarTable.hpp"
 #include "globals.hpp"
 
-const char* popup_menu_names[] = {
-    "Insert",					// not active
-    "Delete",					// not active
-    "Dump segment to disk",		// menu entry for dumping the segment
-    "Refresh"					// not active
-};
+struct ponce_table_chooser_t* ponce_table_chooser = nullptr;
 
 void ponce_table_chooser_t::fill_entryList() {
     //We clear the list
@@ -51,17 +46,19 @@ void ponce_table_chooser_t::fill_entryList() {
         }
 
         list_entry.var_name = SymVar->getName();
-        list_entry.comment = SymVar->getComment();
-        table_item_list.push_back(list_entry);
+        list_entry.comment = SymVar->getComment();       
 
         // fill the constrains
         for (const auto& [id, constrain] : constrains) {
-            if (list_entry.id == id) {
-                list_entry.constrains += constrain->str() + " ";
+            if (list_entry.id == id){
+                for (const auto& [abstract_node_constrain, str_constrain] : constrain) {
+                    list_entry.constrains += list_entry.constrains.empty() ? str_constrain : " ; " +str_constrain;
+                }
             }
         }
+        // Finally, let's push it to the vector table
+        table_item_list.push_back(list_entry);
     }
-    return;
 }
 
 
@@ -71,7 +68,8 @@ const int ponce_table_chooser_t::widths_[] = {
     10,
     7,
     16,
-    16 
+    16,
+    25
 };
 
 // column headers
@@ -82,7 +80,8 @@ const int ponce_table_chooser_t::widths_[] = {
     "Address", // Only for memory
     "Reg Name", // Only for registry 
     "Concrete Value",
-    "Comment"
+    "Comment",
+    "Constrains"
 };
 
 ponce_table_chooser_t::ponce_table_chooser_t()
@@ -112,9 +111,12 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
     }
 
     cols[4].sprnt("%s", li.value.str().c_str()); // Concrete value
-    msg("comment %s", li.comment.c_str());
+
     if(!li.comment.empty())
         cols[5].sprnt("%s", li.comment.c_str());
+
+    if (!li.constrains.empty())
+        cols[6].sprnt("%s", li.constrains.c_str());
 
 }
 
