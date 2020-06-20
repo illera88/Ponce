@@ -148,7 +148,8 @@ jobs:
                   path: my_artifacts
             
             - name: Display structure of downloaded files
-                  run: dir my_artifacts
+                  run: |
+                      dir my_artifacts
             
             - name: Upload ssh arifact to Github release
               uses: actions/upload-release-asset@v1
