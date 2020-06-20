@@ -140,21 +140,16 @@ jobs:
         if: github.event_name == 'release'
         needs: build
         steps:
-            - name: Download all OSX arifacts
-              uses: actions/download-artifact@v2
-              with:
-                  path: ./my_artifacts
-            - name: Branch name
-                id: branch_name
+            # - name: Download all OSX arifacts
+              # uses: actions/download-artifact@v2
+              # with:
+                  # path: ./my_artifacts
+            - name: Set env
+                run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+                
+            - name: Build zip file
                 run: |
-                  echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-                  echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-                  echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
-            - name: Build base image
-                run: |
-                  echo $SOURCE_NAME
-                  echo $SOURCE_BRANCH
-                  echo $SOURCE_TAG
+                  echo $RELEASE_VERSION              
                   
                   mkdir -p to_zip/ida70
                   cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
@@ -164,12 +159,8 @@ jobs:
                   cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
                   
                   cd to_zip
-                  zip -r ../ponce-linux-$SOURCE_TAG.zip *
-                  
-                env:
-                  SOURCE_NAME: ${{ steps.branch_name.outputs.SOURCE_NAME }}
-                  SOURCE_BRANCH: ${{ steps.branch_name.outputs.SOURCE_BRANCH }}
-                  SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}      
+                  zip -r ../ponce-linux-$RELEASE_VERSION.zip *
+
                   
             - name: Display structure of downloaded files
               run: |
@@ -202,11 +193,10 @@ jobs:
               uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}  
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./ponce-linux-$SOURCE_TAG.zip
-                  asset_name: ponce-linux-$SOURCE_TAG.zip
+                  asset_path: ./ponce-linux-$RELEASE_VERSION.zip
+                  asset_name: ponce-linux-$RELEASE_VERSION.zip
                   asset_content_type: application/zip
 
                   
