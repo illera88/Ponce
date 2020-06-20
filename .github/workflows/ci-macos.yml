@@ -148,34 +148,64 @@ jobs:
             - name: Display structure of downloaded files
               run: |
                   ls -lha my_artifacts/Ponce_7.0.dylib
-                  file my_artifacts/Ponce_7.0.dylib/*
-                  mkdir artifacts_binaries
-                  find ./my_artifacts -name '*.dylib' -exec cp {} artifacts_binaries \;
-                  ls -lha artifacts_binaries
+                  ls -lha my_artifacts/Ponce64_7.0.dylib
+                  # file my_artifacts/Ponce_7.0.dylib/*
+                  # mkdir artifacts_binaries
+                  # find ./my_artifacts -name '*.dylib' -exec cp {} artifacts_binaries \;
+                  # ls -lha artifacts_binaries
             
-            - name: Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: |
-                      my_artifacts/Ponce_7.0.dylib/Ponce_7.0.dylib
-                      my_artifacts/Ponce_7.1.dylib/Ponce_7.1.dylib
-                      my_artifacts/Ponce_7.2.dylib/Ponce_7.2.dylib
-                      my_artifacts/Ponce_7.3.dylib/Ponce_7.3.dylib
-                      my_artifacts/Ponce_7.4.dylib/Ponce_7.4.dylib
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            # - name: Release
+              # uses: softprops/action-gh-release@v1
+              # with:
+                  # files: |
+                      # my_artifacts/Ponce_7.0.dylib/Ponce_7.0.dylib
+                      # my_artifacts/Ponce_7.1.dylib/Ponce_7.1.dylib
+                      # my_artifacts/Ponce_7.2.dylib/Ponce_7.2.dylib
+                      # my_artifacts/Ponce_7.3.dylib/Ponce_7.3.dylib
+                      # my_artifacts/Ponce_7.4.dylib/Ponce_7.4.dylib
+              # env:
+                  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
             # - name: Display structure of downloaded files
               # run: |
                   # ls -lha my_artifacts
                   # file my_artifacts/*
             
-            # - name: Upload ssh arifact to Github release
-              # uses: actions/upload-release-asset@v1
-              # env:
-                  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              # with:
-                  # upload_url: ${{ github.event.release.upload_url }}
-                  # asset_path: ./my_artifacts/Ponce_7.5.dylib
-                  # asset_name: Ponce_7.5.dylib
-                  # asset_content_type: application/octet-stream
+            - name: Upload 7.0 artifact to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./my_artifacts/Ponce_7.0.dylib/libPonce.dylib
+                  asset_name: Ponce-7.0.dylib
+                  asset_content_type: application/octet-stream
+            - name: Upload 7.0 x64 artifact to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./my_artifacts/Ponce64_7.0.dylib/libPonce64.dylib
+                  asset_name: Ponce-7.0_64.dylib
+                  asset_content_type: application/octet-stream
+            
+            - name: Upload 7.1 artifact to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./my_artifacts/Ponce_7.1.dylib/libPonce.dylib
+                  asset_name: Ponce-7.1.dylib
+                  asset_content_type: application/octet-stream
+            - name: Upload 7.1 x64 artifact to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./my_artifacts/Ponce64_7.1.dylib/libPonce64.dylib
+                  asset_name: Ponce-7.1_64.dylib
+                  asset_content_type: application/octet-stream
+                  
