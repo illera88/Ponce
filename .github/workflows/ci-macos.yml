@@ -148,7 +148,12 @@ jobs:
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
-                  files: my_artifacts/*
+                  files: |
+                      my_artifacts/Ponce_7.0.dylib
+                      my_artifacts/Ponce_7.1.dylib
+                      my_artifacts/Ponce_7.2.dylib
+                      my_artifacts/Ponce_7.3.dylib
+                      my_artifacts/Ponce_7.4.dylib
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
