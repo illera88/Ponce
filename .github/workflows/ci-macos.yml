@@ -145,15 +145,23 @@ jobs:
               with:
                   path: ./my_artifacts
             
+            - name: Display structure of downloaded files
+              run: |
+                  ls -lha my_artifacts/Ponce_7.0.dylib
+                  file my_artifacts/Ponce_7.0.dylib/*
+                  mkdir artifacts_binaries
+                  find ./my_artifacts -name '*.dylib' -exec cp {} artifacts_binaries \;
+                  ls -lha artifacts_binaries
+            
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
                   files: |
-                      my_artifacts/Ponce_7.0.dylib
-                      my_artifacts/Ponce_7.1.dylib
-                      my_artifacts/Ponce_7.2.dylib
-                      my_artifacts/Ponce_7.3.dylib
-                      my_artifacts/Ponce_7.4.dylib
+                      my_artifacts/Ponce_7.0.dylib/Ponce_7.0.dylib
+                      my_artifacts/Ponce_7.1.dylib/Ponce_7.1.dylib
+                      my_artifacts/Ponce_7.2.dylib/Ponce_7.2.dylib
+                      my_artifacts/Ponce_7.3.dylib/Ponce_7.3.dylib
+                      my_artifacts/Ponce_7.4.dylib/Ponce_7.4.dylib
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
