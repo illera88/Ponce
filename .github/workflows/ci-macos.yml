@@ -143,11 +143,12 @@ jobs:
             - name: Download all OSX arifacts
               uses: actions/download-artifact@v2
               with:
-                  path: my_artifacts
+                  path: ./my_artifacts
             
             - name: Display structure of downloaded files
               run: |
-                  ls my_artifacts
+                  ls -lha my_artifacts
+                  file my_artifacts/*
             
             - name: Upload ssh arifact to Github release
               uses: actions/upload-release-asset@v1
@@ -155,6 +156,6 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: my_artifacts/Ponce_7.5.dylib
+                  asset_path: ./my_artifacts/Ponce_7.5.dylib
                   asset_name: Ponce_7.5.dylib
                   asset_content_type: application/octet-stream
