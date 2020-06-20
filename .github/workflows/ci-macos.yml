@@ -17,7 +17,7 @@ jobs:
                     
             - name: Install Triton dependecies
               run: |
-                 brew install boost
+                 brew install boost p7zip
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
                  vcpkg install capstone[x86,arm,arm64] z3    
                   
@@ -36,11 +36,11 @@ jobs:
               run: |
                   cd ..
                   curl -O -J -L "$IDA_SDK"
-                  unzip IDA_SDKs.zip -d IDA_SDKs              
+                  7z e IDA_SDKs.zip -oIDA_SDKs              
             
             - name: Build Ponce IDA 7.0
               run: |
-                  unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
+                  7z e ../IDA_SDKs/idasdk70.zip -o../IDA_SDKs
                   cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.0 --config Release --parallel 2
                   
