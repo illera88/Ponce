@@ -145,10 +145,10 @@ jobs:
             - name: Download all windows arifacts
               uses: actions/download-artifact@v2
               with:
-                  path: C:\my_artifacts
+                  path: my_artifacts
             
             - name: Display structure of downloaded files
-                  run: dir C:\my_artifacts
+                  run: dir my_artifacts
             
             - name: Upload ssh arifact to Github release
               uses: actions/upload-release-asset@v1
@@ -156,7 +156,7 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: C:\my_artifacts\Ponce_7.4.dll
+                  asset_path: my_artifacts/Ponce_7.4.dll
                   asset_name: Ponce_7.4.dll
                   asset_content_type: application/octet-stream
                   
