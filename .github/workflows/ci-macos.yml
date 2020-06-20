@@ -145,17 +145,24 @@ jobs:
               with:
                   path: ./my_artifacts
             
-            - name: Display structure of downloaded files
-              run: |
-                  ls -lha my_artifacts
-                  file my_artifacts/*
-            
-            - name: Upload ssh arifact to Github release
-              uses: actions/upload-release-asset@v1
-              env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Release
+              uses: softprops/action-gh-release@v1
               with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./my_artifacts/Ponce_7.5.dylib
-                  asset_name: Ponce_7.5.dylib
-                  asset_content_type: application/octet-stream
+                  files: my_artifacts/*
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            
+            # - name: Display structure of downloaded files
+              # run: |
+                  # ls -lha my_artifacts
+                  # file my_artifacts/*
+            
+            # - name: Upload ssh arifact to Github release
+              # uses: actions/upload-release-asset@v1
+              # env:
+                  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # with:
+                  # upload_url: ${{ github.event.release.upload_url }}
+                  # asset_path: ./my_artifacts/Ponce_7.5.dylib
+                  # asset_name: Ponce_7.5.dylib
+                  # asset_content_type: application/octet-stream
