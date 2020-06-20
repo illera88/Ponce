@@ -144,10 +144,13 @@ jobs:
               # uses: actions/download-artifact@v2
               # with:
                   # path: ./my_artifacts
-            - name: Set env
-                run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+            - name: Set output
+                id: vars
+                run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
                 
             - name: Build zip file
+                env:
+                    RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
                 run: |
                   echo $RELEASE_VERSION              
                   
