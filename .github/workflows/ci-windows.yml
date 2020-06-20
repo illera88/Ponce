@@ -137,36 +137,27 @@ jobs:
                   name: Ponce_7.5.dll
                   path: build_x64_7.5/Release/Ponce.dll
                   
-    # release:
-        # runs-on: ubuntu-latest
-        # if: github.event_name == 'release'
-        # needs: build
-        # steps:
-            # - name: Download CidSSH ssh version
-              # uses: actions/download-artifact@v1
-              # with:
-                  # name: CidSSH_win_ssh_x64.exe
+    release:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'release'
+        needs: build
+        steps:
+            - name: Download all windows arifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: C:\my_artifacts
             
-            # - name: Upload ssh arifact to Github release
-              # uses: actions/upload-release-asset@v1
-              # env:
-                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              # with:
-                  # upload_url: ${{ github.event.release.upload_url }}
-                  # asset_path: CidSSH_win_ssh_x64.exe/CidSSH.exe
-                  # asset_name: CidSSH_win_ssh_x64.exe
-                  # asset_content_type: application/octet-stream
+            - name: Display structure of downloaded files
+                  run: dir C:\my_artifacts
+            
+            - name: Upload ssh arifact to Github release
+              uses: actions/upload-release-asset@v1
+              env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: C:\my_artifacts\Ponce_7.4.dll
+                  asset_name: Ponce_7.4.dll
+                  asset_content_type: application/octet-stream
                   
-            # - name: Download CidSSH ws version
-              # uses: actions/download-artifact@v1
-              # with:
-                  # name: CidSSH_win_ws_x64.exe
-            # - name: Upload ws arifact to Github release
-              # uses: actions/upload-release-asset@v1
-              # env:
-                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              # with:
-                  # upload_url: ${{ github.event.release.upload_url }}
-                  # asset_path: CidSSH_win_ws_x64.exe/CidSSH.exe
-                  # asset_name: CidSSH_win_ws_x64.exe
-                  # asset_content_type: application/octet-stream      
+           
