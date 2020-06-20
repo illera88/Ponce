@@ -25,7 +25,6 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
     //auto previousConstraints = ast->bvtrue();
 
     // Add user define constraints (borrar en reejecuccion, poner mensaje if not sat, 
-    // ToDo: Alberto, right now it crashes here
     if (ponce_table_chooser){
         for (const auto& [id, constrain] : ponce_table_chooser->constrains) {
             for (const auto& [abstract_node_constrain, str_constrain] : constrain) {

@@ -45,6 +45,8 @@ extern action_desc_t action_IDA_negate_inject_and_restore;
 extern action_desc_t action_IDA_taint_symbolize_register;
 extern action_desc_t action_IDA_taint_symbolize_memory;
 extern action_desc_t action_IDA_ponce_banner;
+extern action_desc_t action_IDA_solve_formula_choose_index_sub;
+
 
 #define SYMBOLIC "Symbolic/"
 #define symbolize_REG "Symbolize Register"

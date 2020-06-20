@@ -923,9 +923,51 @@ action_desc_t action_IDA_solve_formula_sub = ACTION_DESC_LITERAL(
     "Ponce:solve_formula_sub", // The action name. This acts like an ID and must be unique
     "Solve formula", //The action text.
     &ah_solve_formula_sub, //The action handler.
-    "", //Optional: the action shortcut
+    "", //Optional: the action shortcutaction_IDA_solve_formula_sub
     "This solves a specific condition and shows the result in the output window", //Optional: the action tooltip (available in menus/toolbar)
     13); //Optional: the action icon (shows when in menus/toolbars)
+
+struct ah_solve_formula_choose_index_sub_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        static const char formTaintSymbolizeInput[] =
+            "STARTITEM 1\n"
+            "Select hit # to solve formula for\n\n"
+            "<#The hit#Hit   \t:D2:16:16>\n"
+            "\n"
+            ;
+
+        sval_t path_constraint_index = 0;
+        if (ask_form(formTaintSymbolizeInput,
+            &path_constraint_index
+        ) > 0)
+        {
+            if (cmdOptions.showDebugInfo)
+                msg("[+] Solving condition at address " MEM_FORMAT " with symbolic condition index %d\n", ctx->cur_ea, path_constraint_index);
+            auto solutions = solve_formula(ctx->cur_ea, path_constraint_index);
+        }
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        // The solve menus are added dynamically, this event is never called for them
+        // We have still an menu action for solve that is always disabled to show the user that the option is there.
+        return AST_DISABLE;
+    }
+};
+ah_solve_formula_choose_index_sub_t ah_solve_formula_choose_index_sub;
+
+action_desc_t action_IDA_solve_formula_choose_index_sub = ACTION_DESC_LITERAL(
+    "Ponce:solve_formula_choose_index_sub", // The action name. This acts like an ID and must be unique
+    "Hit N, choose index to solve formula", //The action text.
+    &ah_solve_formula_choose_index_sub, //The action handler.
+    "", //Optional: the action shortcut
+    "Choose an arbitrary index to solve formula", //Optional: the action tooltip (available in menus/toolbar)
+    13); //Optional: the action icon (shows when in menus/toolbars)
+
+
 
 struct ah_ponce_banner_t : public action_handler_t
 {
