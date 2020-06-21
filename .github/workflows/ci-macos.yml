@@ -76,22 +76,22 @@ jobs:
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Ponce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Ponce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Ponce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Ponce.dylib
                   
             # - uses: actions/upload-artifact@master
@@ -159,16 +159,10 @@ jobs:
                 ls -lha my_artifacts
                 echo "----"
                 find . -print
-                echo "----"
-                # mkdir -p to_zip/ida70
-                # cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
-                # cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
-                # mkdir -p to_zip/ida71
-                # cp build_x64_7.1/libPonce64.dylib to_zip/ida71/Ponce64.dylib
-                # cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
-                  
+                echo "----"                  
                 cd my_artifacts
                 zip -r ../ponce-linux-$RELEASE_VERSION.zip *
+                ls -lha ..
 
                   
             - name: Display structure of downloaded files
@@ -202,6 +196,7 @@ jobs:
               uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
                   asset_path: ./ponce-linux-$RELEASE_VERSION.zip
