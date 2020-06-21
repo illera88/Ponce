@@ -140,30 +140,30 @@ jobs:
         if: github.event_name == 'release'
         needs: build
         steps:
-            - name: Download all OSX arifacts
-              uses: actions/download-artifact@v2
-              with:
-                  path: ./my_artifacts
+            # - name: Download all OSX arifacts
+              # uses: actions/download-artifact@v2
+              # with:
+                  # path: ./my_artifacts
             - name: Set output
               id: vars
               run: |
                 echo ::set-output name=tag::${GITHUB_REF#refs/*/}
                 
             - name: Build zip file
-                env:
-                    RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-                run: |
-                  echo $RELEASE_VERSION              
+              env:
+                RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+              run: |
+                echo $RELEASE_VERSION              
                   
-                  mkdir -p to_zip/ida70
-                  cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
-                  cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
-                  mkdir -p to_zip/ida71
-                  cp build_x64_7.1/libPonce64.dylib to_zip/ida71/Ponce64.dylib
-                  cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
+                mkdir -p to_zip/ida70
+                cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
+                cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
+                mkdir -p to_zip/ida71
+                cp build_x64_7.1/libPonce64.dylib to_zip/ida71/Ponce64.dylib
+                cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
                   
-                  cd to_zip
-                  zip -r ../ponce-linux-$RELEASE_VERSION.zip *
+                cd to_zip
+                zip -r ../ponce-linux-$RELEASE_VERSION.zip *
 
                   
             - name: Display structure of downloaded files
