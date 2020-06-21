@@ -88,63 +88,63 @@ jobs:
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.0.so
-                  path: build_x64_7.0/libPonce64.so
+                  name: Ponce_7.0
+                  path: build_x64_7.0/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0.so
-                  path: build_x64_7.0/libPonce.so
+                  name: Ponce_7.0
+                  path: build_x64_7.0/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.1.so
-                  path: build_x64_7.1/libPonce64.so
+                  name: Ponce_7.1
+                  path: build_x64_7.1/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1.so
-                  path: build_x64_7.1/libPonce.so
+                  name: Ponce_7.1
+                  path: build_x64_7.1/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.2.so
-                  path: build_x64_7.2/libPonce64.so
+                  name: Ponce_7.2
+                  path: build_x64_7.2/Ponce64.so
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2.so
-                  path: build_x64_7.2/libPonce.so
+                  name: Ponce_7.2
+                  path: build_x64_7.2/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.3.so
-                  path: build_x64_7.3/libPonce64.so
+                  name: Ponce_7.3
+                  path: build_x64_7.3/Ponce64.so
 
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3.so
-                  path: build_x64_7.3/libPonce.so
+                  name: Ponce_7.3
+                  path: build_x64_7.3/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.4.so
-                  path: build_x64_7.4/libPonce64.so
+                  name: Ponce_7.4
+                  path: build_x64_7.4/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4.so
-                  path: build_x64_7.4/libPonce.so
+                  name: Ponce_7.4
+                  path: build_x64_7.4/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.5.so
-                  path: build_x64_7.5/libPonce64.so
+                  name: Ponce_7.5
+                  path: build_x64_7.5/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5.so
-                  path: build_x64_7.5/libPonce.so
+                  name: Ponce_7.5
+                  path: build_x64_7.5/Ponce.so
                   
     # release:
         # runs-on: ubuntu-latest

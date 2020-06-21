@@ -79,62 +79,62 @@ jobs:
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.0.dll
+                  name: Ponce_7.0
                   path: build_x64_7.0/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0.dll
+                  name: Ponce_7.0
                   path: build_x64_7.0/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.1.dll
+                  name: Ponce_7.1
                   path: build_x64_7.1/Release/Ponce64.dll
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1.dll
+                  name: Ponce_7.1
                   path: build_x64_7.1/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.2.dll
+                  name: Ponce_7.2
                   path: build_x64_7.2/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2.dll
+                  name: Ponce_7.2
                   path: build_x64_7.2/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.3.dll
+                  name: Ponce_7.3
                   path: build_x64_7.3/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3.dll
+                  name: Ponce_7.3
                   path: build_x64_7.3/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.4.dll
+                  name: Ponce_7.4
                   path: build_x64_7.4/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4.dll
+                  name: Ponce_7.4
                   path: build_x64_7.4/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.5.dll
+                  name: Ponce_7.5
                   path: build_x64_7.5/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5.dll
+                  name: Ponce_7.5
                   path: build_x64_7.5/Release/Ponce.dll
                   
     release:

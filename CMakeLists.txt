@@ -31,6 +31,10 @@ file(GLOB PONCE_HEADER_FILES
 add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 
+# Prevent creating ponce binaries as libPonce.so but do Ponce.so
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
+SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
+
 #                       #
 # Look for dependencies #
 #                       # 

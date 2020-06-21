@@ -76,23 +76,23 @@ jobs:
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.0.dylib
-                  path: build_x64_7.0/libPonce64.dylib
+                  name: Ponce_7.0
+                  path: build_x64_7.0/Ponce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0.dylib
-                  path: build_x64_7.0/libPonce.dylib
+                  name: Ponce_7.0
+                  path: build_x64_7.0/Ponce.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce64_7.1.dylib
-                  path: build_x64_7.1/libPonce64.dylib
+                  name: Ponce7.1
+                  path: build_x64_7.1/Ponce64.dylib
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1.dylib
-                  path: build_x64_7.1/libPonce.dylib
+                  name: Ponce_7.1
+                  path: build_x64_7.1/Ponce.dylib
                   
             # - uses: actions/upload-artifact@master
               # with:
@@ -140,10 +140,10 @@ jobs:
         if: github.event_name == 'release'
         needs: build
         steps:
-            # - name: Download all OSX arifacts
-              # uses: actions/download-artifact@v2
-              # with:
-                  # path: ./my_artifacts
+            - name: Download all OSX arifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: ./my_artifacts
             - name: Set output
               id: vars
               run: |
@@ -156,17 +156,18 @@ jobs:
                 echo $RELEASE_VERSION              
                 ls -lha .
                 echo "----"
-                ls -lha ..
+                ls -lha my_artifacts
                 echo "----"
-                ls -lha build_x64_7.0
-                mkdir -p to_zip/ida70
-                cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
-                cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
-                mkdir -p to_zip/ida71
-                cp build_x64_7.1/libPonce64.dylib to_zip/ida71/Ponce64.dylib
-                cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
+                find . -print
+                echo "----"
+                # mkdir -p to_zip/ida70
+                # cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
+                # cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
+                # mkdir -p to_zip/ida71
+                # cp build_x64_7.1/libPonce64.dylib to_zip/ida71/Ponce64.dylib
+                # cp build_x64_7.1/libPonce.dylib to_zip/ida71/Ponce.dylib
                   
-                cd to_zip
+                cd my_artifacts
                 zip -r ../ponce-linux-$RELEASE_VERSION.zip *
 
                   
@@ -197,7 +198,7 @@ jobs:
                   # ls -lha my_artifacts
                   # file my_artifacts/*
             
-            - name: Upload 7.0 artifact to release
+            - name: Upload Linux artifacts
               uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
