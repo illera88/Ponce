@@ -154,7 +154,11 @@ jobs:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               run: |
                 echo $RELEASE_VERSION              
-                  
+                ls -lha .
+                echo "----"
+                ls -lha ..
+                echo "----"
+                ls -lha build_x64_7.0
                 mkdir -p to_zip/ida70
                 cp build_x64_7.0/libPonce64.dylib to_zip/ida70/Ponce64.dylib
                 cp build_x64_7.0/libPonce.dylib to_zip/ida70/Ponce.dylib
