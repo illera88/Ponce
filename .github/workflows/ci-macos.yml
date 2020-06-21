@@ -140,13 +140,14 @@ jobs:
         if: github.event_name == 'release'
         needs: build
         steps:
-            # - name: Download all OSX arifacts
-              # uses: actions/download-artifact@v2
-              # with:
-                  # path: ./my_artifacts
+            - name: Download all OSX arifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: ./my_artifacts
             - name: Set output
-                id: vars
-                run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+              id: vars
+              run: |
+                echo ::set-output name=tag::${GITHUB_REF#refs/*/}
                 
             - name: Build zip file
                 env:
