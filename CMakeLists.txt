@@ -203,10 +203,12 @@ if(NOT WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
 	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE -s)
 	if(EXISTS "/usr/bin/strip")
+		message(STATUS "[-] Symbols will be stripped using strip after build")
 		# Strip binary for release builds
 		if (CMAKE_BUILD_TYPE STREQUAL Release)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-					COMMAND "/usr/bin/strip" -s ${PROJECT_NAME})
+					COMMAND "/usr/bin/strip" -s $<TARGET_FILE:${PROJECT_NAME}>
+					COMMENT "Symbols stripped from binary")
 		endif ()
 	endif()
 endif()
