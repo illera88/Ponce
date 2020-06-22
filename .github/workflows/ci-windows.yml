@@ -79,62 +79,62 @@ jobs:
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Release/Ponce64.dll
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2
+                  name: Ponce_ida72
                   path: build_x64_7.2/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2
+                  name: Ponce_ida72
                   path: build_x64_7.2/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3
+                  name: Ponce_ida73
                   path: build_x64_7.3/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3
+                  name: Ponce_ida73
                   path: build_x64_7.3/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4
+                  name: Ponce_ida74
                   path: build_x64_7.4/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4
+                  name: Ponce_ida74
                   path: build_x64_7.4/Release/Ponce.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5
+                  name: Ponce_ida75
                   path: build_x64_7.5/Release/Ponce64.dll
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5
+                  name: Ponce_ida75
                   path: build_x64_7.5/Release/Ponce.dll
                   
     release:
@@ -142,23 +142,32 @@ jobs:
         if: github.event_name == 'release'
         needs: build
         steps:
-            - name: Download all windows arifacts
+            - name: Download all Windows arifacts
               uses: actions/download-artifact@v2
               with:
-                  path: my_artifacts
+                  path: ./my_artifacts
             
-            - name: Display structure of downloaded files
+            - name: Set output
+              id: vars
               run: |
-                  dir my_artifacts
+                echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+                
+            - name: Build zip file
+              env:
+                RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+              run: |             
+                cd my_artifacts
+                zip -r ../ponce-win-$RELEASE_VERSION.zip *
+
             
-            - name: Upload ssh arifact to Github release
+            - name: Upload Windows artifacts
               uses: actions/upload-release-asset@v1
               env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: my_artifacts/Ponce_7.4.dll
-                  asset_name: Ponce_7.4.dll
-                  asset_content_type: application/octet-stream
+                  asset_path: ./ponce-win-${{ steps.vars.outputs.tag }}.zip
+                  asset_name: ponce-win-${{ steps.vars.outputs.tag }}.zip
+                  asset_content_type: application/zip
                   
            

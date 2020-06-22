@@ -88,94 +88,95 @@ jobs:
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.0
+                  name: Ponce_ida70
                   path: build_x64_7.0/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.1
+                  name: Ponce_ida71
                   path: build_x64_7.1/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2
+                  name: Ponce_ida72
                   path: build_x64_7.2/Ponce64.so
             
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.2
+                  name: Ponce_ida72
                   path: build_x64_7.2/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3
+                  name: Ponce_ida73
                   path: build_x64_7.3/Ponce64.so
 
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.3
+                  name: Ponce_ida73
                   path: build_x64_7.3/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4
+                  name: Ponce_ida74
                   path: build_x64_7.4/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.4
+                  name: Ponce_ida74
                   path: build_x64_7.4/Ponce.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5
+                  name: Ponce_ida75
                   path: build_x64_7.5/Ponce64.so
                   
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_7.5
+                  name: Ponce_ida75
                   path: build_x64_7.5/Ponce.so
                   
-    # release:
-        # runs-on: ubuntu-latest
-        # if: github.event_name == 'release'
-        # needs: build
-        # steps:
-            # - name: Download CidSSH ssh version
-              # uses: actions/download-artifact@v1
-              # with:
-                  # name: CidSSH_win_ssh_x64.exe
+    release:
+        runs-on: ubuntu-latest
+        if: github.event_name == 'release'
+        needs: build
+        steps:
+            - name: Download all Linux arifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: ./my_artifacts
             
-            # - name: Upload ssh arifact to Github release
-              # uses: actions/upload-release-asset@v1
-              # env:
-                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              # with:
-                  # upload_url: ${{ github.event.release.upload_url }}
-                  # asset_path: CidSSH_win_ssh_x64.exe/CidSSH.exe
-                  # asset_name: CidSSH_win_ssh_x64.exe
-                  # asset_content_type: application/octet-stream
+            - name: Set output
+              id: vars
+              run: |
+                echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+                
+            - name: Build zip file
+              env:
+                RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+              run: |             
+                cd my_artifacts
+                zip -r ../ponce-linux-$RELEASE_VERSION.zip *
+
+            
+            - name: Upload Linux artifacts
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./ponce-linux-${{ steps.vars.outputs.tag }}.zip
+                  asset_name: ponce-linux-${{ steps.vars.outputs.tag }}.zip
+                  asset_content_type: application/zip
                   
-            # - name: Download CidSSH ws version
-              # uses: actions/download-artifact@v1
-              # with:
-                  # name: CidSSH_win_ws_x64.exe
-            # - name: Upload ws arifact to Github release
-              # uses: actions/upload-release-asset@v1
-              # env:
-                    # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              # with:
-                  # upload_url: ${{ github.event.release.upload_url }}
-                  # asset_path: CidSSH_win_ws_x64.exe/CidSSH.exe
-                  # asset_name: CidSSH_win_ws_x64.exe
-                  # asset_content_type: application/octet-stream    
+                  

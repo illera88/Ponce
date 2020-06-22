@@ -50,29 +50,29 @@ jobs:
                   cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.1 --config Release --parallel 2
             
-            # - name: Build Ponce IDA 7.2
-              # run: |
-                  # unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
-                  # cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  # cmake --build build_x64_7.2 --config Release --parallel 2
+            - name: Build Ponce IDA 7.2
+              run: |
+                  unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.2 --config Release --parallel 2
             
-            # - name: Build Ponce IDA 7.3
-              # run: |
-                  # unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
-                  # cmake -S . -B build_x64_7.3 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  # cmake --build build_x64_7.3 --config Release --parallel 2
+            - name: Build Ponce IDA 7.3
+              run: |
+                  unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.3 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.3 --config Release --parallel 2
             
-            # - name: Build Ponce IDA 7.4
-              # run: |
-                  # unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
-                  # cmake -S . -B build_x64_7.4 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  # cmake --build build_x64_7.4 --config Release --parallel 2
+            - name: Build Ponce IDA 7.4
+              run: |
+                  unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.4 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.4 --config Release --parallel 2
                       
-            # - name: Build Ponce IDA 7.5
-              # run: |
-                  # unzip ../IDA_SDKs/idasdk75.zip -d ../IDA_SDKs
-                  # cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  # cmake --build build_x64_7.5 --config Release --parallel 2
+            - name: Build Ponce IDA 7.5
+              run: |
+                  unzip ../IDA_SDKs/idasdk75.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.5 --config Release --parallel 2
                   
             - uses: actions/upload-artifact@master
               with:
@@ -94,45 +94,45 @@ jobs:
                   name: Ponce_ida71
                   path: build_x64_7.1/Ponce.dylib
                   
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce64_7.2.dylib
-                  # path: build_x64_7.2/libPonce64.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida72
+                  path: build_x64_7.2/Ponce64.dylib
             
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce_7.2.dylib
-                  # path: build_x64_7.2/libPonce.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida72
+                  path: build_x64_7.2/Ponce.dylib
                   
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce64_7.3.dylib
-                  # path: build_x64_7.3/libPonce64.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida73
+                  path: build_x64_7.3/Ponce64.dylib
 
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce_7.3.dylib
-                  # path: build_x64_7.3/libPonce.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida73
+                  path: build_x64_7.3/Ponce.dylib
                   
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce64_7.4.dylib
-                  # path: build_x64_7.4/libPonce64.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida74
+                  path: build_x64_7.4/Ponce64.dylib
                   
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce_7.4.dylib
-                  # path: build_x64_7.4/libPonce.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida74
+                  path: build_x64_7.4/Ponce.dylib
             
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce64_7.5.dylib
-                  # path: build_x64_7.5/libPonce64.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida75
+                  path: build_x64_7.5/Ponce64.dylib
                   
-            # - uses: actions/upload-artifact@master
-              # with:
-                  # name: Ponce_7.5.dylib
-                  # path: build_x64_7.5/libPonce.dylib
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida75
+                  path: build_x64_7.5/Ponce.dylib
                   
                   
     release:
@@ -144,6 +144,7 @@ jobs:
               uses: actions/download-artifact@v2
               with:
                   path: ./my_artifacts
+            
             - name: Set output
               id: vars
               run: |
@@ -152,55 +153,19 @@ jobs:
             - name: Build zip file
               env:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-              run: |
-                echo $RELEASE_VERSION              
-                ls -lha .
-                echo "----"
-                ls -lha my_artifacts
-                echo "----"
-                find . -print
-                echo "----"                  
+              run: |             
                 cd my_artifacts
-                zip -r ../ponce-linux-$RELEASE_VERSION.zip *
-                ls -lha ..
+                zip -r ../ponce-osx-$RELEASE_VERSION.zip *
 
-                  
-            - name: Display structure of downloaded files
-              run: |
-                  ls -lha
-                  # ls -lha my_artifacts/Ponce_7.0.dylib
-                  # ls -lha my_artifacts/Ponce64_7.0.dylib
-                  # file my_artifacts/Ponce_7.0.dylib/*
-                  # mkdir artifacts_binaries
-                  # find ./my_artifacts -name '*.dylib' -exec cp {} artifacts_binaries \;
-                  # ls -lha artifacts_binaries
             
-            # - name: Release
-              # uses: softprops/action-gh-release@v1
-              # with:
-                  # files: |
-                      # my_artifacts/Ponce_7.0.dylib/Ponce_7.0.dylib
-                      # my_artifacts/Ponce_7.1.dylib/Ponce_7.1.dylib
-                      # my_artifacts/Ponce_7.2.dylib/Ponce_7.2.dylib
-                      # my_artifacts/Ponce_7.3.dylib/Ponce_7.3.dylib
-                      # my_artifacts/Ponce_7.4.dylib/Ponce_7.4.dylib
-              # env:
-                  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            
-            # - name: Display structure of downloaded files
-              # run: |
-                  # ls -lha my_artifacts
-                  # file my_artifacts/*
-            
-            - name: Upload Linux artifacts
+            - name: Upload OSX artifacts
               uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./ponce-linux-${{ steps.vars.outputs.tag }}.zip
-                  asset_name: ponce-linux-${{ steps.vars.outputs.tag }}.zip
+                  asset_path: ./ponce-osx-${{ steps.vars.outputs.tag }}.zip
+                  asset_name: ponce-osx-${{ steps.vars.outputs.tag }}.zip
                   asset_content_type: application/zip
 
                   
