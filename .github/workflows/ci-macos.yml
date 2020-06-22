@@ -199,8 +199,8 @@ jobs:
                   RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./ponce-linux-$RELEASE_VERSION.zip
-                  asset_name: ponce-linux-$RELEASE_VERSION.zip
+                  asset_path: ./ponce-linux-${{ steps.vars.outputs.tag }}.zip
+                  asset_name: ponce-linux-${{ steps.vars.outputs.tag }}.zip
                   asset_content_type: application/zip
 
                   
