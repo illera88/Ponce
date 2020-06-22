@@ -157,7 +157,7 @@ jobs:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               run: |             
                 cd my_artifacts
-                zip -r ../ponce-win-$RELEASE_VERSION.zip *
+                zip -r ../ponce-$RELEASE_VERSION-win.zip *
 
             
             - name: Upload Windows artifacts
@@ -166,8 +166,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./ponce-win-${{ steps.vars.outputs.tag }}.zip
-                  asset_name: ponce-win-${{ steps.vars.outputs.tag }}.zip
+                  asset_path: ./ponce-${{ steps.vars.outputs.tag }}-win.zip
+                  asset_name: ponce-${{ steps.vars.outputs.tag }}-win.zip
                   asset_content_type: application/zip
                   
            

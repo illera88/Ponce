@@ -155,7 +155,7 @@ jobs:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
               run: |             
                 cd my_artifacts
-                zip -r ../ponce-osx-$RELEASE_VERSION.zip *
+                zip -r ../ponce-$RELEASE_VERSION-osx.zip *
 
             
             - name: Upload OSX artifacts
@@ -164,8 +164,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./ponce-osx-${{ steps.vars.outputs.tag }}.zip
-                  asset_name: ponce-osx-${{ steps.vars.outputs.tag }}.zip
+                  asset_path: ./ponce-${{ steps.vars.outputs.tag }}-osx.zip
+                  asset_name: ponce-${{ steps.vars.outputs.tag }}-osx.zip
                   asset_content_type: application/zip
 
                   

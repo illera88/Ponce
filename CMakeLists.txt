@@ -31,10 +31,6 @@ file(GLOB PONCE_HEADER_FILES
 add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
 
-# Prevent creating ponce binaries as libPonce.so but do Ponce.so
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
-SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
-
 #                       #
 # Look for dependencies #
 #                       # 
@@ -188,13 +184,32 @@ if(WIN32)
 elseif (APPLE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
+	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
+	SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
+	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
+	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
+	SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
 	set(PLUGIN_EXTENSION so)
 endif()
 
+
+# Clean as much symbols as we can in OSX and Linux
+if(NOT WIN32)
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE -s)
+	if(EXISTS "/usr/bin/strip")
+		# Strip binary for release builds
+		if (CMAKE_BUILD_TYPE STREQUAL Release)
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND "/usr/bin/strip" -s ${PROJECT_NAME})
+		endif ()
+	endif()
+endif()
 
 if(IDA_INSTALLED_DIR)
 	message(STATUS "[-] Ponce built plugin and pdb file will be moved to '${IDA_INSTALLED_DIR}/plugins/'. The build system should have permisions to write there or it will error.")
