@@ -182,6 +182,8 @@ if(WIN32)
 	set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 	set_property(TARGET ${PROJECT_NAME}64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 elseif (APPLE)
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -dead_strip)
+	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE -dead_strip)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
@@ -189,6 +191,10 @@ elseif (APPLE)
 	SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
+	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-ffunction-sections -fdata-sections" )
+	set_target_properties(${PROJECT_NAME}64 PROPERTIES COMPILE_FLAGS "-ffunction-sections -fdata-sections" )
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--gc-sections")
+	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--gc-sections")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
@@ -199,19 +205,17 @@ endif()
 
 
 # Clean as much symbols as we can in OSX and Linux
-if(NOT WIN32)
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
-	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE -s)
-	if(EXISTS "/usr/bin/strip")
+if(NOT WIN32)	
+	if(EXISTS "/usr/bin/strip")	
 		message(STATUS "[-] Symbols will be stripped using strip after build")
 		# Strip binary for release builds
 		if (CMAKE_BUILD_TYPE STREQUAL Release)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-					COMMAND "echo $<TARGET_FILE:${PROJECT_NAME} && strip && /usr/bin/strip" -s $<TARGET_FILE:${PROJECT_NAME}>
-					COMMENT "Symbols stripped from binary")
+					COMMAND strip -s $<TARGET_FILE:${PROJECT_NAME}>
+					COMMENT "Symbols stripped from ${PROJECT_NAME}")
 			add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
-					COMMAND "echo $<TARGET_FILE:${PROJECT_NAME} && strip && /usr/bin/strip" -s $<TARGET_FILE:${PROJECT_NAME}64>
-					COMMENT "Symbols stripped from binary")
+					COMMAND strip -s $<TARGET_FILE:${PROJECT_NAME}64>
+					COMMENT "Symbols stripped from ${PROJECT_NAME}64")
 		endif ()
 	endif()
 endif()
