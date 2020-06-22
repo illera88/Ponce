@@ -211,10 +211,10 @@ if(NOT WIN32)
 		# Strip binary for release builds
 		if (CMAKE_BUILD_TYPE STREQUAL Release)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-					COMMAND strip -s $<TARGET_FILE:${PROJECT_NAME}>
+					COMMAND strip -S $<TARGET_FILE:${PROJECT_NAME}>
 					COMMENT "Symbols stripped from ${PROJECT_NAME}")
 			add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
-					COMMAND strip -s $<TARGET_FILE:${PROJECT_NAME}64>
+					COMMAND strip -S $<TARGET_FILE:${PROJECT_NAME}64>
 					COMMENT "Symbols stripped from ${PROJECT_NAME}64")
 		endif ()
 	endif()
