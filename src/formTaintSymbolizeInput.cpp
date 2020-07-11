@@ -27,7 +27,6 @@ It returns a MemoryAccess with the memory address and the size indicated. the ca
 bool prompt_window_taint_symbolize(ea_t address, sval_t size, ea_t *selection_start, ea_t *selection_end)
 {
 	char format[125] = { 0 };
-	//qsnprintf(format, sizeof(format), formTaintSymbolizeInput, cmdOptions.use_symbolic_engine ? "Symbolize" : "Taint");
 	if (ask_form(formTaintSymbolizeInput,
 		NULL,
 		&address,

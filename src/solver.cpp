@@ -84,15 +84,14 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
                         newinput.regOperand.push_back(reg);
                         api.setConcreteRegisterValue(reg, model_value); // Why?
                     }
-                    //We represent the number different 
                     switch (symbVar->getSize())
                     {
                     case 8:
-                        msg(" - %s%s: %#02x (%c)\n", 
+                        msg(" - %s%s: %#02x %s\n", 
                             model.getVariable()->getName().c_str(), 
                             !symbVarComment.empty()? (" ("+symbVarComment+")").c_str():"",
                             model_value.convert_to<uchar>(), 
-                            model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>());
+                            isprint(model_value.convert_to<uchar>()) ? ("(" + std::string(1, model_value.convert_to<uchar>()) + ")").c_str()  : "");
                         break;
                     case 16:
                         msg(" - %s%s: %#04x (%c%c)\n", 

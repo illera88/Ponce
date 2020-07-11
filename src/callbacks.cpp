@@ -148,12 +148,10 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
         //This variable defines if a breakpoint is a user-defined breakpoint or not
         bool user_bp = true;
         //We look if there is a pending action for this breakpoint
-        for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it)
-        {
+        for (auto it = breakpoint_pending_actions.begin(); it != breakpoint_pending_actions.end(); ++it) {
             breakpoint_pending_action bpa = *it;
             //If we find a pendign action we execute the callback
-            if (pc == bpa.address)
-            {
+            if (pc == bpa.address) {
                 bpa.callback(pc);
                 tritonize(pc, tid);
 
@@ -161,8 +159,7 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
                 ponce_runtime_status.current_trace_counter++;
                 ponce_runtime_status.total_number_traced_ins++;
                 //If there is a user-defined bp in the same address we should respect it and dont continue the exec
-                if (!bpa.ignore_breakpoint)
-                {
+                if (!bpa.ignore_breakpoint) {
                     //If it's a breakpoint the plugin set not a user-defined bp
                     user_bp = false;
                     //If not this is the bp we set to taint the arguments, we should rmeove it and continue the execution
@@ -180,8 +177,7 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
         }
         //If it is a user break point we enable again the step tracing if it was enabled previously...
         //The idea is if the user uses Execute native til next bp, and IDA reachs the next bp we reenable the tracing
-        if (user_bp)
-        {
+        if (user_bp) {
             ponce_runtime_status.tracing_start_time = 0;
             //request_suspend_process();
             //run_requests();

@@ -16,8 +16,8 @@ int main(int argc, char **argv)
     }
     //For example 32 a's
     if (sum == 97 * 32)
-        printf("Win\n");
+        printf("You Won!!!\n");
     else
-        printf("Fail\n");
+        printf("You Failed :( :(\n");
     return 0;
 }

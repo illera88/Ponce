@@ -115,24 +115,21 @@ std::vector<std::string> builtin_black_functions = {
 //Helper to concretize and untaint volatile registers
 void concretizeAndUntaintVolatileRegisters()
 {
-    //ToDo: check how different compilers behave regarding vilatile registers
+    //ToDo: check how different compilers behave regarding volatile registers
 #if defined(__i386) || defined(_M_IX86)
     char const* volatile_regs[] = { "eax", "ecx", "edx" };
 #elif defined(__x86_64__) || defined(_M_X64)
     char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
 #endif
 
-    auto regs = api.getAllRegisters();
-    for (auto it = regs.begin(); it != regs.end(); it++)
+    for (const auto& [reg_id, reg] : api.getAllRegisters())
     {
-        auto reg = it->second;
         for (auto i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++) {
             if (strcmp(reg.getName().c_str(), volatile_regs[i]) == 0) {
                 api.concretizeRegister(reg);
                 api.untaintRegister(reg);
             }
         }
-
     }
 }
 
@@ -189,9 +186,8 @@ bool should_blacklist(ea_t pc, thid_t tid) {
             to_use_blacklist = &builtin_black_functions;
         }
 
-        for (auto it = to_use_blacklist->begin(); it != to_use_blacklist->end(); ++it)
-        {
-            if (strcmp(callee.c_str(), (*it).c_str()) == 0)
+        for (const auto& blacklisted_function : *to_use_blacklist) {
+            if (strcmp(callee.c_str(), blacklisted_function.c_str()) == 0)
             {
                 //We are in a call to a blacklisted function.
                 /*We should set a BP in the next instruction right after the
