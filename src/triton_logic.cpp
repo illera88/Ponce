@@ -140,7 +140,13 @@ int tritonize(ea_t pc, thid_t threadID)
         if (cmdOptions.showDebugInfo) {
             msg("[+] Branch symbolized detected at " MEM_FORMAT ": " MEM_FORMAT " or " MEM_FORMAT ", Taken:%s\n", pc, addr1, addr2, tritonInst->isConditionTaken() ? "Yes" : "No");
         }
+
+        if (ponce_runtime_status.run_and_break_on_symbolic_branch) {
+            suspend_process();
+            ponce_runtime_status.run_and_break_on_symbolic_branch = false;
+        }
     }
+
     return 0;
 }
 

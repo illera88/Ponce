@@ -4,6 +4,7 @@
 
 #include <dbg.hpp>
 
+
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
 std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
 {
@@ -77,12 +78,12 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
                     if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
                         auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
                         newinput.memOperand.push_back(mem);
-                        api.setConcreteMemoryValue(mem, model_value); // Why
+                        api.setConcreteMemoryValue(mem, model_value);
                     }
                     else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
                         auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
                         newinput.regOperand.push_back(reg);
-                        api.setConcreteRegisterValue(reg, model_value); // Why?
+                        api.setConcreteRegisterValue(reg, model_value);
                     }
                     switch (symbVar->getSize())
                     {

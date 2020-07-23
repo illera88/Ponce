@@ -273,12 +273,12 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
         // Set the name for the action depending if using tainting or symbolic engine
         if (cmdOptions.use_tainting_engine) {
-            action_list[2].menu_path = TAINT;
             action_list[3].menu_path = TAINT;
+            action_list[4].menu_path = TAINT;
         }
         else {
-            action_list[2].menu_path = SYMBOLIC;
             action_list[3].menu_path = SYMBOLIC;
+            action_list[4].menu_path = SYMBOLIC;
         }
 
         //Adding a separator

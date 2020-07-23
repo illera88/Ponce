@@ -62,28 +62,28 @@ bool idaapi run(size_t)
 
         // Set the name for the action depending if using tainting or symbolic engine
         if (cmdOptions.use_tainting_engine) {
-            action_list[2].menu_path = TAINT;
+            action_list[3].menu_path = TAINT;
             action_IDA_taint_symbolize_register.label = TAINT_REG;
             action_IDA_taint_symbolize_register.tooltip = COMMENT_TAINT_REG;
 
-            action_list[3].menu_path = TAINT;
+            action_list[4].menu_path = TAINT;
             action_IDA_taint_symbolize_memory.label = TAINT_MEM;
             action_IDA_taint_symbolize_memory.tooltip = COMMENT_TAINT_MEM;
         }
         else {
-            action_list[2].menu_path = SYMBOLIC;
+            action_list[3].menu_path = SYMBOLIC;
             action_IDA_taint_symbolize_register.label = symbolize_REG;
             action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
 
-            action_list[3].menu_path = SYMBOLIC;
+            action_list[4].menu_path = SYMBOLIC;
             action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
             action_IDA_taint_symbolize_memory.label = symbolize_MEM;     
         }
 
         /* Init the IDA actions depending on the IDA SDK version we build with*/
         std::copy(std::begin(ponce_banner_views), std::end(ponce_banner_views), std::begin(action_list[0].view_type));
-        std::copy(std::begin(ponce_taint_symbolize_mem_views), std::end(ponce_taint_symbolize_mem_views), std::begin(action_list[2].view_type));
         std::copy(std::begin(ponce_taint_symbolize_reg_views), std::end(ponce_taint_symbolize_reg_views), std::begin(action_list[3].view_type));
+        std::copy(std::begin(ponce_taint_symbolize_mem_views), std::end(ponce_taint_symbolize_mem_views), std::begin(action_list[4].view_type));
 
         //Loop to register all the actions used in the menus
         for (int i = 0;; i++) {

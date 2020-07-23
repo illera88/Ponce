@@ -993,12 +993,47 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
     "Use settings below while debugging", //Optional: the action tooltip (available in menus/toolbar)
     0); //Optional: the action icon (shows when in menus/toolbars)
 
+
+struct ah_run_until_symbolic_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        ponce_runtime_status.run_and_break_on_symbolic_branch = true;
+        request_continue_process();
+        run_requests(); 
+        
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        if (is_debugger_on() && 
+            ponce_runtime_status.runtimeTrigger.getState()/*and there is something symbolic*/) {
+            return AST_ENABLE;
+        }
+        return AST_DISABLE;
+    }
+};
+static ah_run_until_symbolic_t ah_run_until_symbolic;
+
+//We need to define this struct before the action handler because we are using it inside the handler
+action_desc_t action_IDA_run_until_symbolic = ACTION_DESC_LITERAL(
+    "Ponce:run_until_symbolic_branch",
+    "Run until symbolic condition", //The action text.
+    &ah_run_until_symbolic, //The action handler.
+    "Ctrl+Shift+F9", //Optional: the action shortcut
+    "Continue running and stop on next symbolic condition", //Optional: the action tooltip (available in menus/toolbar)
+    72); //Optional: the action icon (shows when in menus/toolbars)
+
+
 /*This list defined all the actions for the plugin*/
 struct IDA_actions action_list[] =
 {
     { &action_IDA_ponce_banner, {0}, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
+
+    { &action_IDA_run_until_symbolic, { BWN_DISASM, __END__ }, "" },
 
     { &action_IDA_taint_symbolize_register, {0}, "Symbolic or taint/"},
     { &action_IDA_taint_symbolize_memory, {0}, "Symbolic or taint/" },
