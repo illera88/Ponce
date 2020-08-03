@@ -6,7 +6,7 @@
 
 
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
-std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
+std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
 {
     auto pathConstrains = api.getPathConstraints();
     std::vector<Input> solutions;
@@ -23,7 +23,6 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
     // We are going to store here the constraints for the previous conditions
     // We can not initializate this to null, so we do it to a true condition (based on code_coverage_crackme_xor.py from the triton project)
     auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
-    //auto previousConstraints = ast->bvtrue();
 
     // Add user define constraints (borrar en reejecuccion, poner mensaje if not sat, 
     if (ponce_table_chooser){
@@ -32,8 +31,7 @@ std::vector<Input> solve_formula(ea_t pc, int path_constraint_index)
                 previousConstraints = ast->land(previousConstraints, abstract_node_constrain);
             }
         }
-    }
-    
+    }  
 
     // First we iterate through the previous path constrains to add the predicates of the taken path
     unsigned int j;
@@ -384,4 +382,46 @@ void set_SMT_solution(const Input& solution) {
 
     if (cmdOptions.showDebugInfo)
         msg("[+] Memory/Registers set with the SMT results\n");
+}
+
+
+void negate_inject_maybe_restore_solver(ea_t pc, int path_constraint_index, bool restore) {
+    auto solutions = solve_formula(pc, path_constraint_index);
+
+    Input* chosen_solution = nullptr;
+    if (solutions.size() > 0) {
+        if (solutions.size() == 1) {
+            chosen_solution = &solutions[0];
+            triton::ast::SharedAbstractNode new_constraint;
+            for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                // Let's look for the constraint we have force to take wich is the a priori not taken one
+                if (!taken) {
+                    new_constraint = constraint;
+                    break;
+                }
+            }
+            // Once found we first pop the last path constraint
+            api.popPathConstraint();
+            // And replace it for the found previously
+            api.pushPathConstraint(new_constraint);
+        }
+        else {
+            // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
+            for (const auto& solution : solutions) {
+                // ask the user where he wants to go in popup or even better in the contextual menu
+                // chosen_solution = &solutions[0];
+                //We need to modify the last path constrain from api.getPathConstraints()
+                for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                    if (!taken) {
+
+                    }
+                }
+            }
+        }
+        // We negate necesary flags to go over the other branch
+        negate_flag_condition(ponce_runtime_status.last_triton_instruction);
+        if (restore)
+            snapshot.restoreSnapshot();
+        set_SMT_solution(*chosen_solution);
+    }
 }

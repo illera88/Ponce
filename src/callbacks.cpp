@@ -120,15 +120,13 @@ ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list v
             }
             else if ((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000 >= cmdOptions.limitTime) {
                 int answer = ask_yn(1, "[?] the tracing was working for %u seconds(%u inst traced!). Do you want to execute it %u more?", (unsigned int)((GetTimeMs64() - ponce_runtime_status.tracing_start_time) / 1000), ponce_runtime_status.total_number_traced_ins, (unsigned int)cmdOptions.limitTime);
-                if (answer == 0 || answer == -1) //No or Cancel
-                {
+                if (answer == 0 || answer == -1) { //No or Cancel
                     // stop the trace mode and suspend the process
                     disable_step_trace();
                     suspend_process();
                     msg("[!] Process suspended (Traced %d instructions)\n", ponce_runtime_status.total_number_traced_ins);
                 }
-                else
-                {
+                else {
                     ponce_runtime_status.tracing_start_time = GetTimeMs64();
                 }
             }
