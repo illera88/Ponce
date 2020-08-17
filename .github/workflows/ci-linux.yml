@@ -15,22 +15,12 @@ jobs:
             - uses: actions/checkout@v1
               with:
                   submodules: true
-            
-            - name: Install Triton dependencies (delete and move to vcpkg when https://github.com/Z3Prover/z3/pull/4043 gets merged and vcpkg gets updated to use the merged z3 version)
-              run: |
-                 vcpkg version
-                 cd ..
-                 git clone https://github.com/illera88/z3
-                 cd z3
-                 mkdir build_x64
-                 cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DZ3_BUILD_LIBZ3_SHARED=OFF
-                 cmake --build build_x64 --target install --config Release --parallel 2
-            
+
             - name: Install Triton dependencies
               run: |
                  sudo apt install -y libboost-all-dev
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
-                 vcpkg install capstone[x86,arm,arm64]
+                 vcpkg install capstone[x86,arm,arm64] z3
                   
             - name: Download and build Triton x64
               run: |
