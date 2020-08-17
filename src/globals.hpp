@@ -44,7 +44,7 @@ extern Snapshot snapshot;
 //All the global variables:
 extern bool hooked;
 
-//User options
+//User controlled options
 struct cmdOptionStruct {
     uint64 limitInstructionsTracingMode = 10000;
     uint64 limitTime = 60; //seconds
@@ -62,6 +62,8 @@ struct cmdOptionStruct {
 
     bool showDebugInfo = false;
     bool showExtraDebugInfo = false;
+
+    unsigned int solver_timeout = 10000; // default 10 seconds
 
     bool AST_OPTIMIZATIONS = false;
     bool CONCRETIZE_UNDEFINED_REGISTERS = false;
