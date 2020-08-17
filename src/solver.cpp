@@ -59,9 +59,19 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
             }
 
             //Time to solve
-            auto model = api.getModel(final_expr);
+            const unsigned int solver_timeout = 1000; // in milliseconds
+            api.setSolverTimeout(solver_timeout);
+            triton::engines::solver::status_e solver_status;
+            auto model = api.getModel(final_expr, &solver_status);
+            
+            if (solver_status == triton::engines::solver::status_e::TIMEOUT) {
+                msg("[!] Solver timed out after %f seconds\n", solver_timeout / 1000);
+            }
+            else if (solver_status == triton::engines::solver::status_e::UNSAT) {
+                msg("[!] That formula cannnot be solved (UNSAT)\n");
+            }
 
-            if (model.size() > 0) {
+            else if (solver_status == triton::engines::solver::status_e::SAT) {
                 Input newinput;
                 //Clone object 
                 newinput.path_constraint_index = path_constraint_index;
@@ -119,7 +129,7 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
                 solutions.push_back(newinput);
             }
             else {
-                msg("[!] No solution found :(\n");
+                msg("[!] You should not see this. If so report a bug :(\n");
             }
         }
     }
