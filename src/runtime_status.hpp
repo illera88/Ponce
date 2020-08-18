@@ -40,6 +40,8 @@ typedef struct runtime_status_t
     thid_t analyzed_thread;
     //Flag used to skip the step over done to deal with wow64 switching
     bool ignore_wow64_switching_step = false;
+    // Set when user uses run & break on symbolic
+    bool run_and_break_on_symbolic_branch = false;
 } runtime_status_t;
 
 extern runtime_status_t ponce_runtime_status;

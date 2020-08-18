@@ -18,9 +18,19 @@ jobs:
             - name: Update vcpkg triplet to only build release
               run: |
                  "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
-                  
+                 git -C C:\vcpkg\ pull
+                 echo "aaaaaaaaaaaaaaaaaaaaaaaaa"
+                 C:\vcpkg\bootstrap-vcpkg.bat
+                 C:\vcpkg\vcpkg.exe update
+                 vcpkg install z3 --triplet x64-windows-static
+                 type C:\vcpkg\buildtrees\z3\install-x64-windows-static-rel-out.log
+                 echo "aaaaaaaaaaaaaaaaaaaaaaaaa"
+                 type C:\vcpkg\buildtrees\z3\install-x64-windows-static-rel-err.log
+                 
             - name: Build Triton dependencies with vcpkg for x64.
               run: |
+                  git -C C:\vcpkg\ pull
+                  C:\vcpkg\vcpkg.exe update
                   vcpkg install capstone[x86,arm,arm64] z3 boost-multiprecision boost-numeric-conversion boost-math --triplet x64-windows-static
                   
             - name: Download and build Triton x64

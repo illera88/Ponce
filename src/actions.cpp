@@ -8,6 +8,8 @@
 **  This program is under the terms of the BSD License.
 */
 
+#include <thread>
+
 //IDA
 #include <idp.hpp>
 #include <dbg.hpp>
@@ -83,6 +85,9 @@ struct ah_taint_symbolize_register_t : public action_handler_t
 #endif
 
         taint_symbolize_register(selected, ctx);
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -220,6 +225,9 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         }
 
         tritonize(current_instruction());
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -310,44 +318,12 @@ struct ah_negate_and_inject_t : public action_handler_t
             if (cmdOptions.showDebugInfo)
                 msg("[+] Negating condition at " MEM_FORMAT "\n", action_activation_ctx->cur_ea);
 
-            auto solutions = solve_formula(action_activation_ctx->cur_ea, symbolic_condition_index);
-
-            Input* chosen_solution = nullptr;
-            if (solutions.size() > 0) {
-                if (solutions.size() == 1) {
-                    chosen_solution = &solutions[0];
-                    triton::ast::SharedAbstractNode new_constraint;
-                    for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
-                        // Let's look for the constraint we have force to take wich is the a priori not taken one
-                        if (!taken) {
-                            new_constraint = constraint;
-                            break;
-                        }
-                    }
-                    // Once found we first pop the last path constraint
-                    api.popPathConstraint();
-                    // And replace it for the found previously
-                    api.pushPathConstraint(new_constraint);
-                }
-                else{
-                    // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
-                    for (const auto& solution : solutions) { 
-                        // ask the user where he wants to go in popup or even better in the contextual menu
-                        // chosen_solution = &solutions[0];
-                        //We need to modify the last path constrain from api.getPathConstraints()
-                        for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
-                            if (!taken) {
-                            
-                            }
-                        }
-                    }
-                }
-                // We negate necesary flags to go over the other branch
-                negate_flag_condition(ponce_runtime_status.last_triton_instruction);
-
-                set_SMT_solution(*chosen_solution);
-            }
+            std::thread t(negate_inject_maybe_restore_solver, action_activation_ctx->cur_ea, symbolic_condition_index, false);
+            t.detach();            
         }
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -412,44 +388,11 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
             if (cmdOptions.showDebugInfo)
                 msg("[+] Negating condition at " MEM_FORMAT "\n", action_activation_ctx->cur_ea);
 
-            auto solutions = solve_formula(action_activation_ctx->cur_ea, symbolic_condition_index);
-
-            Input* chosen_solution = nullptr;
-            if (solutions.size() > 0) {
-                if (solutions.size() == 1) {
-                    chosen_solution = &solutions[0];
-                    triton::ast::SharedAbstractNode new_constraint;
-                    for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
-                        // Let's look for the constraint we have force to take wich is the a priori not taken one
-                        if (!taken) {
-                            new_constraint = constraint;
-                            break;
-                        }
-                    }
-                    // Once found we first pop the last path constraint
-                    api.popPathConstraint();
-                    // And replace it for the found previously
-                    api.pushPathConstraint(new_constraint);
-                }
-                else {
-                    // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
-                    for (const auto& solution : solutions) {
-                        // ask the user where he wants to go in popup or even better in the contextual menu
-                        // chosen_solution = &solutions[0];
-                        //We need to modify the last path constrain from api.getPathConstraints()
-                        for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
-                            if (!taken) {
-
-                            }
-                        }
-                    }
-                }
-                // We negate necesary flags to go over the other branch
-                negate_flag_condition(ponce_runtime_status.last_triton_instruction);
-                snapshot.restoreSnapshot();
-                set_SMT_solution(*chosen_solution);
-            }
+            std::thread t(negate_inject_maybe_restore_solver, action_activation_ctx->cur_ea, symbolic_condition_index, true);
+            t.detach();
         }
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -507,6 +450,9 @@ struct ah_create_snapshot_t : public action_handler_t
         snapshot.takeSnapshot();
         snapshot.setAddress(xip); // We will use this address later to delete the comment
         msg("Snapshot Taken\n");
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -535,6 +481,9 @@ struct ah_restore_snapshot_t : public action_handler_t
     {
         snapshot.restoreSnapshot();
         msg("Snapshot restored\n");
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -563,6 +512,9 @@ struct ah_delete_snapshot_t : public action_handler_t
     {
         snapshot.resetEngine();
         msg("[+] Snapshot removed\n");
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -590,6 +542,9 @@ struct ah_show_config_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         prompt_conf_window();
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -631,7 +586,8 @@ struct ah_show_symbolicVarsWindow_t : public action_handler_t
             ponce_table_chooser = new ponce_table_chooser_t();
             ponce_table_chooser->choose();
         }
-
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -696,6 +652,9 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
             }
         }
         refresh_chooser(ponce_table_chooser->title);
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -746,7 +705,9 @@ struct ah_action_chooser_comment_t : public action_handler_t
                 msg("[+] Comment %s set to %s\n", response.c_str(), list_item.var_name.c_str());
             }
             refresh_chooser(ponce_table_chooser->title);
-        }      
+        }
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -793,6 +754,9 @@ struct ah_unload_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         term();
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -817,6 +781,9 @@ struct ah_clean_comments_t : public action_handler_t
     virtual int idaapi activate(action_activation_ctx_t* ctx)
     {
         delete_ponce_comments();
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -859,6 +826,9 @@ struct ah_enable_disable_tracing_t : public action_handler_t
             if (cmdOptions.showDebugInfo)
                 msg("[+] Enabling step tracing\n");
         }
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -905,8 +875,12 @@ struct ah_solve_formula_sub_t : public action_handler_t
         unsigned int path_constraint_index = atoi((tooltip.c_str() + offset + 7)); // skip "Index: "
         if (cmdOptions.showDebugInfo)
             msg("[+] Solving condition at address " MEM_FORMAT " with symbolic condition index %d\n", ctx->cur_ea, path_constraint_index);
-        auto solutions = solve_formula(ctx->cur_ea, path_constraint_index);
         
+        std::thread t(solve_formula, ctx->cur_ea, path_constraint_index);
+        t.detach();
+        
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -945,8 +919,13 @@ struct ah_solve_formula_choose_index_sub_t : public action_handler_t
         {
             if (cmdOptions.showDebugInfo)
                 msg("[+] Solving condition at address " MEM_FORMAT " with symbolic condition index %d\n", ctx->cur_ea, path_constraint_index);
-            auto solutions = solve_formula(ctx->cur_ea, path_constraint_index);
+            
+            std::thread t(solve_formula, ctx->cur_ea, path_constraint_index);
+            t.detach();
         }
+
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
         return 0;
     }
 
@@ -993,12 +972,49 @@ action_desc_t action_IDA_ponce_banner = ACTION_DESC_LITERAL(
     "Use settings below while debugging", //Optional: the action tooltip (available in menus/toolbar)
     0); //Optional: the action icon (shows when in menus/toolbars)
 
+
+struct ah_run_until_symbolic_t : public action_handler_t
+{
+    virtual int idaapi activate(action_activation_ctx_t* ctx)
+    {
+        ponce_runtime_status.run_and_break_on_symbolic_branch = true;
+        request_continue_process();
+        run_requests(); 
+        
+        // Reset tracer timing counter since user was using IDA and not just tracing
+        ponce_runtime_status.tracing_start_time = GetTimeMs64();
+        return 0;
+    }
+
+    virtual action_state_t idaapi update(action_update_ctx_t* ctx)
+    {
+        if (is_debugger_on() && 
+            ponce_runtime_status.runtimeTrigger.getState()/*and there is something symbolic*/) {
+            return AST_ENABLE;
+        }
+        return AST_DISABLE;
+    }
+};
+static ah_run_until_symbolic_t ah_run_until_symbolic;
+
+//We need to define this struct before the action handler because we are using it inside the handler
+action_desc_t action_IDA_run_until_symbolic = ACTION_DESC_LITERAL(
+    "Ponce:run_until_symbolic_branch",
+    "Run until symbolic condition", //The action text.
+    &ah_run_until_symbolic, //The action handler.
+    "Ctrl+Shift+F9", //Optional: the action shortcut
+    "Continue running and stop on next symbolic condition", //Optional: the action tooltip (available in menus/toolbar)
+    72); //Optional: the action icon (shows when in menus/toolbars)
+
+
 /*This list defined all the actions for the plugin*/
 struct IDA_actions action_list[] =
 {
     { &action_IDA_ponce_banner, {0}, "" },
 
     { &action_IDA_enable_disable_tracing, { BWN_DISASM, __END__ }, "" },
+
+    { &action_IDA_run_until_symbolic, { BWN_DISASM, __END__ }, "" },
 
     { &action_IDA_taint_symbolize_register, {0}, "Symbolic or taint/"},
     { &action_IDA_taint_symbolize_memory, {0}, "Symbolic or taint/" },

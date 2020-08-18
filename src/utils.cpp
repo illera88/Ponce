@@ -338,7 +338,7 @@ bool load_options(struct cmdOptionStruct* cmdOptions)
 }
 
 /*This function loads the options from the config file.
-It returns true if it reads the config false, if there is any error.*/
+It returns true if it reads the config and false if there is any error.*/
 bool save_options(struct cmdOptionStruct* cmdOptions)
 {
     std::ofstream config_file;
