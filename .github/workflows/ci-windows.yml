@@ -21,6 +21,7 @@ jobs:
                   
             - name: Build Triton dependencies with vcpkg for x64.
               run: |
+                  C:\vcpkg\vcpkg.exe update
                   vcpkg install capstone[x86,arm,arm64] z3 boost-multiprecision boost-numeric-conversion boost-math --triplet x64-windows-static
                   
             - name: Download and build Triton x64
