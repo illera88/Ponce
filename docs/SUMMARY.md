@@ -2,9 +2,12 @@
 
 ## USAGE
 
+* [Symbolic and Taint engines](usage/symbolic-and-taint-engines.md)
 * [Enable/Disable Ponce](usage/enable-disable.md)
-* [Taint and Symbolize](usage/taint-symbolize.md)
-* [Blacklist](usage/blacklist.md)
+* [Symbolize/Taint data](usage/symbolize-taint-data.md)
+* [Solve conditions](usage/solve-conditions.md)
+* [Blacklisting library functions](usage/blacklist.md)
+* [Shortcuts](usage/shortcuts.md)
 
 ## EXAMPLES
 
@@ -16,5 +19,6 @@
 ## MISC
 
 * [Ponce limitations](misc/ponce-limitations.md)
+* [Building](misc/building.md)
 * [FAQ](misc/faq.md)
 
