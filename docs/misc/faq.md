@@ -8,9 +8,17 @@ Juan Ponce de León \(1474 – July 1521\) was a Spanish explorer and conquistad
 
 Yes. Ponce is multi-platform and can be used in Windows, OSX and Linux.
 
+**What platforms are supported?**
+Ponce relies heavily on Triton, and support the same platforms Triton does: 
+* x86
+* x86-64
+* Arm
+* Arm64
+
 **How many instructions per second can handle Ponce?**
 
 In our tests we reach to process 3000 instructions per second. We plan to use the PIN tracer IDA offers to increase the speed.
+
 
 **Something is not working!**
 

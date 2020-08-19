@@ -39,6 +39,8 @@ Make sure you use the Ponce binary compiled for your IDA version to avoid any in
 
 The examples section is a good way to see how Ponce works. If you want a more detailed information check out the Usage section, we explained there the different options.
 
+Also make sure to review the [limitations](misc/ponce-limitations.md) before you start using Ponce.
+
 ### Triton
 
 Ponce relies on the [Triton framework](https://github.com/JonathanSalwan/Triton) to provide semantics, taint analysis and symbolic execution. Triton is an awesome Open Source project sponsored by Quarkslab and maintained mainly by [Jonathan Salwan](http://shell-storm.org/) with a rich library. We would like to thank and endorse Jonathan's work with Triton. You rock! :)
