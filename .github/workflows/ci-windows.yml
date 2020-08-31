@@ -18,10 +18,11 @@ jobs:
             - name: Update vcpkg triplet to only build release
               run: |
                  "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
-                 git -C C:\vcpkg\ pull
+                 cd C:\
+                 git clone https://github.com/microsoft/vcpkg vcpkg2
+                 cd vcpkg2
                  echo "aaaaaaaaaaaaaaaaaaaaaaaaa"
-                 C:\vcpkg\bootstrap-vcpkg.bat
-                 C:\vcpkg\vcpkg.exe update
+                 C:\vcpkg2\bootstrap-vcpkg.bat
                  vcpkg install z3 --triplet x64-windows-static
                  type C:\vcpkg\buildtrees\z3\install-x64-windows-static-rel-out.log
                  echo "aaaaaaaaaaaaaaaaaaaaaaaaa"
