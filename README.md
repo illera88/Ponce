@@ -20,7 +20,7 @@ We addressed these needs by creating Ponce, an IDA plugin that implements symbol
 
 ### Installation
 
-Ponce works with both x86 and x64 binaries in any IDA version &gt;= 7.0. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/tree/master/latest_builds) to the `plugins\` folder in your IDA installation directory.
+Ponce works with both x86 and x64 binaries in any IDA version &gt;= 7.0. Installing the plugin is as simple as copying the appropiate files from the [latest builds](https://github.com/illera88/Ponce/releases/latest) to the `plugins\` folder in your IDA installation directory.
 
 Make sure you use the Ponce binary compiled for your IDA version to avoid any incompatibilities.
 
