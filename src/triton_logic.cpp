@@ -188,9 +188,9 @@ void triton_restart_engines()
     //We reset everything at the beginning
     api.reset();
     // Memory access callback
-    api.addCallback(needConcreteMemoryValue_cb);
+    api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_MEMORY_VALUE, needConcreteMemoryValue_cb);
     // Register access callback
-    api.addCallback(needConcreteRegisterValue_cb);
+    api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_REGISTER_VALUE, needConcreteRegisterValue_cb);
     //If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
     api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
     api.getSymbolicEngine()->enable(true);
