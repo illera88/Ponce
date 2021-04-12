@@ -31,8 +31,10 @@
 #ifdef BUILD_HEXRAYS_SUPPORT
 #include "ponce_hexrays.hpp"
 
+#if IDA_SDK_VERSION < 760
 // Hex-Rays API pointer
 hexdsp_t* hexdsp = NULL;
+#endif
 #endif
 
 bool idaapi run(size_t)
@@ -118,7 +120,9 @@ bool idaapi run(size_t)
 }
 
 //--------------------------------------------------------------------------
-#if IDA_SDK_VERSION >= 750
+#if IDA_SDK_VERSION >= 760
+plugmod_t* idaapi init(void)
+#elif IDA_SDK_VERSION == 750
 size_t idaapi init(void)
 #else
 int idaapi init(void)
@@ -127,29 +131,28 @@ int idaapi init(void)
     char version[8];
     //We do some checks with the versions...
     if (get_kernel_version(version, sizeof(version))) {
-#if IDA_SDK_VERSION > 750
-        warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+#if IDA_SDK_VERSION == 760
+        if (strcmp(version, "7.6") != 0) {
 #elif IDA_SDK_VERSION == 750
-        if (strcmp(version, "7.5") != 0)
-        warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);       
+        if (strcmp(version, "7.5") != 0) {
 #elif IDA_SDK_VERSION == 740
-        if (strcmp(version, "7.4") != 0)
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "7.4") != 0) {
 #elif IDA_SDK_VERSION == 730
-        if (strcmp(version, "7.3") != 0)
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "7.3") != 0) {
 #elif IDA_SDK_VERSION == 720
-        if (strcmp(version, "7.2") != 0)
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "7.2") != 0) {
 #elif IDA_SDK_VERSION == 710
-        if (strcmp(version, "7.1") != 0)
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "7.1") != 0) {
 #elif IDA_SDK_VERSION == 700
-        if (strcmp(version, "7.00") != 0)
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        if (strcmp(version, "7.00") != 0) {
 #elif IDA_SDK_VERSION < 700
 #error // not supported
 #endif
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+        }
+    }
+    else {
+        error("Can't detect the IDA version you are running");
     }
 
     if (int(version[0]) < 7) {

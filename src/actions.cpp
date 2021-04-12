@@ -125,6 +125,7 @@ struct ah_taint_symbolize_register_t : public action_handler_t
 };
 static ah_taint_symbolize_register_t ah_taint_symbolize_register;
 
+
 action_desc_t action_IDA_taint_symbolize_register = ACTION_DESC_LITERAL(
     "Ponce:taint_symbolize_register", // The action name. This acts like an ID and must be unique
     "nothing", //The action text.
