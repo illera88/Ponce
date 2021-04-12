@@ -63,7 +63,7 @@ struct cmdOptionStruct {
     bool showDebugInfo = false;
     bool showExtraDebugInfo = false;
 
-    unsigned int solver_timeout = 10000; // default 10 seconds
+    unsigned int solver_timeout = 10; // default 10 seconds
 
     bool AST_OPTIMIZATIONS = false;
     bool CONCRETIZE_UNDEFINED_REGISTERS = false;

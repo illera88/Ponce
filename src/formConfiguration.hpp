@@ -43,6 +43,8 @@ static const char form[] =
 "<#Time in seconds#Seconds running               :D1:12:12>\n"
 "<#Number of the instructions executed during tracing before ask to the user#Instructions executed         :D2:12:12>\n"
 "\n"
+"<#Time in seconds#Solver timeout               :D3:12:12>\n"
+"\n"
 "<#-1 is default colour#Color Tainted Instruction     :K19:::>\n"
 "<#-1 is default colour#Color Executed Instruction    :K20:::>\n"
 "<#-1 is default colour#Color Tainted Condition       :K21:::>\n"

@@ -102,6 +102,7 @@ void prompt_conf_window(void) {
         &chkgroup3,
         &cmdOptions.limitTime,
         &cmdOptions.limitInstructionsTracingMode,
+        &cmdOptions.solver_timeout,
         &cmdOptions.color_tainted,
         &cmdOptions.color_executed_instruction,
         &cmdOptions.color_tainted_condition,
@@ -161,12 +162,12 @@ void prompt_conf_window(void) {
             readBlacklistfile(cmdOptions.blacklist_path);
         }
 
-
         save_options(&cmdOptions);
         if (cmdOptions.showDebugInfo) {
             msg("\n"
                 "limitTime: %lld\n"
                 "limitInstructionsTracingMode: %lld\n"
+                "solver_timeout: %lld\n"
                 "use_symbolic_engine: %s\n"
                 "showDebugInfo: %s\n"
                 "showExtraDebugInfo: %s\n"
@@ -178,11 +179,12 @@ void prompt_conf_window(void) {
                 "addCommentsControlledOperands: %s\n"
                 "RenameTaintedFunctionNames: %s\n"
                 "addCommentssymbolizexpresions: %s\n"
-                "color_tainted: %x\n"
+                "addCommentssymbolizexpresions: %s\n"
                 "color_tainted_execution: %x\n"
                 "color_tainted_condition: %x\n",
                 cmdOptions.limitTime,
                 cmdOptions.limitInstructionsTracingMode,
+                cmdOptions.solver_timeout,
                 cmdOptions.use_symbolic_engine ? "symbolic engine enabled" : "tainting engine enabled",
                 cmdOptions.showDebugInfo ? "true" : "false",
                 cmdOptions.showExtraDebugInfo ? "true" : "false",

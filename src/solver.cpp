@@ -59,12 +59,12 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
             }
 
             //Time to solve
-            api.setSolverTimeout(cmdOptions.solver_timeout);
+            api.setSolverTimeout(cmdOptions.solver_timeout * 1000);
             triton::engines::solver::status_e solver_status;
             auto model = api.getModel(final_expr, &solver_status);
             
             if (solver_status == triton::engines::solver::status_e::TIMEOUT) {
-                msg("[!] Solver timed out after %d seconds\n", cmdOptions.solver_timeout / 1000);               
+                msg("[!] Solver timed out after %d seconds\n", cmdOptions.solver_timeout);
             }
             else if (solver_status == triton::engines::solver::status_e::UNSAT) {
                 msg("[!] That formula cannnot be solved (UNSAT)\n");
