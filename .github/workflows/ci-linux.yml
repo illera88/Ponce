@@ -75,7 +75,13 @@ jobs:
                   cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.5 --config Release --parallel 2
 
-            
+            - name: Build Ponce IDA 7.6
+              run: |
+                  unzip ../IDA_SDKs/idasdk76.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DZ3_DIR="../z3/install_dir/lib/cmake/z3" -DTRITON_INCLUDE_DIR="../Triton/install_dir/include" -DTRITON_LIBRARY="../Triton/install_dir/lib/libtriton.a" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.6 --config Release --parallel 2
+
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida70
@@ -135,6 +141,16 @@ jobs:
               with:
                   name: Ponce_ida75
                   path: build_x64_7.5/Ponce.so
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida76
+                  path: build_x64_7.6/Ponce64.so
+                  
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida76
+                  path: build_x64_7.6/Ponce.so
                   
     release:
         runs-on: ubuntu-latest
