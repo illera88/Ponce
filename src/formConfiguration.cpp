@@ -95,7 +95,7 @@ void prompt_conf_window(void) {
         symbolic_or_taint_engine = cmdOptions.use_symbolic_engine ? 0 : 1;
     }
     if (ask_form(form,
-        modcb, // the call to this function can be omitted. It's only usefull if a checkbox activate or dissable other elements of the form
+        modcb,
         &symbolic_or_taint_engine,
         &chkgroup1,
         &chkgroup2,
@@ -179,8 +179,8 @@ void prompt_conf_window(void) {
                 "addCommentsControlledOperands: %s\n"
                 "RenameTaintedFunctionNames: %s\n"
                 "addCommentssymbolizexpresions: %s\n"
-                "addCommentssymbolizexpresions: %s\n"
-                "color_tainted_execution: %x\n"
+                "color_tainted: %x\n"
+                "color_executed_instruction: %x\n"
                 "color_tainted_condition: %x\n",
                 cmdOptions.limitTime,
                 cmdOptions.limitInstructionsTracingMode,

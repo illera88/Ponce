@@ -146,7 +146,7 @@ int idaapi init(void)
 #elif IDA_SDK_VERSION == 700
         if (strcmp(version, "7.00") != 0) {
 #elif IDA_SDK_VERSION < 700
-#error // not supported
+#error "Ponce does not support IDA < 7.0"
 #endif
             warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
         }
