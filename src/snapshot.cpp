@@ -136,7 +136,7 @@ void Snapshot::restoreSnapshot() {
     Suposedly XIP should be set at the same time and execution redirected*/
     typedef std::map<std::string, triton::uint512>::iterator it_type;
     for (it_type iterator = this->IDAContext.begin(); iterator != this->IDAContext.end(); iterator++) {
-        if (!set_reg_val(iterator->first.c_str(), iterator->second.convert_to<uint64>()))
+        if (!set_reg_val(iterator->first.c_str(), static_cast<uint64>(iterator->second)))
             msg("[!] ERROR restoring register %s\n", iterator->first.c_str());
     }
 

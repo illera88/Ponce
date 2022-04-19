@@ -15,18 +15,10 @@ jobs:
               with:
                   submodules: true
    
-            - name: Build Triton dependencies with vcpkg for x64.
+            - name: Build Triton
               run: |
                   "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
-                  vcpkg install capstone[x86,arm,arm64] z3 boost-multiprecision boost-numeric-conversion boost-math --triplet x64-windows-static
-                  
-            - name: Download and build Triton x64
-              run: |
-                  cd ..
-                  git clone --single-branch --branch dev-v0.9 https://github.com/JonathanSalwan/Triton
-                  cd Triton
-                  cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -G "Visual Studio 16 2019" -A x64 -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DBOOST_INCLUDEDIR="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DZ3_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" -DCAPSTONE_INCLUDE_DIRS="$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include\capstone"
-                  cmake --build build_x64 --target install --config Release --parallel 2
+                  vcpkg install triton --triplet x64-windows-static
                       
             - name: Dowload IDA SDKs
               shell: cmd
@@ -40,43 +32,43 @@ jobs:
             - name: Build Ponce IDA 7.0
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk70.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.0 --config Release --parallel 2
                   
             - name: Build Ponce IDA 7.1
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk71.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.1 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.2
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk72.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.2 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.3
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk73.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.3 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.4
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk74.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.4 --config Release --parallel 2
                       
             - name: Build Ponce IDA 7.5
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk75.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.5 --config Release --parallel 2
 
             - name: Build Ponce IDA 7.6
               run: |
                   powershell Expand-Archive -Force ..\IDA_SDKs\idasdk76.zip ..\IDA_SDKs
-                  cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" -DTRITON_INCLUDE_DIR="..\Triton\install_dir\include" -DTRITON_LIBRARY="..\Triton\install_dir\lib\triton.lib"          
+                  cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR="..\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
                   cmake --build build_x64_7.6 --config Release --parallel 2
 
             - uses: actions/upload-artifact@master

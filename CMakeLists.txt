@@ -73,16 +73,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 # Find Triton
-set(TRITON_INCLUDE_DIR "" CACHE PATH "Path to triton include directory")
-set(TRITON_LIBRARY "" CACHE FILEPATH "Path to triton library")
-
-if(NOT TRITON_INCLUDE_DIR OR NOT TRITON_LIBRARY)
-	message(FATAL_ERROR "You should set Triton libraries")
-endif()
-
-# Look for Boost
-find_package(Boost 1.55.0 REQUIRED)
-
+find_package(triton CONFIG REQUIRED)
 
 if(BUILD_EXAMPLES)
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -105,36 +96,6 @@ if(BUILD_EXAMPLES)
 		FOLDER "Examples")
 endif()
 
-# Find Capstone
-find_path(Capstone_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
-
-if(WIN32 AND NOT STATICLIB)
-	find_library(CAPSTONE_LIBRARY
-	NAMES capstone_dll
-	PATHS Capstone_INCLUDE_DIR/../
-	)
-else()
-    find_library(CAPSTONE_LIBRARY
-    NAMES capstone
-    PATHS Capstone_INCLUDE_DIR/../
-    )
-endif()
-
-
-if (NOT WIN32)
-	# got this from https://github.com/microsoft/vcpkg/issues/10752
-	# In Windows this is not required because Triton is doing:
-	#  #if defined(__unix__) || defined(__APPLE__)
-    #    #include <capstone/x86.h>
-    #  #elif _WIN32
-    #    #include <capstone.h>
-    #  #endif
-	set(Capstone_INCLUDE_DIR ${Capstone_INCLUDE_DIR}/../)
-endif()
-
-# Find z3
-find_package(Z3 CONFIG REQUIRED)
-
 # Look for hexrays SDK to provide Ponce feedback in the pseudocode	
 find_file(HEXRAYS_PATH hexrays.hpp PATHS ${IDA_INCLUDE_DIR} NO_DEFAULT_PATH)	
 if(BUILD_HEXRAYS_SUPPORT)	
@@ -148,26 +109,24 @@ endif()
 
 get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
 
-# Now we create the project
-target_include_directories(${PROJECT_NAME} PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME}64 PRIVATE ${TRITON_INCLUDE_DIR} ${IDA_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Capstone_INCLUDE_DIR})
+
+
+# Now we create the projects (one for x86 and other for x64)
+target_include_directories(${PROJECT_NAME} PRIVATE ${IDA_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME}64 PRIVATE ${IDA_INCLUDE_DIR})
 
 target_link_libraries(
     ${PROJECT_NAME}
 	PRIVATE
-    ${TRITON_LIBRARY}
+    triton::triton
 	${idasdk_ea32}
-	z3::libz3
-	${CAPSTONE_LIBRARY}
 )
 
 target_link_libraries(
     ${PROJECT_NAME}64
 	PRIVATE
-    ${TRITON_LIBRARY}
+    triton::triton
 	${idasdk_ea64}
-	z3::libz3
-	${CAPSTONE_LIBRARY}
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __IDP__)

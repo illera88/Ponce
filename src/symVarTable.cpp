@@ -110,7 +110,7 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
         cols[2].sprnt(MEM_FORMAT, li.address);
     }
 
-    cols[4].sprnt("%s", li.value.str().c_str()); // Concrete value
+    cols[4].sprnt("%s", triton::utils::toString(li.value).c_str()); // Concrete value
 
     if(!li.comment.empty())
         cols[5].sprnt("%s", li.comment.c_str());

@@ -103,12 +103,12 @@ ea_t get_args(int argument_number, bool skip_ret)
     // On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
     switch (argument_number)
     {
-    case 0: return IDA_getCurrentRegisterValue(api.registers.x86_rcx).convert_to<ea_t>();
-    case 1: return IDA_getCurrentRegisterValue(api.registers.x86_rdx).convert_to<ea_t>();
-    case 2: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
-    case 3: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
+    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rcx));
+    case 1: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdx));
+    case 2: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r8));
+    case 3: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r9));
     default:
-        ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
+        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsp));
         ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
         return get_qword(arg);
     }
@@ -153,7 +153,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
     case 2:
     case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
     default:
-        ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp).convert_to<ea_t>();
+        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsp));
         ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
         return arg;
     }

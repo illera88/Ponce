@@ -54,7 +54,7 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
             if (cmdOptions.showExtraDebugInfo) {  
                 std::stringstream ss;
                 ss << "(set-logic QF_AUFBV)" << std::endl;
-                api.printSlicedExpressions(ss, api.newSymbolicExpression(final_expr), true);      
+                api.liftToSMT(ss, api.newSymbolicExpression(final_expr), true);
                 msg("[+] Formula:\n%s\n\n", ss.str().c_str());
             }
 
@@ -98,28 +98,28 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
                         msg(" - %s%s: %#02x %s\n", 
                             model.getVariable()->getName().c_str(), 
                             !symbVarComment.empty()? (" ("+symbVarComment+")").c_str():"",
-                            model_value.convert_to<uchar>(), 
-                            isprint(model_value.convert_to<uchar>()) ? ("(" + std::string(1, model_value.convert_to<uchar>()) + ")").c_str()  : "");
+                            static_cast<uchar>(model_value),
+                            isprint(static_cast<uchar>(model_value)) ? ("(" + std::string(1, static_cast<uchar>(model_value)) + ")").c_str()  : "");
                         break;
                     case 16:
                         msg(" - %s%s: %#04x (%c%c)\n", 
                             !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
                             symbVarComment.c_str(), 
-                            model_value.convert_to<ushort>(), 
-                            model_value.convert_to<uchar>() == 0 ? ' ' : model_value.convert_to<uchar>(), 
-                            (unsigned char)(model_value.convert_to<ushort>() >> 8) == 0 ? ' ' : (unsigned char)(model_value.convert_to<ushort>() >> 8));
+                            static_cast<ushort>(model_value),
+                            static_cast<uchar>(model_value) == 0 ? ' ' : static_cast<uchar>(model_value),
+                            (unsigned char)(static_cast<ushort>(model_value) >> 8) == 0 ? ' ' : (unsigned char)(static_cast<ushort>(model_value) >> 8));
                         break;
                     case 32:
                         msg(" - %s%s: %#08x\n", 
                             !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
                             symbVarComment.c_str(), 
-                            model_value.convert_to<uint32>());
+                            static_cast<uint32>(model_value));
                         break;
                     case 64:
                         msg(" - %s%s: %#16llx\n", 
                             model.getVariable()->getName().c_str(), 
                             !symbVarComment.empty() ? (" (" + symbVarComment + ")").c_str() : "",
-                            model_value.convert_to<uint64>());
+                            static_cast<uint64>(model_value));
                         break;
                     default:
                         msg("[!] Unsupported size for the symbolic variable: %s (%s)\n", model.getVariable()->getName().c_str(), symbVarComment.c_str()); // what about 128 - 512 registers? 
@@ -358,34 +358,34 @@ void set_SMT_solution(const Input& solution) {
 
         if (cmdOptions.showExtraDebugInfo){
             char ascii_value[5] = { 0 };
-            if(std::isprint(concreteValue.convert_to<unsigned char>()))
-                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", concreteValue.convert_to<char>());
+            if(std::isprint(static_cast<unsigned char>(concreteValue)))
+                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", static_cast<char>(concreteValue));
             std::stringstream stream;
             stream << std::hex << concreteValue;
             msg("[+] Memory " MEM_FORMAT " set with value 0x%s %s\n", 
                 mem.getAddress(), 
                 stream.str().c_str(), 
-                std::isprint(concreteValue.convert_to<unsigned char>())? ascii_value :"");
+                std::isprint(static_cast<unsigned char>(concreteValue))? ascii_value :"");
         }
     }
 
     /*To set the register types*/
     for (const auto& reg : solution.regOperand) {
         auto concreteRegValue = api.getConcreteRegisterValue(reg, false);
-        set_reg_val(reg.getName().c_str(), concreteRegValue.convert_to<uint64>());
+        set_reg_val(reg.getName().c_str(), static_cast<uint64>(concreteRegValue));
         api.setConcreteRegisterValue(reg, concreteRegValue);
 
         if (cmdOptions.showExtraDebugInfo) {
             char ascii_value[5] = { 0 };
-            if (std::isprint(concreteRegValue.convert_to<unsigned char>()))
-                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", concreteRegValue.convert_to<char>());
+            if (std::isprint(static_cast<unsigned char>(concreteRegValue)))
+                qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", static_cast<char>(concreteRegValue));
             std::stringstream stream;
             stream << std::hex << concreteRegValue;
 
             msg("[+] Registers %s set with value 0x%s %s\n", 
                 reg.getName().c_str(), 
                 stream.str().c_str(),
-                std::isprint(concreteRegValue.convert_to<unsigned char>()) ? ascii_value : "");
+                std::isprint(static_cast<unsigned char>(concreteRegValue)) ? ascii_value : "");
         }
     }
 

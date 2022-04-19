@@ -46,13 +46,13 @@ triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
     case triton::size::word:    value = *(reinterpret_cast<triton::uint16*>(buffer)); break;
     case triton::size::dword:   value = *(reinterpret_cast<triton::uint32*>(buffer)); break;
     case triton::size::qword:   value = *(reinterpret_cast<triton::uint64*>(buffer)); break;
-    case triton::size::dqword:  value = triton::utils::fromBufferToUint<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer)); break;
-    case triton::size::qqword:  value = triton::utils::fromBufferToUint<triton::uint256>(reinterpret_cast<triton::uint8*>(buffer)); break;
-    case triton::size::dqqword: value = triton::utils::fromBufferToUint<triton::uint512>(reinterpret_cast<triton::uint8*>(buffer)); break;
+    case triton::size::dqword:  value = triton::utils::cast<triton::uint128>(reinterpret_cast<triton::uint8*>(buffer)); break;
+    case triton::size::qqword:  value = triton::utils::cast<triton::uint256>(reinterpret_cast<triton::uint8*>(buffer)); break;
+    case triton::size::dqqword: value = triton::utils::cast<triton::uint512>(reinterpret_cast<triton::uint8*>(buffer)); break;
     }
 
     return value;
-    return triton::utils::fromBufferToUint<triton::uint512>(buffer);
+    return triton::utils::cast<triton::uint512>(buffer);
 }
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
@@ -75,8 +75,8 @@ void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAcce
 
     if (cmdOptions.showExtraDebugInfo) {
         char ascii_value[5] = { 0 };
-        if (std::isprint(IDA_memValue.convert_to<unsigned char>()))
-            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", IDA_memValue.convert_to<char>());
+        if (std::isprint(static_cast<unsigned char>(IDA_memValue)))
+            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", static_cast<char>(IDA_memValue));
         std::stringstream stream;
         stream << std::nouppercase << std::hex << IDA_memValue;
         msg("[+] Triton asking IDA for %s syncronized memory address: " MEM_FORMAT " Size: %u. Value: 0x%s %s\n", 
@@ -84,7 +84,7 @@ void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAcce
             (ea_t)mem.getAddress(), 
             mem.getSize(), 
             stream.str().c_str(),
-            std::isprint(IDA_memValue.convert_to<unsigned char>()) ? ascii_value : "");
+            std::isprint(static_cast<unsigned char>(IDA_memValue)) ? ascii_value : "");
     }
 }
 
@@ -103,7 +103,7 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
     triton::arch::Register syncReg;
     if (reg.getId() >= api.registers.x86_af.getId() && reg.getId() <= api.registers.x86_zf.getId())
         syncReg = api.registers.x86_eflags;
-    else if (reg.getId() >= api.registers.x86_ie.getId() && reg.getId() <= api.registers.x86_fz.getId())
+    else if (reg.getId() >= api.registers.x86_sse_ie.getId() && reg.getId() <= api.registers.x86_sse_fz.getId())
         syncReg = api.registers.x86_mxcsr;
     else
         syncReg = api.getRegister(reg.getParent());
@@ -125,8 +125,8 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
  
     if (cmdOptions.showExtraDebugInfo) {
         char ascii_value[5] = { 0 };
-        if (std::isprint(IDA_regValue.convert_to<unsigned char>()))
-            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", IDA_regValue.convert_to<char>());
+        if (std::isprint(static_cast<unsigned char>(IDA_regValue)))
+            qsnprintf(ascii_value, sizeof(ascii_value), "(%c)", static_cast<char>(IDA_regValue));
         
         std::stringstream stream;
         stream << std::nouppercase << std::hex << IDA_regValue;
@@ -134,7 +134,7 @@ void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register
             had_it ? "already" : "not",
             reg.getName().c_str(),
             stream.str().c_str(),
-            std::isprint(IDA_regValue.convert_to<unsigned char>()) ? ascii_value : "");
+            std::isprint(static_cast<unsigned char>(IDA_regValue)) ? ascii_value : "");
     }
 }
 

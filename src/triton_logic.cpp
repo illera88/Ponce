@@ -87,7 +87,7 @@ int tritonize(ea_t pc, thid_t threadID)
                 get_bytes(&value, 1, (ea_t)addr + i, GMB_READALL, NULL);
 
                 //We add a meomory modification to the snapshot engine
-                snapshot.addModification((ea_t)addr + i, value.convert_to<char>());
+                snapshot.addModification((ea_t)addr + i, static_cast<char>(value));
             }
         }
     }
@@ -191,20 +191,21 @@ void triton_restart_engines()
     api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_MEMORY_VALUE, needConcreteMemoryValue_cb);
     // Register access callback
     api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_REGISTER_VALUE, needConcreteRegisterValue_cb);
-    //If we are in taint analysis mode we enable only the tainting engine and disable the symbolic one
-    api.getTaintEngine()->enable(cmdOptions.use_tainting_engine);
-    api.getSymbolicEngine()->enable(true);
+
     if (ponce_runtime_status.last_triton_instruction) {
         delete ponce_runtime_status.last_triton_instruction;
         ponce_runtime_status.last_triton_instruction = nullptr;
     }
 
-    // This modes cannot be configured by the user. They are allways on
+    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+    
+    // These modes cannot be configured by the user. They are allways on
     api.setMode(triton::modes::ALIGNED_MEMORY, true);
-    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, cmdOptions.use_symbolic_engine);
-    api.setMode(triton::modes::ONLY_ON_TAINTED, cmdOptions.use_tainting_engine);
     // We don't want to track non symbolic path constraints
     api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
+    // Only keep expressions (AST) that contain at least a symbolic variable
+    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+
 
     // Set the optimizations selected by user
     api.setMode(triton::modes::AST_OPTIMIZATIONS, cmdOptions.AST_OPTIMIZATIONS);
