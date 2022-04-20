@@ -18,7 +18,6 @@ jobs:
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
                  cd $VCPKG_INSTALLATION_ROOT
-                 cd $env:VCPKG_INSTALLATION_ROOT
                  git reset --hard
                  git pull
                  ./bootstrap-vcpkg.sh
