@@ -116,7 +116,7 @@ ea_t get_args(int argument_number, bool skip_ret)
     //On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
     switch (argument_number)
     {
-    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdi)();
+    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdi));
     case 1: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsi));
     case 2: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdx));
     case 3: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rcx));
