@@ -103,7 +103,7 @@ extern std::map<ea_t, struct instruction_info> ponce_comments;
 #endif
 
 #ifdef __EA64__
-#define MEM_FORMAT "%#llx" PRIx64
+#define MEM_FORMAT "%#" PRIx64
 #define REG_XIP api.registers.x86_rip
 #else
 #define MEM_FORMAT "%#" PRIx32

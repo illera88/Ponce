@@ -15,16 +15,10 @@ jobs:
               with:
                   submodules: true
    
-            - name: Build Triton (delete first two lines when Triton last port is in the CI)
+            - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
                   cd $env:VCPKG_INSTALLATION_ROOT
-                  echo "-----------git branch"
-                  git branch
-                  echo "------git checkout master"
-                  git checkout master
-                  echo "------git reset"
                   git reset --hard
-                  echo "------git pull"
                   git pull
                   ".\bootstrap-vcpkg.bat"
 

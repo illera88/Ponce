@@ -116,14 +116,14 @@ ea_t get_args(int argument_number, bool skip_ret)
     //On Linux - parameters are passed in RDI, RSI, RDX, RCX, R8, R9 for ints / ptrs and xmm0 - 7 for float types.
     switch (argument_number)
     {
-    case 0: return IDA_getCurrentRegisterValue(api.registers.x86_rdi).convert_to<ea_t>();
-    case 1: return IDA_getCurrentRegisterValue(api.registers.x86_rsi).convert_to<ea_t>();
-    case 2: return IDA_getCurrentRegisterValue(api.registers.x86_rdx).convert_to<ea_t>();
-    case 3: return IDA_getCurrentRegisterValue(api.registers.x86_rcx).convert_to<ea_t>();
-    case 4: return IDA_getCurrentRegisterValue(api.registers.x86_r8).convert_to<ea_t>();
-    case 5: return IDA_getCurrentRegisterValue(api.registers.x86_r9).convert_to<ea_t>();
+    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdi)();
+    case 1: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsi));
+    case 2: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdx));
+    case 3: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rcx));
+    case 4: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r8));
+    case 5: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r9));
     default:
-        ea_t esp = (ea_t)IDA_getCurrentRegisterValue(api.registers.x86_rsp);
+        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsp));
         ea_t arg = esp + (argument_number - 6 + skip_ret_index) * 8;
         return get_qword(arg);
     }
