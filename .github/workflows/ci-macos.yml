@@ -18,9 +18,14 @@ jobs:
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
                  cd $VCPKG_INSTALLATION_ROOT
-                 git branch
-                 git checkout master
-                 git pull
+                 echo "-----------git branch"
+                  git branch
+                  echo "------git checkout master"
+                  git checkout master
+                  echo "------git reset"
+                  git reset --hard
+                  echo "------git pull"
+                  git pull
                  ./bootstrap-vcpkg.sh
 
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
