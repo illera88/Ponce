@@ -15,8 +15,12 @@ jobs:
               with:
                   submodules: true
                     
-            - name: Install Triton
+            - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
+                 cd $VCPKG_INSTALLATION_ROOT
+                 git pull
+                 ./bootstrap-vcpkg.sh
+
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
                  vcpkg install triton
                   
