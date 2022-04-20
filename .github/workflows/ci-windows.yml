@@ -18,6 +18,9 @@ jobs:
             - name: Build Triton (delete first two lines when Triton last port is in the CI)
               run: |
                   cd $env:VCPKG_INSTALLATION_ROOT
+                  git branch
+                  git checkout master
+                  git pull
                   ".\bootstrap-vcpkg.bat"
 
                   "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
