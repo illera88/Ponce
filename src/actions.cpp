@@ -59,7 +59,6 @@ int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* a
             api.symbolizeRegister(register_to_symbolize, std::string(comment));
         }
 
-
         tritonize(pc);
         return 0;
     }

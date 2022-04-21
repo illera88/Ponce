@@ -23,6 +23,8 @@
 
 #define strtol_m strtoll
 
+#include <inttypes.h>
+
 //stdcall does not exist in Linux so lets define it to nothing
 #if defined(__LINUX__) || defined(__MAC__)
 #define __stdcall
