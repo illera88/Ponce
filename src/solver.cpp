@@ -77,8 +77,11 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
                 newinput.dstAddr = dstAddr;
                 newinput.srcAddr = srcAddr;
 
+                // model is an std::unordered_map. Lets sort it out so results make more sense when printed
+                std::map<triton::usize, triton::engines::solver::SolverModel> ordered_model(model.begin(), model.end());
+
                 msg("[+] Solution found! Values:\n");
-                for (const auto& [symId, model] : model) {
+                for (const auto& [symId, model] : ordered_model) {
                     triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
                     std::string  symbVarComment = symbVar->getComment();
                     triton::uint512 model_value = model.getValue();
