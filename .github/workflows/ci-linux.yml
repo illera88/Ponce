@@ -9,7 +9,7 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-        steps:           
+        steps:
             - uses: actions/checkout@v1
               with:
                   submodules: true
@@ -157,7 +157,7 @@ jobs:
                   name: Ponce_ida77
                   path: build_x64_7.7/Ponce64.so
 
-             - uses: actions/upload-artifact@master
+            - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida77
                   path: build_x64_7.7/Ponce.so
