@@ -8,7 +8,6 @@ on:
 
 jobs:
     build:
-        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
         runs-on: macos-latest
         steps:           
             - uses: actions/checkout@v1
