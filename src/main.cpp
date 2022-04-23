@@ -131,7 +131,9 @@ int idaapi init(void)
     char version[8];
     //We do some checks with the versions...
     if (get_kernel_version(version, sizeof(version))) {
-#if IDA_SDK_VERSION == 760
+#if IDA_SDK_VERSION == 770
+        if (strcmp(version, "7.7") != 0) {
+#elif IDA_SDK_VERSION == 760
         if (strcmp(version, "7.6") != 0) {
 #elif IDA_SDK_VERSION == 750
         if (strcmp(version, "7.5") != 0) {
