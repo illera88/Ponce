@@ -8,10 +8,8 @@ on:
 
 jobs:
     build:
-        #cmake -S . -B build_x64 -DCMAKE_INSTALL_PREFIX=install_dir -DPYTHON_BINDINGS=OFF -DSTATICLIB=ON -DZ3_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include" -DCAPSTONE_INCLUDE_DIRS="$VCPKG_INSTALLATION_ROOT/installed/x64-linux/include"              
-        #if: github.event_name == 'push' && contains(toJson(github.event.commits), '***NO_CI***') == false && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
         runs-on: ubuntu-latest
-        steps:           
+        steps:
             - uses: actions/checkout@v1
               with:
                   submodules: true
@@ -76,6 +74,12 @@ jobs:
                   unzip ../IDA_SDKs/idasdk76.zip -d ../IDA_SDKs
                   cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.6 --config Release --parallel 2
+
+            - name: Build Ponce IDA 7.7
+              run: |
+                  unzip ../IDA_SDKs/idasdk77.zip -d ../IDA_SDKs
+                  cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_7.7 --config Release --parallel 2
 
 
             - uses: actions/upload-artifact@master
@@ -147,6 +151,16 @@ jobs:
               with:
                   name: Ponce_ida76
                   path: build_x64_7.6/Ponce.so
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida77
+                  path: build_x64_7.7/Ponce64.so
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida77
+                  path: build_x64_7.7/Ponce.so
                   
     release:
         runs-on: ubuntu-latest
