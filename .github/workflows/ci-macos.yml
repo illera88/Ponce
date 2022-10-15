@@ -36,49 +36,49 @@ jobs:
             - name: Build Ponce IDA 7.0
               run: |
                   unzip ../IDA_SDKs/idasdk70.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk70" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.0 --config Release --parallel 2
                   
             - name: Build Ponce IDA 7.1
               run: |
                   unzip ../IDA_SDKs/idasdk71.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk71" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.1 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.2
               run: |
                   unzip ../IDA_SDKs/idasdk72.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk72" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.2 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.3
               run: |
                   unzip ../IDA_SDKs/idasdk73.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.3 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.3 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk73" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.3 --config Release --parallel 2
             
             - name: Build Ponce IDA 7.4
               run: |
                   unzip ../IDA_SDKs/idasdk74.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.4 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.4 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk74" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.4 --config Release --parallel 2
                       
             - name: Build Ponce IDA 7.5
               run: |
                   unzip ../IDA_SDKs/idasdk75.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk75" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.5 --config Release --parallel 2
 
             - name: Build Ponce IDA 7.6
               run: |
                   unzip ../IDA_SDKs/idasdk76.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.6 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.6 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk76" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.6 --config Release --parallel 2
 
             - name: Build Ponce IDA 7.7
               run: |
                   unzip ../IDA_SDKs/idasdk77.zip -d ../IDA_SDKs
-                  cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="../IDA_SDKs/idasdk77" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.7 --config Release --parallel 2
 
 
