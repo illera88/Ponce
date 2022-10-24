@@ -37,6 +37,10 @@ hexdsp_t* hexdsp = NULL;
 #endif
 #endif
 
+#if IDA_SDK_VERSION < 700
+#error "Ponce does not support IDA < 7.0"
+#endif
+
 bool idaapi run(size_t)
 {
     /*We shouldn't prompt for it if the user has a saved configuration*/
@@ -128,40 +132,20 @@ size_t idaapi init(void)
 int idaapi init(void)
 #endif
 {
-    char version[8];
+    char runtimeVersion[8];
     //We do some checks with the versions...
-    if (get_kernel_version(version, sizeof(version))) {
-#if IDA_SDK_VERSION == 810
-      if (strcmp(version, "8.1") != 0) {
-#elif IDA_SDK_VERSION == 800
-      if (strcmp(version, "8.0") != 0) {
-#elif IDA_SDK_VERSION == 770
-        if (strcmp(version, "7.7") != 0) {
-#elif IDA_SDK_VERSION == 760
-        if (strcmp(version, "7.6") != 0) {
-#elif IDA_SDK_VERSION == 750
-        if (strcmp(version, "7.5") != 0) {
-#elif IDA_SDK_VERSION == 740
-        if (strcmp(version, "7.4") != 0) {
-#elif IDA_SDK_VERSION == 730
-        if (strcmp(version, "7.3") != 0) {
-#elif IDA_SDK_VERSION == 720
-        if (strcmp(version, "7.2") != 0) {
-#elif IDA_SDK_VERSION == 710
-        if (strcmp(version, "7.1") != 0) {
-#elif IDA_SDK_VERSION == 700
-        if (strcmp(version, "7.00") != 0) {
-#elif IDA_SDK_VERSION < 700
-#error "Ponce does not support IDA < 7.0"
-#endif
-            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, version);
+    if (get_kernel_version(runtimeVersion, sizeof(runtimeVersion))) {
+        const char* staticVersion = (const char*)IDA_SDK_VERSION;
+        if (runtimeVersion[0] != staticVersion[0] ||
+            runtimeVersion[2] != staticVersion[1]) {
+            warning("[!] This Ponce plugin was built for IDA %d, you are using: %s\n", IDA_SDK_VERSION, runtimeVersion);
         }
     }
     else {
         error("Can't detect the IDA version you are running");
     }
 
-    if (int(version[0]) < 7) {
+    if (int(runtimeVersion[0]) < 7) {
         warning("[!] Ponce plugin can't run with IDA version < 7. Please use a newer IDA version");
         return PLUGIN_SKIP;
     }
