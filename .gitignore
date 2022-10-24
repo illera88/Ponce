@@ -1,5 +1,6 @@
 **/build*/*
 .vs
+.vscode/
 
 *.db
 *.i64
