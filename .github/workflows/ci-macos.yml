@@ -24,12 +24,9 @@ jobs:
             - name: Unzip IDA_SDKs.zip
               shell: bash
               run: |
-                  ls -lha
                   unzip IDA_SDKs.zip -d IDA_SDKs
                   cd IDA_SDKs
                   unzip -n -q '*.zip'
-                  ls -lha
-                  tree
 
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
@@ -76,10 +73,20 @@ jobs:
                   cmake -S . -B build_x64_7.6 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.6 --config Release --parallel 2
 
-            - name: Build Ponce IDA 7.7
+            # - name: Build Ponce IDA 7.7
+            #   run: |
+            #       cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            #       cmake --build build_x64_7.7 --config Release --parallel 2
+
+             - name: Build Ponce IDA 8.0
               run: |
-                  cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-                  cmake --build build_x64_7.7 --config Release --parallel 2
+                  cmake -S . -B build_x64_8.0 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk_pro80" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_8.0 --config Release --parallel 2
+
+               - name: Build Ponce IDA 8.1
+              run: |
+                  cmake -S . -B build_x64_8.1 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk_pro81" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                  cmake --build build_x64_8.1 --config Release --parallel 2
 
 
             - uses: actions/upload-artifact@master
@@ -152,15 +159,35 @@ jobs:
                   name: Ponce_ida76
                   path: build_x64_7.6/Ponce.dylib
 
-            - uses: actions/upload-artifact@master
-              with:
-                  name: Ponce_ida77
-                  path: build_x64_7.7/Ponce64.dylib
+            # - uses: actions/upload-artifact@master
+            #   with:
+            #       name: Ponce_ida77
+            #       path: build_x64_7.7/Ponce64.dylib
+
+            # - uses: actions/upload-artifact@master
+            #   with:
+            #       name: Ponce_ida77
+            #       path: build_x64_7.7/Ponce.dylib
 
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_ida77
-                  path: build_x64_7.7/Ponce.dylib
+                  name: Ponce_ida80
+                  path: build_x64_8.0/Ponce64.dylib
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida80
+                  path: build_x64_8.0/Ponce.dylib
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida81
+                  path: build_x64_8.1/Ponce64.dylib
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida81
+                  path: build_x64_8.1/Ponce.dylib
 
 
     release:

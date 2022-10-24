@@ -23,11 +23,9 @@ jobs:
 
             - name: Unzip IDA_SDKs.zip
               run: |
-                  dir
                   7z.exe x IDA_SDKs.zip -oIDA_SDKs
                   cd IDA_SDKs
                   7z.exe x *.zip
-                  dir
 
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
@@ -74,10 +72,20 @@ jobs:
                   cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.6 --config Release --parallel 2
 
-            - name: Build Ponce IDA 7.7
+            # - name: Build Ponce IDA 7.7
+            #   run: |
+            #       cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+            #       cmake --build build_x64_7.7 --config Release --parallel 2
+
+            - name: Build Ponce IDA 8.0
               run: |
-                  cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-                  cmake --build build_x64_7.7 --config Release --parallel 2
+                  cmake -S . -B build_x64_8.0 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk_pro80" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+                  cmake --build build_x64_8.0 --config Release --parallel 2
+
+            - name: Build Ponce IDA 8.1
+              run: |
+                  cmake -S . -B build_x64_8.1 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk_pro81" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+                  cmake --build build_x64_8.1 --config Release --parallel 2
 
 
             - uses: actions/upload-artifact@master
@@ -150,16 +158,35 @@ jobs:
                   name: Ponce_ida76
                   path: build_x64_7.6/Release/Ponce.dll
 
-            - uses: actions/upload-artifact@master
-              with:
-                  name: Ponce_ida77
-                  path: build_x64_7.7/Release/Ponce64.dll
+            # - uses: actions/upload-artifact@master
+            #   with:
+            #       name: Ponce_ida77
+            #       path: build_x64_7.7/Release/Ponce64.dll
+
+            # - uses: actions/upload-artifact@master
+            #   with:
+            #       name: Ponce_ida77
+            #       path: build_x64_7.7/Release/Ponce.dll
 
             - uses: actions/upload-artifact@master
               with:
-                  name: Ponce_ida77
-                  path: build_x64_7.7/Release/Ponce.dll
+                  name: Ponce_ida80
+                  path: build_x64_8.0/Release/Ponce64.dll
 
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida80
+                  path: build_x64_8.0/Release/Ponce.dll
+            
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida81
+                  path: build_x64_8.1/Release/Ponce64.dll
+
+            - uses: actions/upload-artifact@master
+              with:
+                  name: Ponce_ida81
+                  path: build_x64_8.1/Release/Ponce.dll
 
     release:
         runs-on: ubuntu-latest
