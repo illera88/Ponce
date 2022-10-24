@@ -13,7 +13,7 @@
 #include <sstream>
 
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 
 //IDA
 #include <ida.hpp>
@@ -32,17 +32,17 @@ void ponce_table_chooser_t::fill_entryList() {
     //We clear the list
     table_item_list.clear();
 
-    for (const auto& [SymVarId, SymVar] : api.getSymbolicVariables()) {
+    for (const auto& [SymVarId, SymVar] : tritonCtx.getSymbolicVariables()) {
         list_item_t list_entry;
 
         list_entry.id = SymVarId;
         if (SymVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
             list_entry.address = SymVar->getOrigin();
-            list_entry.value = api.getConcreteMemoryValue(list_entry.address, false);
+            list_entry.value = tritonCtx.getConcreteMemoryValue(list_entry.address, false);
         }
         else if (SymVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
-            list_entry.register_name = api.getRegister((triton::arch::register_e)SymVar->getOrigin()).getName();
-            list_entry.value = api.getConcreteRegisterValue(api.getRegister((triton::arch::register_e)SymVar->getOrigin()), false);
+            list_entry.register_name = tritonCtx.getRegister((triton::arch::register_e)SymVar->getOrigin()).getName();
+            list_entry.value = tritonCtx.getConcreteRegisterValue(tritonCtx.getRegister((triton::arch::register_e)SymVar->getOrigin()), false);
         }
 
         list_entry.var_name = SymVar->getName();

@@ -45,28 +45,28 @@ void Snapshot::takeSnapshot() {
     this->locked = false;
 
     /* 2 - Save current symbolic engine state */
-    this->snapshotSymEngine = new triton::engines::symbolic::SymbolicEngine(*api.getSymbolicEngine());
+    this->snapshotSymEngine = new triton::engines::symbolic::SymbolicEngine(*tritonCtx.getSymbolicEngine());
 
     /* 3 - Save current taint engine state */
-    this->snapshotTaintEngine = new triton::engines::taint::TaintEngine(*api.getTaintEngine());
+    this->snapshotTaintEngine = new triton::engines::taint::TaintEngine(*tritonCtx.getTaintEngine());
 
     /* 4 - Save current set of nodes */
-    this->astCtx = new triton::ast::AstContext(*api.getAstContext());
-    //this->nodesList = api.getAllocatedAstNodes();
+    this->astCtx = new triton::ast::AstContext(*tritonCtx.getAstContext());
+    //this->nodesList = tritonCtx.getAllocatedAstNodes();
 
     /* 5 - Save the Triton CPU state. It depens on the analyzed binary*/   
-    switch (api.getArchitecture()) {
+    switch (tritonCtx.getArchitecture()) {
     case triton::arch::ARCH_X86_64:
-        this->cpu_x8664 = new triton::arch::x86::x8664Cpu(*dynamic_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()));
+        this->cpu_x8664 = new triton::arch::x86::x8664Cpu(*dynamic_cast<triton::arch::x86::x8664Cpu*>(tritonCtx.getCpuInstance()));
         break;
     case triton::arch::ARCH_X86:
-        this->cpu_x86 = new triton::arch::x86::x86Cpu(*reinterpret_cast<triton::arch::x86::x86Cpu*>(api.getCpuInstance()));
+        this->cpu_x86 = new triton::arch::x86::x86Cpu(*reinterpret_cast<triton::arch::x86::x86Cpu*>(tritonCtx.getCpuInstance()));
         break;
     case triton::arch::ARCH_AARCH64:
-        this->cpu_AArch64 = new triton::arch::arm::aarch64::AArch64Cpu(*reinterpret_cast<triton::arch::arm::aarch64::AArch64Cpu*>(api.getCpuInstance()));
+        this->cpu_AArch64 = new triton::arch::arm::aarch64::AArch64Cpu(*reinterpret_cast<triton::arch::arm::aarch64::AArch64Cpu*>(tritonCtx.getCpuInstance()));
         break;
     case triton::arch::ARCH_ARM32:
-        this->cpu_Arm32 = new triton::arch::arm::arm32::Arm32Cpu(*reinterpret_cast<triton::arch::arm::arm32::Arm32Cpu*>(api.getCpuInstance()));
+        this->cpu_Arm32 = new triton::arch::arm::arm32::Arm32Cpu(*reinterpret_cast<triton::arch::arm::arm32::Arm32Cpu*>(tritonCtx.getCpuInstance()));
         break;
     default:
         throw triton::exceptions::Architecture("Architecture not supported.");
@@ -74,7 +74,7 @@ void Snapshot::takeSnapshot() {
     }
 
     /* 6 - Save IDA registers context */
-    auto regs = api.getAllRegisters();
+    auto regs = tritonCtx.getAllRegisters();
     for (auto it = regs.begin(); it != regs.end(); it++)
     {
         const triton::arch::Register reg = (*it).second;
@@ -103,27 +103,27 @@ void Snapshot::restoreSnapshot() {
     this->memory.clear();
 
     /* 2 - Restore current symbolic engine state */
-    *api.getSymbolicEngine() = *this->snapshotSymEngine;
+    *tritonCtx.getSymbolicEngine() = *this->snapshotSymEngine;
 
     /* 3 - Restore current taint engine state */
-    *api.getTaintEngine() = *this->snapshotTaintEngine;
+    *tritonCtx.getTaintEngine() = *this->snapshotTaintEngine;
 
     /* 4 - Restore current AST context */
-    *api.getAstContext() = *this->astCtx;
+    *tritonCtx.getAstContext() = *this->astCtx;
 
     /* 5 - Restore the Triton CPU state */
-    switch (api.getArchitecture()) {
+    switch (tritonCtx.getArchitecture()) {
     case triton::arch::ARCH_X86_64:
-        *reinterpret_cast<triton::arch::x86::x8664Cpu*>(api.getCpuInstance()) = *this->cpu_x8664;
+        *reinterpret_cast<triton::arch::x86::x8664Cpu*>(tritonCtx.getCpuInstance()) = *this->cpu_x8664;
         break;
     case triton::arch::ARCH_X86:
-        *reinterpret_cast<triton::arch::x86::x86Cpu*>(api.getCpuInstance()) = *this->cpu_x86;
+        *reinterpret_cast<triton::arch::x86::x86Cpu*>(tritonCtx.getCpuInstance()) = *this->cpu_x86;
         break;
     case triton::arch::ARCH_AARCH64:
-        *reinterpret_cast<triton::arch::arm::aarch64::AArch64Cpu*>(api.getCpuInstance()) = *this->cpu_AArch64;
+        *reinterpret_cast<triton::arch::arm::aarch64::AArch64Cpu*>(tritonCtx.getCpuInstance()) = *this->cpu_AArch64;
         break;
     case triton::arch::ARCH_ARM32:
-        *reinterpret_cast<triton::arch::arm::arm32::Arm32Cpu*>(api.getCpuInstance()) = *this->cpu_Arm32;
+        *reinterpret_cast<triton::arch::arm::arm32::Arm32Cpu*>(tritonCtx.getCpuInstance()) = *this->cpu_Arm32;
         break;
     default:
         throw triton::exceptions::Architecture("Architecture not supported.");

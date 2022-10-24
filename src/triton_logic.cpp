@@ -60,7 +60,7 @@ int tritonize(ea_t pc, thid_t threadID)
     tritonInst->setThreadId(threadID);
 
     try {
-        if (!api.processing(*tritonInst)) {
+        if (!tritonCtx.processing(*tritonInst)) {
             msg("[!] Instruction at " MEM_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
             return 2;
         }
@@ -153,9 +153,9 @@ int tritonize(ea_t pc, thid_t threadID)
 bool ponce_set_triton_architecture() {
     if (ph.id == PLFM_386) {
         if (ph.use64())
-            api.setArchitecture(triton::arch::ARCH_X86_64);
+            tritonCtx.setArchitecture(triton::arch::ARCH_X86_64);
         else if (ph.use32())
-            api.setArchitecture(triton::arch::ARCH_X86);
+            tritonCtx.setArchitecture(triton::arch::ARCH_X86);
         else {
             msg("[e] Wrong architecture\n");
             return false;
@@ -163,9 +163,9 @@ bool ponce_set_triton_architecture() {
     }
     else if (ph.id == PLFM_ARM) {
         if (ph.use64())
-            api.setArchitecture(triton::arch::ARCH_AARCH64);
+            tritonCtx.setArchitecture(triton::arch::ARCH_AARCH64);
         else if (ph.use32())
-            api.setArchitecture(triton::arch::ARCH_ARM32);
+            tritonCtx.setArchitecture(triton::arch::ARCH_ARM32);
         else {
             msg("[e] Wrong architecture\n");
             return false;
@@ -186,33 +186,33 @@ void triton_restart_engines()
     //We need to set the architecture for Triton
     ponce_set_triton_architecture();
     //We reset everything at the beginning
-    api.reset();
+    tritonCtx.reset();
     // Memory access callback
-    api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_MEMORY_VALUE, needConcreteMemoryValue_cb);
+    tritonCtx.addCallback(triton::callbacks::callback_e::GET_CONCRETE_MEMORY_VALUE, needConcreteMemoryValue_cb);
     // Register access callback
-    api.addCallback(triton::callbacks::callback_e::GET_CONCRETE_REGISTER_VALUE, needConcreteRegisterValue_cb);
+    tritonCtx.addCallback(triton::callbacks::callback_e::GET_CONCRETE_REGISTER_VALUE, needConcreteRegisterValue_cb);
 
     if (ponce_runtime_status.last_triton_instruction) {
         delete ponce_runtime_status.last_triton_instruction;
         ponce_runtime_status.last_triton_instruction = nullptr;
     }
 
-    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+    tritonCtx.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
     
     // These modes cannot be configured by the user. They are allways on
-    api.setMode(triton::modes::ALIGNED_MEMORY, true);
+    tritonCtx.setMode(triton::modes::ALIGNED_MEMORY, true);
     // We don't want to track non symbolic path constraints
-    api.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
+    tritonCtx.setMode(triton::modes::PC_TRACKING_SYMBOLIC, true);
     // Only keep expressions (AST) that contain at least a symbolic variable
-    api.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
+    tritonCtx.setMode(triton::modes::ONLY_ON_SYMBOLIZED, true);
 
 
     // Set the optimizations selected by user
-    api.setMode(triton::modes::AST_OPTIMIZATIONS, cmdOptions.AST_OPTIMIZATIONS);
-    api.setMode(triton::modes::CONCRETIZE_UNDEFINED_REGISTERS, cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS);
-    api.setMode(triton::modes::CONSTANT_FOLDING, cmdOptions.CONSTANT_FOLDING);
-    api.setMode(triton::modes::SYMBOLIZE_INDEX_ROTATION, cmdOptions.SYMBOLIZE_INDEX_ROTATION);
-    api.setMode(triton::modes::TAINT_THROUGH_POINTERS, cmdOptions.TAINT_THROUGH_POINTERS);
+    tritonCtx.setMode(triton::modes::AST_OPTIMIZATIONS, cmdOptions.AST_OPTIMIZATIONS);
+    tritonCtx.setMode(triton::modes::CONCRETIZE_UNDEFINED_REGISTERS, cmdOptions.CONCRETIZE_UNDEFINED_REGISTERS);
+    tritonCtx.setMode(triton::modes::CONSTANT_FOLDING, cmdOptions.CONSTANT_FOLDING);
+    tritonCtx.setMode(triton::modes::SYMBOLIZE_INDEX_ROTATION, cmdOptions.SYMBOLIZE_INDEX_ROTATION);
+    tritonCtx.setMode(triton::modes::TAINT_THROUGH_POINTERS, cmdOptions.TAINT_THROUGH_POINTERS);
 
     ponce_runtime_status.runtimeTrigger.disable();
     ponce_runtime_status.tainted_functions_index = 0;

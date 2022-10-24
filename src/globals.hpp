@@ -19,7 +19,7 @@
 #include <kernwin.hpp>
 
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 
 #define strtol_m strtoll
 
@@ -85,7 +85,7 @@ extern std::vector<std::string>* blacklkistedUserFunctions;
 
 extern void idaapi term(void);
 
-extern triton::API api;
+extern triton::Context tritonCtx;
 
 struct instruction_info {
     std::string comment;
@@ -104,9 +104,9 @@ extern std::map<ea_t, struct instruction_info> ponce_comments;
 
 #ifdef __EA64__
 #define MEM_FORMAT "%#" PRIx64
-#define REG_XIP api.registers.x86_rip
+#define REG_XIP tritonCtx.registers.x86_rip
 #else
 #define MEM_FORMAT "%#" PRIx32
-#define REG_XIP api.registers.x86_eip
+#define REG_XIP tritonCtx.registers.x86_eip
 #endif // __EA64__
 
