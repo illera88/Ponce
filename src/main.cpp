@@ -174,7 +174,9 @@ void idaapi term(void)
     // We want to delete Ponce comments and colours before terminating
     delete_ponce_comments();
 #ifdef BUILD_HEXRAYS_SUPPORT
-    remove_hexrays_callback(ponce_hexrays_callback, NULL);
+    if(hexrays_present) {
+        remove_hexrays_callback(ponce_hexrays_callback, NULL);
+    }
 #endif
     // Unhook notifications
     unhook_from_notification_point(HT_UI, ui_callback, NULL);
