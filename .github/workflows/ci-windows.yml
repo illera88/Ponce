@@ -1,5 +1,5 @@
 name: Build for Windows
-on: 
+on:
     push:
     pull_request:
     release:
@@ -9,25 +9,26 @@ on:
 jobs:
     build:
         runs-on: windows-2019
-        steps:           
+        steps:
             - uses: actions/checkout@v1
               with:
                   submodules: true
-   
+
             - uses: robinraju/release-downloader@v1.5
-              with: 
+              with:
                 repository: ${{ secrets.SDK_REPO }}
                 latest: true
                 filename : "IDA_SDKs.zip"
                 token: ${{ secrets.SDK_REPO_ACCESS_TOKEN }}
 
             - name: Unzip IDA_SDKs.zip
-              shell: bash
-              run: |     
+              run: |
+                  dir
                   7z.exe x IDA_SDKs.zip -oIDA_SDKs
                   cd IDA_SDKs
                   7z.exe x *.zip
-            
+                  dir
+
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
                   cd $env:VCPKG_INSTALLATION_ROOT
@@ -42,40 +43,40 @@ jobs:
               run: |
                   cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.0 --config Release --parallel 2
-                  
+
             - name: Build Ponce IDA 7.1
               run: |
-                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.1 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.2
               run: |
-                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.2 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.3
               run: |
-                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.3 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.4
               run: |
-                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.4 --config Release --parallel 2
-                      
+
             - name: Build Ponce IDA 7.5
               run: |
-                  cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.5 --config Release --parallel 2
 
             - name: Build Ponce IDA 7.6
               run: |
-                  cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.6 --config Release --parallel 2
 
             - name: Build Ponce IDA 7.7
               run: |
-                  cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"          
+                  cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
                   cmake --build build_x64_7.7 --config Release --parallel 2
 
 
@@ -83,57 +84,57 @@ jobs:
               with:
                   name: Ponce_ida70
                   path: build_x64_7.0/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida70
                   path: build_x64_7.0/Release/Ponce.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida71
                   path: build_x64_7.1/Release/Ponce64.dll
-            
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida71
                   path: build_x64_7.1/Release/Ponce.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida72
                   path: build_x64_7.2/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida72
                   path: build_x64_7.2/Release/Ponce.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida73
                   path: build_x64_7.3/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida73
                   path: build_x64_7.3/Release/Ponce.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida74
                   path: build_x64_7.4/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida74
                   path: build_x64_7.4/Release/Ponce.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida75
                   path: build_x64_7.5/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida75
@@ -143,7 +144,7 @@ jobs:
               with:
                   name: Ponce_ida76
                   path: build_x64_7.6/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida76
@@ -153,7 +154,7 @@ jobs:
               with:
                   name: Ponce_ida77
                   path: build_x64_7.7/Release/Ponce64.dll
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida77
@@ -169,20 +170,20 @@ jobs:
               uses: actions/download-artifact@v2
               with:
                   path: ./my_artifacts
-            
+
             - name: Set output
               id: vars
               run: |
                 echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-                
+
             - name: Build zip file
               env:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-              run: |             
+              run: |
                 cd my_artifacts
                 zip -r ../ponce-$RELEASE_VERSION-win.zip *
 
-            
+
             - name: Upload Windows artifacts
               uses: actions/upload-release-asset@v1
               env:
@@ -192,5 +193,4 @@ jobs:
                   asset_path: ./ponce-${{ steps.vars.outputs.tag }}-win.zip
                   asset_name: ponce-${{ steps.vars.outputs.tag }}-win.zip
                   asset_content_type: application/zip
-                  
-           
+

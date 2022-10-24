@@ -1,5 +1,5 @@
 name: Build for Linux
-on: 
+on:
     push:
     pull_request:
     release:
@@ -15,7 +15,7 @@ jobs:
                   submodules: true
 
             - uses: robinraju/release-downloader@v1.5
-              with: 
+              with:
                 repository: ${{ secrets.SDK_REPO }}
                 latest: true
                 filename : "IDA_SDKs.zip"
@@ -23,10 +23,13 @@ jobs:
 
             - name: Unzip IDA_SDKs.zip
               shell: bash
-              run: |     
+              run: |
+                  ls -lha
                   unzip IDA_SDKs.zip -d IDA_SDKs
                   cd IDA_SDKs
                   unzip -n -q '*.zip'
+                  ls -lha
+                  tree
 
             - name: Install Triton (delete first two lines when Triton last port is in the CI)
               run: |
@@ -42,27 +45,27 @@ jobs:
               run: |
                   cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.0 --config Release --parallel 2
-                  
+
             - name: Build Ponce IDA 7.1
               run: |
                   cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.1 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.2
               run: |
                   cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.2 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.3
               run: |
                   cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.3 --config Release --parallel 2
-            
+
             - name: Build Ponce IDA 7.4
               run: |
                   cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
                   cmake --build build_x64_7.4 --config Release --parallel 2
-                      
+
             - name: Build Ponce IDA 7.5
               run: |
                   cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
@@ -83,32 +86,32 @@ jobs:
               with:
                   name: Ponce_ida70
                   path: build_x64_7.0/Ponce64.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida70
                   path: build_x64_7.0/Ponce.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida71
                   path: build_x64_7.1/Ponce64.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida71
                   path: build_x64_7.1/Ponce.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida72
                   path: build_x64_7.2/Ponce64.so
-            
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida72
                   path: build_x64_7.2/Ponce.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida73
@@ -118,22 +121,22 @@ jobs:
               with:
                   name: Ponce_ida73
                   path: build_x64_7.3/Ponce.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida74
                   path: build_x64_7.4/Ponce64.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida74
                   path: build_x64_7.4/Ponce.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida75
                   path: build_x64_7.5/Ponce64.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida75
@@ -143,7 +146,7 @@ jobs:
               with:
                   name: Ponce_ida76
                   path: build_x64_7.6/Ponce64.so
-                  
+
             - uses: actions/upload-artifact@master
               with:
                   name: Ponce_ida76
@@ -158,7 +161,7 @@ jobs:
               with:
                   name: Ponce_ida77
                   path: build_x64_7.7/Ponce.so
-                  
+
     release:
         runs-on: ubuntu-latest
         if: github.event_name == 'release'
@@ -168,20 +171,20 @@ jobs:
               uses: actions/download-artifact@v2
               with:
                   path: ./my_artifacts
-            
+
             - name: Set output
               id: vars
               run: |
                 echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-                
+
             - name: Build zip file
               env:
                 RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
-              run: |             
+              run: |
                 cd my_artifacts
                 zip -r ../ponce-$RELEASE_VERSION-linux.zip *
 
-            
+
             - name: Upload Linux artifacts
               uses: actions/upload-release-asset@v1
               env:
@@ -191,5 +194,4 @@ jobs:
                   asset_path: ./ponce-${{ steps.vars.outputs.tag }}-linux.zip
                   asset_name: ponce-${{ steps.vars.outputs.tag }}-linux.zip
                   asset_content_type: application/zip
-                  
-                  
+
