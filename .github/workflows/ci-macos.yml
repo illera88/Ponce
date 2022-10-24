@@ -24,14 +24,17 @@ jobs:
                  echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
                  vcpkg install triton
                   
-            - name: Dowload IDA SDKs
+            - uses: robinraju/release-downloader@v1.5
+              with: 
+                repository: ${{ secrets.SDK_REPO }}
+                latest: true
+                filename : "IDA_SDKs.zip"
+                token: ${{ secrets.SDK_REPO_ACCESS_TOKEN }}
+
+            - name: Unzip IDA_SDKs.zip
               shell: bash
-              env:
-                IDA_SDK: ${{ secrets. DOWNLOAD_LINK_IDA_SDK }}
-              run: |
-                  cd ..
-                  curl -L -o IDA_SDKs.zip "$IDA_SDK"
-                  unzip IDA_SDKs.zip -d IDA_SDKs              
+              run: |     
+                  unzip IDA_SDKs.zip -d IDA_SDKs  
             
             - name: Build Ponce IDA 7.0
               run: |
