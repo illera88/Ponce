@@ -68,15 +68,15 @@ jobs:
           cmake -S . -B build_x64_7.5 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
           cmake --build build_x64_7.5 --config Release --parallel 2
 
-      # - name: Build Ponce IDA 7.6
-      #   run: |
-      #     cmake -S . -B build_x64_7.6 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-      #     cmake --build build_x64_7.6 --config Release --parallel 2
+      - name: Build Ponce IDA 7.6
+        run: |
+          cmake -S . -B build_x64_7.6 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build_x64_7.6 --config Release --parallel 2
 
-      # - name: Build Ponce IDA 7.7
-      #   run: |
-      #     cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-      #     cmake --build build_x64_7.7 --config Release --parallel 2
+      - name: Build Ponce IDA 7.7
+        run: |
+          cmake -S . -B build_x64_7.7 -DUSE_CLANG=ON -DIDASDK_ROOT_DIR="./IDA_SDKs/idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build_x64_7.7 --config Release --parallel 2
 
       - name: Build Ponce IDA 8.0
         run: |
@@ -148,25 +148,25 @@ jobs:
           name: Ponce_ida75
           path: build_x64_7.5/Ponce.dylib
 
-      # - uses: actions/upload-artifact@master
-      #   with:
-      #     name: Ponce_ida76
-      #     path: build_x64_7.6/Ponce64.dylib
+      - uses: actions/upload-artifact@master
+        with:
+          name: Ponce_ida76
+          path: build_x64_7.6/Ponce64.dylib
 
-      # - uses: actions/upload-artifact@master
-      #   with:
-      #     name: Ponce_ida76
-      #     path: build_x64_7.6/Ponce.dylib
+      - uses: actions/upload-artifact@master
+        with:
+          name: Ponce_ida76
+          path: build_x64_7.6/Ponce.dylib
 
-      # - uses: actions/upload-artifact@master
-      #   with:
-      #       name: Ponce_ida77
-      #       path: build_x64_7.7/Ponce64.dylib
+      - uses: actions/upload-artifact@master
+        with:
+            name: Ponce_ida77
+            path: build_x64_7.7/Ponce64.dylib
 
-      # - uses: actions/upload-artifact@master
-      #   with:
-      #       name: Ponce_ida77
-      #       path: build_x64_7.7/Ponce.dylib
+      - uses: actions/upload-artifact@master
+        with:
+            name: Ponce_ida77
+            path: build_x64_7.7/Ponce.dylib
 
       - uses: actions/upload-artifact@master
         with:
