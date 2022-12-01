@@ -14,9 +14,6 @@
 #include <loader.hpp>
 #include <kernwin.hpp>
 
-//Triton
-#include <triton/api.hpp>
-
 //Ponce
 #include "formTaintSymbolizeInput.hpp"
 #include "globals.hpp"

@@ -28,13 +28,8 @@ jobs:
           cd IDA_SDKs
           unzip -n -q '*.zip'
 
-      - name: Install Triton (delete first two lines when Triton last port is in the CI)
+      - name: Install Triton
         run: |
-          cd $VCPKG_INSTALLATION_ROOT
-          git reset --hard
-          git pull
-          ./bootstrap-vcpkg.sh
-
           echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
           vcpkg install triton
 

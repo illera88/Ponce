@@ -107,6 +107,6 @@ extern std::map<ea_t, struct instruction_info> ponce_comments;
 #define REG_XIP tritonCtx.registers.x86_rip
 #else
 #define MEM_FORMAT "%#" PRIx32
-#define REG_XIP api.registers.x86_eip
+#define REG_XIP tritonCtx.registers.x86_eip
 #endif // __EA64__
 
