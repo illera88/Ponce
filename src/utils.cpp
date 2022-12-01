@@ -23,7 +23,7 @@
 
 
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 #include <triton/x86Specifications.hpp>
 
 //IDA
@@ -48,7 +48,7 @@
 This is using the triton current architecture so it is more generic.*/
 const triton::arch::register_e str_to_register(const qstring& register_name)
 {
-    for (const auto& [key, value] : api.getAllRegisters())
+    for (const auto& [key, value] : tritonCtx.getAllRegisters())
         if (stricmp(value.getName().c_str(), register_name.c_str()) == 0)
             return key;
 
@@ -103,12 +103,12 @@ ea_t get_args(int argument_number, bool skip_ret)
     // On Windows - function parameters are passed in using RCX, RDX, R8, R9 for ints / ptrs and xmm0 - 3 for float types.
     switch (argument_number)
     {
-    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rcx));
-    case 1: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rdx));
-    case 2: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r8));
-    case 3: return static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_r9));
+    case 0: return static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_rcx));
+    case 1: return static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_rdx));
+    case 2: return static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_r8));
+    case 3: return static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_r9));
     default:
-        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsp));
+        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_rsp));
         ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
         return get_qword(arg);
     }
@@ -153,7 +153,7 @@ ea_t get_args_pointer(int argument_number, bool skip_ret)
     case 2:
     case 3: error("[!] In Windows 64 bits you can't get a pointer to the four first\n arguments since they are registers");
     default:
-        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(api.registers.x86_rsp));
+        ea_t esp = static_cast<ea_t>(IDA_getCurrentRegisterValue(tritonCtx.registers.x86_rsp));
         ea_t arg = esp + (argument_number - 4 + skip_ret_index) * 8;
         return arg;
     }
@@ -586,8 +586,8 @@ void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc)
     /*Here we check all the registers and memory read to know which are tainted*/
     auto regs = tritonInst->getReadRegisters();
     for (const auto& [reg, expr] : tritonInst->getReadRegisters()) {
-        if ((cmdOptions.use_tainting_engine && api.isRegisterTainted(reg)) ||
-            (cmdOptions.use_symbolic_engine && api.isRegisterSymbolized(reg))) {
+        if ((cmdOptions.use_tainting_engine && tritonCtx.isRegisterTainted(reg)) ||
+            (cmdOptions.use_symbolic_engine && tritonCtx.isRegisterSymbolized(reg))) {
             regs_controlled << std::uppercase << reg.getName() << " ";
         }
     }
@@ -596,8 +596,8 @@ void comment_controlled_operands(triton::arch::Instruction* tritonInst, ea_t pc)
     }
 
     for (const auto& [mem, expr] : tritonInst->getLoadAccess()) {
-        if ((cmdOptions.use_tainting_engine && api.isMemoryTainted(mem)) ||
-            (cmdOptions.use_symbolic_engine && api.isMemorySymbolized(mem)))
+        if ((cmdOptions.use_tainting_engine && tritonCtx.isMemoryTainted(mem)) ||
+            (cmdOptions.use_symbolic_engine && tritonCtx.isMemorySymbolized(mem)))
             mems_controlled << "0x" << std::hex << mem.getAddress() << " ";
     }
 

@@ -14,7 +14,7 @@
 #include "globals.hpp"
 #include "trigger.hpp"
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 
 #include <ida.hpp>
 //A variable to store if the plugin has hooked the ui and debugger events
@@ -33,7 +33,7 @@ Snapshot snapshot = Snapshot();
 //Used to point to the vector of blacklisted user functions
 std::vector<std::string>* blacklkistedUserFunctions = nullptr;
 
-triton::API api;
+triton::Context tritonCtx;
 
 std::map<ea_t, struct instruction_info> ponce_comments;
 

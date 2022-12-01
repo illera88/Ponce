@@ -10,11 +10,11 @@
 
 #pragma once
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 //IDA
 #include <pro.h> 
 
-void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem);
-void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register& reg);
+void needConcreteMemoryValue_cb(triton::Context& tritonCtx, const triton::arch::MemoryAccess& mem);
+void needConcreteRegisterValue_cb(triton::Context& tritonCtx, const triton::arch::Register& reg);
 triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size);
 triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg);

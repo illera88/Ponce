@@ -9,8 +9,6 @@
 */
 
 #pragma once
-//Triton
-#include <triton/api.hpp>
 
 //IDA
 #include <ida.hpp>

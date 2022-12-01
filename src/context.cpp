@@ -15,7 +15,7 @@
 #include <triton/cpuSize.hpp>
 #include <triton/coreUtils.hpp>
 #include <triton/x86Specifications.hpp>
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 
 #include "context.hpp"
 #include "globals.hpp"
@@ -56,21 +56,21 @@ triton::uint512 IDA_getCurrentMemoryValue(ea_t addr, triton::uint32 size)
 }
 
 /*This callback is called when triton is processing a instruction and it needs a memory value to build the expressions*/
-void needConcreteMemoryValue_cb(triton::API& api, const triton::arch::MemoryAccess& mem)
+void needConcreteMemoryValue_cb(triton::Context& tritonCtx, const triton::arch::MemoryAccess& mem)
 {
     bool had_it = false;
     auto IDA_memValue = IDA_getCurrentMemoryValue((ea_t)mem.getAddress(), mem.getSize());
 
-    if (api.isConcreteMemoryValueDefined(mem)) {
-        auto triton_memValue = api.getConcreteMemoryValue(mem, false);
+    if (tritonCtx.isConcreteMemoryValueDefined(mem)) {
+        auto triton_memValue = tritonCtx.getConcreteMemoryValue(mem, false);
         if ((IDA_memValue != triton_memValue)) {
-            api.setConcreteMemoryValue(mem, IDA_memValue);
+            tritonCtx.setConcreteMemoryValue(mem, IDA_memValue);
             had_it = false;
         }
         had_it = true;
     }
     else {
-        api.setConcreteMemoryValue(mem, IDA_memValue);
+        tritonCtx.setConcreteMemoryValue(mem, IDA_memValue);
     }
 
     if (cmdOptions.showExtraDebugInfo) {
@@ -101,25 +101,25 @@ triton::uint512 IDA_getCurrentRegisterValue(const triton::arch::Register& reg)
     value = reg_value.ival;
     /* Sync with the libTriton */
     triton::arch::Register syncReg;
-    if (reg.getId() >= api.registers.x86_af.getId() && reg.getId() <= api.registers.x86_zf.getId())
-        syncReg = api.registers.x86_eflags;
-    else if (reg.getId() >= api.registers.x86_sse_ie.getId() && reg.getId() <= api.registers.x86_sse_fz.getId())
-        syncReg = api.registers.x86_mxcsr;
+    if (reg.getId() >= tritonCtx.registers.x86_af.getId() && reg.getId() <= tritonCtx.registers.x86_zf.getId())
+        syncReg = tritonCtx.registers.x86_eflags;
+    else if (reg.getId() >= tritonCtx.registers.x86_sse_ie.getId() && reg.getId() <= tritonCtx.registers.x86_sse_fz.getId())
+        syncReg = tritonCtx.registers.x86_mxcsr;
     else
-        syncReg = api.getRegister(reg.getParent());
+        syncReg = tritonCtx.getRegister(reg.getParent());
 
     return value;
 }
 
 /*This callback is called when triton is processing a instruction and it needs a regiter to build the expressions*/
-void needConcreteRegisterValue_cb(triton::API& api, const triton::arch::Register& reg)
+void needConcreteRegisterValue_cb(triton::Context& tritonCtx, const triton::arch::Register& reg)
 {
     bool had_it = true;
     auto IDA_regValue = IDA_getCurrentRegisterValue(reg);
-    auto triton_regValue = api.getConcreteRegisterValue(reg, false);
+    auto triton_regValue = tritonCtx.getConcreteRegisterValue(reg, false);
 
     if (IDA_regValue != triton_regValue) {
-        api.setConcreteRegisterValue(reg, IDA_regValue);
+        tritonCtx.setConcreteRegisterValue(reg, IDA_regValue);
         had_it = false;
     }
  

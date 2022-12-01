@@ -15,7 +15,7 @@
 #include <kernwin.hpp>
 
 //Triton
-#include <triton/api.hpp>
+#include <triton/context.hpp>
 
 //Ponce
 #include "callbacks.hpp"
@@ -64,7 +64,7 @@ bool idaapi run(size_t)
         register_action(action_IDA_clean);
         attach_action_to_menu("Edit/Ponce/", action_IDA_clean.name, SETMENU_APP);
 
-        //Some actions needs to use the api and the api need to have the architecture set
+        //Some actions needs to use the tritonCtx and the tritonCtx need to have the architecture set
         if (!ponce_set_triton_architecture()) {
             return false;
         }

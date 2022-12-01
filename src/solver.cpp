@@ -8,7 +8,7 @@
 /* This function return a vector of Inputs. A vector is necesary since switch conditions may have multiple branch constraints*/
 std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
 {
-    auto pathConstrains = api.getPathConstraints();
+    auto pathConstrains = tritonCtx.getPathConstraints();
     std::vector<Input> solutions;
     
     if (path_constraint_index > pathConstrains.size() - 1) {
@@ -19,7 +19,7 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
     // Double check that the condition at the path constraint index is at the address the user selected
     assert(std::get<1>(pathConstrains[path_constraint_index].getBranchConstraints()[0]) == pc);
 
-    auto ast = api.getAstContext();
+    auto ast = tritonCtx.getAstContext();
     // We are going to store here the constraints for the previous conditions
     // We can not initializate this to null, so we do it to a true condition (based on code_coverage_crackme_xor.py from the triton project)
     auto previousConstraints = ast->equal(ast->bvtrue(), ast->bvtrue());
@@ -54,14 +54,14 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
             if (cmdOptions.showExtraDebugInfo) {  
                 std::stringstream ss;
                 ss << "(set-logic QF_AUFBV)" << std::endl;
-                api.liftToSMT(ss, api.newSymbolicExpression(final_expr), true);
+                tritonCtx.liftToSMT(ss, tritonCtx.newSymbolicExpression(final_expr), true);
                 msg("[+] Formula:\n%s\n\n", ss.str().c_str());
             }
 
             //Time to solve
-            api.setSolverTimeout(cmdOptions.solver_timeout * 1000);
+            tritonCtx.setSolverTimeout(cmdOptions.solver_timeout * 1000);
             triton::engines::solver::status_e solver_status;
-            auto model = api.getModel(final_expr, &solver_status);
+            auto model = tritonCtx.getModel(final_expr, &solver_status);
             
             if (solver_status == triton::engines::solver::status_e::TIMEOUT) {
                 msg("[!] Solver timed out after %d seconds\n", cmdOptions.solver_timeout);
@@ -82,18 +82,18 @@ std::vector<Input> solve_formula(ea_t pc, size_t path_constraint_index)
 
                 msg("[+] Solution found! Values:\n");
                 for (const auto& [symId, model] : ordered_model) {
-                    triton::engines::symbolic::SharedSymbolicVariable  symbVar = api.getSymbolicVariable(symId);
+                    triton::engines::symbolic::SharedSymbolicVariable  symbVar = tritonCtx.getSymbolicVariable(symId);
                     std::string  symbVarComment = symbVar->getComment();
                     triton::uint512 model_value = model.getValue();
                     if (symbVar->getType() == triton::engines::symbolic::variable_e::MEMORY_VARIABLE) {
                         auto mem = triton::arch::MemoryAccess(symbVar->getOrigin(), symbVar->getSize() / 8);
                         newinput.memOperand.push_back(mem);
-                        api.setConcreteMemoryValue(mem, model_value);
+                        tritonCtx.setConcreteMemoryValue(mem, model_value);
                     }
                     else if (symbVar->getType() == triton::engines::symbolic::variable_e::REGISTER_VARIABLE) {
-                        auto reg = triton::arch::Register(*api.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
+                        auto reg = triton::arch::Register(*tritonCtx.getCpuInstance(), (triton::arch::register_e)symbVar->getOrigin());
                         newinput.regOperand.push_back(reg);
-                        api.setConcreteRegisterValue(reg, model_value);
+                        tritonCtx.setConcreteRegisterValue(reg, model_value);
                     }
                     switch (symbVar->getSize())
                     {
@@ -355,9 +355,9 @@ void negate_flag_condition(triton::arch::Instruction* triton_instruction)
 void set_SMT_solution(const Input& solution) {
     /*To set the memory types*/
     for (const auto& mem : solution.memOperand){
-        auto concreteValue = api.getConcreteMemoryValue(mem, false);
+        auto concreteValue = tritonCtx.getConcreteMemoryValue(mem, false);
         put_bytes((ea_t)mem.getAddress(), &concreteValue, mem.getSize());
-        api.setConcreteMemoryValue(mem, concreteValue);
+        tritonCtx.setConcreteMemoryValue(mem, concreteValue);
 
         if (cmdOptions.showExtraDebugInfo){
             char ascii_value[5] = { 0 };
@@ -374,9 +374,9 @@ void set_SMT_solution(const Input& solution) {
 
     /*To set the register types*/
     for (const auto& reg : solution.regOperand) {
-        auto concreteRegValue = api.getConcreteRegisterValue(reg, false);
+        auto concreteRegValue = tritonCtx.getConcreteRegisterValue(reg, false);
         set_reg_val(reg.getName().c_str(), static_cast<uint64>(concreteRegValue));
-        api.setConcreteRegisterValue(reg, concreteRegValue);
+        tritonCtx.setConcreteRegisterValue(reg, concreteRegValue);
 
         if (cmdOptions.showExtraDebugInfo) {
             char ascii_value[5] = { 0 };
@@ -405,7 +405,7 @@ void negate_inject_maybe_restore_solver(ea_t pc, int path_constraint_index, bool
         if (solutions.size() == 1) {
             chosen_solution = &solutions[0];
             triton::ast::SharedAbstractNode new_constraint;
-            for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+            for (auto& [taken, srcAddr, dstAddr, constraint] : tritonCtx.getPathConstraints().back().getBranchConstraints()) {
                 // Let's look for the constraint we have force to take wich is the a priori not taken one
                 if (!taken) {
                     new_constraint = constraint;
@@ -413,17 +413,17 @@ void negate_inject_maybe_restore_solver(ea_t pc, int path_constraint_index, bool
                 }
             }
             // Once found we first pop the last path constraint
-            api.popPathConstraint();
+            tritonCtx.popPathConstraint();
             // And replace it for the found previously
-            api.pushPathConstraint(new_constraint);
+            tritonCtx.pushPathConstraint(new_constraint);
         }
         else {
             // ToDo: what do we do if we are in a switch case and get several solutions? Just using the first one? Ask the user?
             for (const auto& solution : solutions) {
                 // ask the user where he wants to go in popup or even better in the contextual menu
                 // chosen_solution = &solutions[0];
-                //We need to modify the last path constrain from api.getPathConstraints()
-                for (auto& [taken, srcAddr, dstAddr, constraint] : api.getPathConstraints().back().getBranchConstraints()) {
+                //We need to modify the last path constrain from tritonCtx.getPathConstraints()
+                for (auto& [taken, srcAddr, dstAddr, constraint] : tritonCtx.getPathConstraints().back().getBranchConstraints()) {
                     if (!taken) {
 
                     }

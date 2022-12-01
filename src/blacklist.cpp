@@ -122,12 +122,12 @@ void concretizeAndUntaintVolatileRegisters()
     char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
 #endif
 
-    for (const auto& [reg_id, reg] : api.getAllRegisters())
+    for (const auto& [reg_id, reg] : tritonCtx.getAllRegisters())
     {
         for (auto i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++) {
             if (strcmp(reg.getName().c_str(), volatile_regs[i]) == 0) {
-                api.concretizeRegister(reg);
-                api.untaintRegister(reg);
+                tritonCtx.concretizeRegister(reg);
+                tritonCtx.untaintRegister(reg);
             }
         }
     }
@@ -136,12 +136,12 @@ void concretizeAndUntaintVolatileRegisters()
 //Helper to concretize and untaint all registers
 void concretizeAndUntaintAllRegisters()
 {
-    api.concretizeAllRegister();
+    tritonCtx.concretizeAllRegister();
     //We untaint all the registers
-    auto regs = api.getAllRegisters();
+    auto regs = tritonCtx.getAllRegisters();
     for (auto it = regs.begin(); it != regs.end(); it++)
     {
-        api.untaintRegister(it->second);
+        tritonCtx.untaintRegister(it->second);
     }
 }
 

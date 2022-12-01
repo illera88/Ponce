@@ -31,14 +31,14 @@
 #include "triton_logic.hpp"
 
 //Triton
-#include "triton/api.hpp"
+#include <triton/context.hpp>
 #include "triton/x86Specifications.hpp"
 
 int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* action_activation_ctx) {
     auto reg_id_to_symbolize = str_to_register(selected);
 
     if (reg_id_to_symbolize != triton::arch::register_e::ID_REG_INVALID) {
-        auto register_to_symbolize = api.getRegister(reg_id_to_symbolize);
+        auto register_to_symbolize = tritonCtx.getRegister(reg_id_to_symbolize);
         /*When the user symbolize something for the first time we should enable step_tracing*/
         start_tainting_or_symbolic_analysis();
 
@@ -50,13 +50,13 @@ int taint_symbolize_register(const qstring& selected, action_activation_ctx_t* a
         qsnprintf(comment, 256, "Reg %s at address: " MEM_FORMAT, selected.c_str(), pc);
 
         // Before symbolizing register we should set his concrete value
-        needConcreteRegisterValue_cb(api, register_to_symbolize);
+        needConcreteRegisterValue_cb(tritonCtx, register_to_symbolize);
 
         if (cmdOptions.use_tainting_engine) {
-            api.taintRegister(register_to_symbolize);
+            tritonCtx.taintRegister(register_to_symbolize);
         }
         else{ // Symbolize register            
-            api.symbolizeRegister(register_to_symbolize, std::string(comment));
+            tritonCtx.symbolizeRegister(register_to_symbolize, std::string(comment));
         }
 
         tritonize(pc);
@@ -73,13 +73,13 @@ struct ah_taint_symbolize_register_t : public action_handler_t
     {
         // Get the address range selected, or return false if there was no selection
         qstring selected;
-        if (ctx->widget_type == BWN_DISASM) {      
+        if (ctx->widget_type == BWN_DISASM) {
             uint32 flags;
             get_highlight(&selected, get_current_viewer(), &flags);
         }
 #if IDA_SDK_VERSION >= 740
         else if (ctx->widget_type == BWN_CPUREGS) {
-            selected = ctx->regname;            
+            selected = ctx->regname;
         }
 #endif
 
@@ -205,12 +205,12 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
 
         // Before symbolizing the memory we should set its concrete value
         for (unsigned int i = 0; i < selection_length; i++) {
-            needConcreteMemoryValue_cb(api, triton::arch::MemoryAccess(selection_starts + i, 1));
+            needConcreteMemoryValue_cb(tritonCtx, triton::arch::MemoryAccess(selection_starts + i, 1));
         }
 
         if (cmdOptions.use_tainting_engine) {
             for (unsigned int i = 0; i < selection_length; i++) {
-                auto taintVar = api.taintMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
+                auto taintVar = tritonCtx.taintMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
                 if (taintVar) {
                     ponce_set_cmt(selection_starts + i, "Tainted memory", true);
                 }
@@ -218,7 +218,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
         }
         else{ // Symbolizing all the selected memory
             for (unsigned int i = 0; i < selection_length; i++) {
-                auto symVar = api.symbolizeMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
+                auto symVar = tritonCtx.symbolizeMemory(triton::arch::MemoryAccess(selection_starts + i, 1));
                 auto var_name = symVar->getName();
                 ponce_set_cmt(selection_starts + i, var_name.c_str(), true);
             }
@@ -338,7 +338,7 @@ struct ah_negate_and_inject_t : public action_handler_t
                 ponce_runtime_status.last_triton_instruction->isSymbolized()) {
 
                 unsigned int path_constraint_index = 0;
-                for (const auto& pc : api.getPathConstraints()) {
+                for (const auto& pc : tritonCtx.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                         if (ctx->cur_ea == srcAddr && !taken) {
                             char tooltip[256];
@@ -407,7 +407,7 @@ struct ah_negate_inject_and_restore_t : public action_handler_t
                 ponce_runtime_status.last_triton_instruction->isSymbolized()) {
 
 
-                for (const auto& pc : api.getPathConstraints()) {
+                for (const auto& pc : tritonCtx.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                         if (ctx->cur_ea == srcAddr) {
                             char label[100] = { 0 };
@@ -637,7 +637,7 @@ struct ah_action_chooser_add_constrain_t : public action_handler_t
         }
 
 
-        auto ast = api.getAstContext();
+        auto ast = tritonCtx.getAstContext();
         for (const auto& index : ctx->chooser_selection) {
             triton::ast::SharedAbstractNode ge, le;
             auto list_item = ponce_table_chooser->table_item_list.at(index);
@@ -699,9 +699,9 @@ struct ah_action_chooser_comment_t : public action_handler_t
     {
         qstring response;
         if (ask_str(&response, 3, "New comment")) {
-            for (const auto& index : ctx->chooser_selection) {             
+            for (const auto& index : ctx->chooser_selection) {
                 auto list_item = ponce_table_chooser->table_item_list.at(index);
-                api.getSymbolicVariable(list_item.id)->setComment(std::string(response.c_str()));
+                tritonCtx.getSymbolicVariable(list_item.id)->setComment(std::string(response.c_str()));
                 msg("[+] Comment %s set to %s\n", response.c_str(), list_item.var_name.c_str());
             }
             refresh_chooser(ponce_table_chooser->title);

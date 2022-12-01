@@ -29,7 +29,7 @@
 #include <bytes.hpp>
 
 //Triton
-#include "triton/api.hpp"
+#include <triton/context.hpp>
 #include "triton/x86Specifications.hpp"
 
 ssize_t idaapi tracer_callback(void* user_data, int notification_code, va_list va)
@@ -313,11 +313,11 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         if (view_type == BWN_DISASM) {
             //&& !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
 
-            for (const auto& pc : api.getPathConstraints()) {
+            for (const auto& pc : tritonCtx.getPathConstraints()) {
                 auto temp = pc.getBranchConstraints();
             }
             /* For the selected address(cur_ea), let's count how many branches we can reach (how many non taken addresses are in reach)*/
-            int non_taken_branches_n = std::count_if(api.getPathConstraints().begin(), api.getPathConstraints().end(), [cur_ea](const auto& pc) {
+            int non_taken_branches_n = std::count_if(tritonCtx.getPathConstraints().begin(), tritonCtx.getPathConstraints().end(), [cur_ea](const auto& pc) {
                 for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                     if (cur_ea == srcAddr && !taken) return true;
                 }
@@ -334,7 +334,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                 // But we need to modify the Solve Formula menu with more info and the path constraint index
                 // The tooltip is not updated on the update event, we need to unregister the Solve formula submenu and add a new one
                 unsigned int path_constraint_index = 0;
-                for (const auto& pc : api.getPathConstraints()) {
+                for (const auto& pc : tritonCtx.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                         if (cur_ea == srcAddr && !taken) { // get the non taken branch for the path constraint the user clicked on          
                             // Using the solve formula as template
@@ -350,7 +350,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                 // Fix https://github.com/illera88/Ponce/issues/116
                 if (non_taken_branches_n <= 5) {
                     unsigned int path_constraint_index = 0;
-                    for (const auto& pc : api.getPathConstraints()) {
+                    for (const auto& pc : tritonCtx.getPathConstraints()) {
                         for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                             if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
                                 // Using the solve formula as template (If not we modify the name of the main solve formula menu)
@@ -369,7 +369,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     unsigned int path_constraint_index = 0;
                     unsigned int count = 0;
                     // Show the first two
-                    for (const auto& pc : api.getPathConstraints()) {
+                    for (const auto& pc : tritonCtx.getPathConstraints()) {
                         for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                             if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
                                 if (count == 2) // Only adding the first two
@@ -394,7 +394,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     };
                     struct pair_address_index holder[2] = {0};
                     // Show the last two
-                    for (auto rit = std::rbegin(api.getPathConstraints()); rit != std::rend(api.getPathConstraints()); ++rit) {
+                    for (auto rit = std::rbegin(tritonCtx.getPathConstraints()); rit != std::rend(tritonCtx.getPathConstraints()); ++rit) {
                         for (auto const& [taken, srcAddr, dstAddr, pc] : rit->getBranchConstraints()) {
                             if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
                                 if (count == 2) // Only adding the first two
