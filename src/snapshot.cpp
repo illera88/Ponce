@@ -172,7 +172,7 @@ void Snapshot::resetEngine(void) {
     this->snapshotTaken = false;
 
     //We delete the comment and color that we created
-    ponce_set_cmt(this->address, "", false);
+    ponce_set_cmt(this->address, "", false, false, false);
     del_item_color(this->address);
     this->address = 0;
 }
