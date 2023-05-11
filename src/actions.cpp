@@ -341,12 +341,12 @@ struct ah_negate_and_inject_t : public action_handler_t
                 for (const auto& pc : tritonCtx.getPathConstraints()) {
                     for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
                         if (ctx->cur_ea == srcAddr && !taken) {
-                            char tooltip[256];
+                            char tooltip[20];
                             //We need the path constraint index during the action activate
                             qsnprintf(tooltip, 255, "Index: %u", path_constraint_index);
                             update_action_tooltip(ctx->action, tooltip);
 
-                            char label[100] = { 0 };
+                            char label[50] = { 0 };
                             qsnprintf(label, sizeof(label), "Negate and Inject to reach " MEM_FORMAT, dstAddr);
                             update_action_label(ctx->action, label);
                             return AST_ENABLE;
@@ -444,7 +444,7 @@ struct ah_create_snapshot_t : public action_handler_t
             return 0;
         }
 
-        ponce_set_cmt(xip, "Snapshot taken here", false, true);
+        ponce_set_cmt(xip, "Snapshot taken here", false, true, false);
         ponce_set_item_color(xip, 0x00FFFF);
 
         snapshot.takeSnapshot();

@@ -59,20 +59,23 @@ int tritonize(ea_t pc, thid_t threadID)
     tritonInst->setAddress(pc);
     tritonInst->setThreadId(threadID);
 
-    try {
-        if (!tritonCtx.processing(*tritonInst)) {
-            msg("[!] Instruction at " MEM_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-            return 2;
+
+    switch (tritonCtx.processing(*tritonInst))
+    {
+    case triton::arch::NO_FAULT:
+        if (cmdOptions.showExtraDebugInfo) {
+            msg("[+] Triton at " MEM_FORMAT " : %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
         }
-    }
-    catch (const triton::exceptions::Exception& e) {
+        break;
+    case triton::arch::FAULT_UD:
         msg("[!] Instruction at " MEM_FORMAT " not supported by Triton: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
         return 2;
-    }
-
-    if (cmdOptions.showExtraDebugInfo) {
-        msg("[+] Triton at " MEM_FORMAT " : %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
-    }
+    case triton::arch::FAULT_DE:
+    case triton::arch::FAULT_BP:
+    case triton::arch::FAULT_GP:
+        msg("[!] Some error happend at " MEM_FORMAT " processing instruction: %s (Thread id: %d)\n", pc, tritonInst->getDisassembly().c_str(), threadID);
+        return 2;
+    }    
 
     /*In the case that the snapshot engine is in use we should track every memory write access*/
     if (snapshot.exists())  {
@@ -92,13 +95,13 @@ int tritonize(ea_t pc, thid_t threadID)
         }
     }
 
-    /* Don't write nothing on symbolic/tainted branch instructions instructions because I'll do it later*/
+    /* Don't write anything on symbolic/tainted branch instructions because I'll do it later*/
     if (cmdOptions.addCommentsControlledOperands && !tritonInst->isBranch()){
         comment_controlled_operands(tritonInst, pc);
     }
 
     if (cmdOptions.addCommentsSymbolicExpresions)
-        add_symbolic_expressions(tritonInst, pc);
+        comment_symbolic_expressions(tritonInst, pc);
 
     //We only paint the executed instructions if they don't have a previous color
     if (get_item_color(pc) == DEFCOLOR && cmdOptions.color_executed_instruction != DEFCOLOR) {

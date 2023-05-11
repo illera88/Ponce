@@ -241,7 +241,7 @@ void rename_tainted_function(ea_t address)
     }
 }
 
-void add_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
+void comment_symbolic_expressions(triton::arch::Instruction* tritonInst, ea_t address)
 {
     std::ostringstream oss;
     for (const auto& expr : tritonInst->symbolicExpressions) {       
@@ -515,10 +515,10 @@ void ponce_set_item_color(ea_t ea, bgcolor_t color) {
 }
 
 /* Wrapper to keep track of added comments so we can delete them after*/
-bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble, bool snapshot) {
+bool ponce_set_cmt(ea_t ea, const char* comm, bool rptble, bool snapshot, bool increment_index) {
     qstring buf;
     qstring new_comment;
-    if (get_cmt(&buf, ea, rptble) != -1) {
+    if (increment_index && get_cmt(&buf, ea, rptble) != -1) {
         auto first_space = strchr(buf.c_str(), ' ');
         // there is a previous comment. Let's try to get the hit count
         if (first_space){
