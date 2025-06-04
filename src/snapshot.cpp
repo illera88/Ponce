@@ -17,12 +17,18 @@ Snapshot::Snapshot() {
     this->locked = true;
     this->snapshotTaintEngine = nullptr;
     this->snapshotSymEngine = nullptr;
+    this->astCtx = nullptr;
+    this->cpu_x8664 = nullptr;
+    this->cpu_x86 = nullptr;
+    this->cpu_AArch64 = nullptr;
+    this->cpu_Arm32 = nullptr;
     this->mustBeRestore = false;
     this->snapshotTaken = false;
 }
 
 
 Snapshot::~Snapshot() {
+    resetEngine();
 }
 
 /* Check if the snapshot has been taken */
@@ -39,6 +45,10 @@ void Snapshot::addModification(ea_t mem, char byte) {
 
 /* Enable the snapshot engine. */
 void Snapshot::takeSnapshot() {
+    if (this->snapshotTaken) {
+        resetEngine();
+    }
+
     this->snapshotTaken = true;
 
     /* 1 - Unlock the engine */
@@ -161,13 +171,36 @@ void Snapshot::resetEngine(void) {
         return;
 
     this->memory.clear();
-
-    //ToDo: We should delete this when this issue is fixed: https://github.com/JonathanSalwan/Triton/issues/385
     delete this->snapshotSymEngine;
     this->snapshotSymEngine = nullptr;
 
     delete this->snapshotTaintEngine;
     this->snapshotTaintEngine = nullptr;
+
+    delete this->astCtx;
+    this->astCtx = nullptr;
+
+    // Fix Memleak
+    switch (tritonCtx.getArchitecture()) {
+    case triton::arch::ARCH_X86_64:
+        delete this->cpu_x8664;
+        this->cpu_x8664 = nullptr;
+        break;
+    case triton::arch::ARCH_X86:
+        delete this->cpu_x86;
+        this->cpu_x86 = nullptr;
+        break;
+    case triton::arch::ARCH_AARCH64:
+        delete this->cpu_AArch64;
+        this->cpu_AArch64 = nullptr;
+        break;
+    case triton::arch::ARCH_ARM32:
+        delete this->cpu_Arm32;
+        this->cpu_Arm32 = nullptr;
+        break;
+    default:
+        break;
+    }
 
     this->snapshotTaken = false;
 

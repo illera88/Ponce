@@ -13,18 +13,22 @@
 #define __END__ -1
 
 /* Depending on the IDA version the SDK allows or not using some of the fetures we have*/
-#if IDA_SDK_VERSION < 730
-const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_CHOOSER, __END__ };
-const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
-const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
-#elif IDA_SDK_VERSION == 730
-const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, BWN_CHOOSER, __END__ };
-const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
-const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
+#if IDA_SDK_VERSION >= 900
+const int ponce_banner_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, BWN_CHOOSER, __END__ };
+const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, __END__ };
+const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, __END__ };
 #elif IDA_SDK_VERSION >= 740
 const int ponce_banner_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, BWN_CHOOSER, __END__ };
 const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ };
 const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ };
+#elif IDA_SDK_VERSION == 730
+const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, BWN_CHOOSER, __END__ };
+const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
+const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
+#elif IDA_SDK_VERSION < 730
+const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_CHOOSER, __END__ };
+const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
+const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
 #endif
 
 struct IDA_actions {

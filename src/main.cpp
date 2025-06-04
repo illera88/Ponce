@@ -71,22 +71,22 @@ bool idaapi run(size_t)
 
         // Set the name for the action depending if using tainting or symbolic engine
         if (cmdOptions.use_tainting_engine) {
-            action_list[3].menu_path = TAINT;
+            action_list[3].menu_path = "[Ponce] " TAINT;
             action_IDA_taint_symbolize_register.label = TAINT_REG;
             action_IDA_taint_symbolize_register.tooltip = COMMENT_TAINT_REG;
 
-            action_list[4].menu_path = TAINT;
+            action_list[4].menu_path = "[Ponce] " TAINT;
             action_IDA_taint_symbolize_memory.label = TAINT_MEM;
             action_IDA_taint_symbolize_memory.tooltip = COMMENT_TAINT_MEM;
         }
         else {
-            action_list[3].menu_path = SYMBOLIC;
+            action_list[3].menu_path = "[Ponce] " SYMBOLIC;
             action_IDA_taint_symbolize_register.label = symbolize_REG;
             action_IDA_taint_symbolize_register.tooltip = COMMENT_SYMB_REG;
 
-            action_list[4].menu_path = SYMBOLIC;
+            action_list[4].menu_path = "[Ponce] " SYMBOLIC;
             action_IDA_taint_symbolize_memory.tooltip = COMMENT_SYMB_MEM;
-            action_IDA_taint_symbolize_memory.label = symbolize_MEM;     
+            action_IDA_taint_symbolize_memory.label = symbolize_MEM;
         }
 
         /* Init the IDA actions depending on the IDA SDK version we build with*/
@@ -127,7 +127,9 @@ bool idaapi run(size_t)
 }
 
 //--------------------------------------------------------------------------
-#if IDA_SDK_VERSION >= 760
+#if IDA_SDK_VERSION >= 900
+plugmod_t* idaapi init(void)
+#elif IDA_SDK_VERSION >= 760
 plugmod_t* idaapi init(void)
 #elif IDA_SDK_VERSION == 750
 size_t idaapi init(void)
@@ -176,6 +178,19 @@ void idaapi term(void)
     snapshot.resetEngine();
     // We want to delete Ponce comments and colours before terminating
     delete_ponce_comments();
+
+    // Fix Memory Leak: blacklkistedUserFunctions
+    if (blacklkistedUserFunctions) {
+        delete blacklkistedUserFunctions;
+        blacklkistedUserFunctions = nullptr;
+    }
+
+    // Fix Memory Leak: ponce_table_chooser
+    if (ponce_table_chooser) {
+        delete ponce_table_chooser;
+        ponce_table_chooser = nullptr;
+    }
+
 #ifdef BUILD_HEXRAYS_SUPPORT
     if(hexrays_present) {
         remove_hexrays_callback(ponce_hexrays_callback, NULL);

@@ -119,12 +119,12 @@ void concretizeAndUntaintVolatileRegisters()
 #if defined(__i386) || defined(_M_IX86)
     char const* volatile_regs[] = { "eax", "ecx", "edx" };
 #elif defined(__x86_64__) || defined(_M_X64)
-    char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
+    char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r9", "r10", "r11", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5" };
 #endif
 
     for (const auto& [reg_id, reg] : tritonCtx.getAllRegisters())
     {
-        for (auto i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++) {
+        for (size_t i = 0; i < sizeof(volatile_regs) / sizeof(char*); i++) {
             if (strcmp(reg.getName().c_str(), volatile_regs[i]) == 0) {
                 tritonCtx.concretizeRegister(reg);
                 tritonCtx.untaintRegister(reg);
