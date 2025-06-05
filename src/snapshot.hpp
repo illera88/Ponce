@@ -87,6 +87,10 @@ public:
     //! Destructor.
     ~Snapshot();
 
+    //! Prevent copy construction and assignment to avoid shallow copy issues
+    Snapshot(const Snapshot&) = delete;
+    Snapshot& operator=(const Snapshot&) = delete;
+
     //! Returns true if the snapshot engine is disabled.
     bool isLocked(void);
 
