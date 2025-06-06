@@ -14,173 +14,55 @@ jobs:
         with:
           submodules: true
 
-      - uses: robinraju/release-downloader@v1.5
-        with:
-          repository: ${{ secrets.SDK_REPO }}
-          latest: true
-          filename: "IDA_SDKs.zip"
-          token: ${{ secrets.SDK_REPO_ACCESS_TOKEN }}
-
-      - name: Unzip IDA_SDKs.zip
-        run: |
-          7z.exe x IDA_SDKs.zip -oIDA_SDKs
-          cd IDA_SDKs
-          7z.exe x *.zip
-
       - name: Install Triton
         run: |
           "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
           vcpkg install triton --triplet x64-windows-static
 
-      - name: Build Ponce IDA 7.0
+      - name: Clone IDA-SDKs repo
         run: |
-          cmake -S . -B build_x64_7.0 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk70" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.0 --config Release --parallel 2
+            git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/illera88/IDA-SDKs.git IDA_SDKs
 
-      - name: Build Ponce IDA 7.1
+      - name: List SDK zips and extract versions
+        id: sdk_versions
+        shell: bash
         run: |
-          cmake -S . -B build_x64_7.1 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk71" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.1 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.2
+          cd IDA_SDKs
+          versions=()
+          for f in idasdk*.zip; do
+            if [[ "$f" =~ idasdk([0-9])([0-9])\.zip ]]; then
+              major="${BASH_REMATCH[1]}"
+              minor="${BASH_REMATCH[2]}"
+              echo "Found SDK version $major.$minor"
+              versions+=("${major}.${minor}")
+              # Unzip each SDK to its own folder
+              7z.exe x "$f" -o"../idasdk${major}${minor}"
+            fi
+          done
+          echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
+      
+      - name: Build Ponce for all SDKs
+        shell: bash
         run: |
-          cmake -S . -B build_x64_7.2 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk72" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.2 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.3
-        run: |
-          cmake -S . -B build_x64_7.3 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk73" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.3 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.4
-        run: |
-          cmake -S . -B build_x64_7.4 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk74" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.4 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.5
-        run: |
-          cmake -S . -B build_x64_7.5 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk75" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.5 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.6
-        run: |
-          cmake -S . -B build_x64_7.6 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk76" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_7.6 --config Release --parallel 2
-
-      - name: Build Ponce IDA 7.7
-        run: |
-            cmake -S . -B build_x64_7.7 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk77" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-            cmake --build build_x64_7.7 --config Release --parallel 2
-
-      - name: Build Ponce IDA 8.0
-        run: |
-          cmake -S . -B build_x64_8.0 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk_pro80" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_8.0 --config Release --parallel 2
-
-      - name: Build Ponce IDA 8.1
-        run: |
-          cmake -S . -B build_x64_8.1 -DIDASDK_ROOT_DIR=".\IDA_SDKs\idasdk_pro81" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake --build build_x64_8.1 --config Release --parallel 2
-
-      - uses: actions/upload-artifact@master
+          for version in $VERSIONS; do
+            major="${version%%.*}"
+            minor="${version##*.}"
+            sdkdir="idasdk${major}${minor}"
+            builddir="build_x64_${major}.${minor}"
+            echo "Building for IDA SDK $major.$minor"
+            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            cmake --build $builddir --config Release --parallel 2
+            # Optionally, upload artifact here or collect for later
+          done
+      
+      # To upload the artifacts dynamically we need to do a little hack
+      - name: Upload all built DLLs
+        uses: actions/upload-artifact@v3
         with:
-          name: Ponce_ida70
-          path: build_x64_7.0/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida70
-          path: build_x64_7.0/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida71
-          path: build_x64_7.1/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida71
-          path: build_x64_7.1/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida72
-          path: build_x64_7.2/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida72
-          path: build_x64_7.2/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida73
-          path: build_x64_7.3/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida73
-          path: build_x64_7.3/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida74
-          path: build_x64_7.4/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida74
-          path: build_x64_7.4/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida75
-          path: build_x64_7.5/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida75
-          path: build_x64_7.5/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida76
-          path: build_x64_7.6/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida76
-          path: build_x64_7.6/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-            name: Ponce_ida77
-            path: build_x64_7.7/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-            name: Ponce_ida77
-            path: build_x64_7.7/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida80
-          path: build_x64_8.0/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida80
-          path: build_x64_8.0/Release/Ponce.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida81
-          path: build_x64_8.1/Release/Ponce64.dll
-
-      - uses: actions/upload-artifact@master
-        with:
-          name: Ponce_ida81
-          path: build_x64_8.1/Release/Ponce.dll
+          name: ponce-windows-artifacts
+          path: |
+            build_x64_*/Release/Ponce.dll
+            build_x64_*/Release/Ponce64.dll
 
   release:
     runs-on: ubuntu-latest
