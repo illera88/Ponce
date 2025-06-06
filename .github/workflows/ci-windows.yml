@@ -57,7 +57,7 @@ jobs:
       
       # To upload the artifacts dynamically we need to do a little hack
       - name: Upload all built DLLs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ponce-windows-artifacts
           path: |

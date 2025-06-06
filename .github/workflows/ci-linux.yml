@@ -54,7 +54,7 @@ jobs:
           done
 
       - name: Upload all built so files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ponce-linux-artifacts
           path: |
