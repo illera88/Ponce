@@ -102,6 +102,10 @@ extern std::map<ea_t, struct instruction_info> ponce_comments;
 #define WOPN_DP_TAB             WOPN_TAB
 #endif
 
+/* For forwards compatibility with IDA SDK >= 9.0 */
+#if IDA_SDK_VERSION >= 900
+#endif
+
 #ifdef __EA64__
 #define MEM_FORMAT "%#" PRIx64
 #define REG_XIP tritonCtx.registers.x86_rip

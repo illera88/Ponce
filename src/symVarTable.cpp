@@ -97,7 +97,10 @@ void idaapi ponce_table_chooser_t::get_row(qstrvec_t* cols_, int*, chooser_item_
     size_t n) const {
     qstrvec_t& cols = *cols_;
 
-    list_item_t li = table_item_list.at(n);
+    if (n >= table_item_list.size())
+        return;
+
+    const list_item_t& li = table_item_list[n];
 
     cols[0].sprnt("%lu", li.id);
     cols[1].sprnt("%s", li.var_name.c_str());

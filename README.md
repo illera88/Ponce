@@ -31,7 +31,7 @@ Ponce works on Windows, Linux and OSX natively!
 ### Use cases
 
 * **Exploit development**: Ponce can help you create an exploit in a far more efficient manner as the exploit developer may easily see what parts of memory and which registers you control, as well as possible addresses which can be leveraged as ROP gadgets.
-* **Malware Analysis**: Another use of Ponce is related to malware code. Analyzing the commands a particular family of malware supports is easily determined by symbolizing a simple known command and negating all the conditions where the command is being checked. 
+* **Malware Analysis**: Another use of Ponce is related to malware code. Analyzing the commands a particular family of malware supports is easily determined by symbolizing a simple known command and negating all the conditions where the command is being checked.
 * **Protocol Reversing**: One of the most interesting Ponce uses is the possibility of recognizing required magic numbers, headers or even entire protocols for controlled user input. For instance, Ponce can help you to list all the accepted arguments for a given command line binary or extract the file format required for a specific file parser.
 * **CTF**: Ponce speeds up the process of reverse engineer binaries during CTFs. As Ponce is totally integrated into IDA you don't need to worry about setup timing. It's ready to be used!
 
@@ -40,7 +40,7 @@ The plugin will automatically run, guiding you through the initial configuration
 ### Use modes
 
 * **Tainting engine**: This engine is used to determine at every step of the binary's execution which parts of memory and registers are controllable by the user input.
-* **Symbolic engine**: This engine maintains a symbolic state of registers and part of memory at each step in a binary's execution path. 
+* **Symbolic engine**: This engine maintains a symbolic state of registers and part of memory at each step in a binary's execution path.
 
 ### Examples
 
@@ -154,7 +154,7 @@ Yes, you can natively use Ponce in IDA for Windows or remotely attach to a Linux
 
 In our tests we reach to process 3000 instructions per second. We plan to use the PIN tracer IDA offers to increase the speed.
 
-#### Something is not working!
+#### Something is not working
 
 Open an [issue](https://github.com/illera88/Ponce/issues), we will solve it ASAP ;\)
 
@@ -166,7 +166,7 @@ Sure! Please do pull requests and work in the opened issues. We will pay you in 
 
 Concolic execution and Ponce have some problems:
 
-* Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input. 
+* Symbolic memory load/write: When the index used to read a memory value is symbolic like in `x = aray[symbolic_index]` some problems arise that could lead on the loose of track of the tainted/symbolized user controled input.
 * Triton doesn't work very well with [floating point instructions](https://github.com/illera88/Ponce/issues/59).
 * Concolic execution only analyzed the executed instructions. That means that symbolic tracking is lost in cases like the following:
 
@@ -184,6 +184,5 @@ Concolic execution and Ponce have some problems:
 
 ### Authors
 
-* Alberto Garcia Illera \([@algillera](https://twitter.com/algillera)\) agarciaillera@gmail.com
-* Francisco Oca \([@francisco\_oca](https://twitter.com/francisco_oca)\) francisco.oca.gonzalez@gmail.com
-
+* Alberto Garcia Illera \([@algillera](https://twitter.com/algillera)\) <agarciaillera@gmail.com>
+* Francisco Oca \([@francisco\_oca](https://twitter.com/francisco_oca)\) <francisco.oca.gonzalez@gmail.com>

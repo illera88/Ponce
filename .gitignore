@@ -66,3 +66,6 @@ vcomp110.dll
 # This file should be generated just before compile the program. 
 # i#20 For some reason the script can not generate this file at Appveyor site. Let's ignore it for a while.
 # VERSION_NUMBER
+
+src_for_ida9
+test

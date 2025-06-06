@@ -214,14 +214,14 @@ bool attach_action_solve(triton::uint64 dstAddr, unsigned int path_constraint_in
     char label[256];
     char tooltip[256];
     char name[256];
-    char popup_name[] = "SMT Solver/Solve formula (Multiple hits)/";
+    char popup_name[] = "[Ponce] SMT Solver/Solve formula (Multiple hits)/";
 
     if (mode == 0) {
         action = action_IDA_solve_formula_sub;       
         qsnprintf(label, sizeof(label), "Solve formula to take " MEM_FORMAT, dstAddr);
         //We need the path constraint index during the action activate
         qsnprintf(tooltip, 255, "%s. Index: %u", action_IDA_solve_formula_sub.tooltip, path_constraint_index);
-        qsnprintf(popup_name, sizeof(popup_name), "SMT Solver/Solve formula");
+        qsnprintf(popup_name, sizeof(popup_name), "[Ponce] SMT Solver/Solve formula");
 
         action.name = "Ponce:solve_formula_one_branch";
         action.label = label;
@@ -271,12 +271,12 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
         // Set the name for the action depending if using tainting or symbolic engine
         if (cmdOptions.use_tainting_engine) {
-            action_list[3].menu_path = TAINT;
-            action_list[4].menu_path = TAINT;
+            action_list[3].menu_path = "[Ponce] " TAINT;
+            action_list[4].menu_path = "[Ponce] " TAINT;
         }
         else {
-            action_list[3].menu_path = SYMBOLIC;
-            action_list[4].menu_path = SYMBOLIC;
+            action_list[3].menu_path = "[Ponce] " SYMBOLIC;
+            action_list[4].menu_path = "[Ponce] " SYMBOLIC;
         }
 
         //Adding a separator
@@ -287,7 +287,7 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
             if (action_list[i].action_decs == NULL)
                 break;
 
-            if (cmdOptions.use_tainting_engine && strcmp(action_list[i].menu_path, "SMT Solver/") == 0) {
+            if (cmdOptions.use_tainting_engine && strcmp(action_list[i].menu_path, "[Ponce] SMT Solver/") == 0) {
                 /* Do not populate SMT Solver options if we use the tainting engine*/
                 continue;
             }
@@ -313,12 +313,12 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
         if (view_type == BWN_DISASM) {
             //&& !(is_debugger_on() && !ponce_runtime_status.runtimeTrigger.getState())) { // Don't let solve formulas if user is debugging natively 
 
-            for (const auto& pc : tritonCtx.getPathConstraints()) {
-                auto temp = pc.getBranchConstraints();
+            for (const auto& pathConstraint : tritonCtx.getPathConstraints()) {
+                auto temp = pathConstraint.getBranchConstraints();
             }
             /* For the selected address(cur_ea), let's count how many branches we can reach (how many non taken addresses are in reach)*/
-            int non_taken_branches_n = std::count_if(tritonCtx.getPathConstraints().begin(), tritonCtx.getPathConstraints().end(), [cur_ea](const auto& pc) {
-                for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
+            int non_taken_branches_n = std::count_if(tritonCtx.getPathConstraints().begin(), tritonCtx.getPathConstraints().end(), [cur_ea](const auto& pathConstraint) {
+                for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstraint.getBranchConstraints()) {
                     if (cur_ea == srcAddr && !taken) return true;
                 }
                 return false;
@@ -327,16 +327,16 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
 
             if (non_taken_branches_n == 0) {
                 // Disabled menu (so the user knows it's an option in some cases), already registered, we just need to attach it to the popup
-                attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "SMT Solver/Solve formula", SETMENU_INS);
+                attach_action_to_popup(form, popup_handle, action_IDA_solve_formula_sub.name, "[Ponce] SMT Solver/Solve formula", SETMENU_INS);
             }
             else if (non_taken_branches_n == 1) {
                 // There is only one non taken branch, no need to add submenus
                 // But we need to modify the Solve Formula menu with more info and the path constraint index
                 // The tooltip is not updated on the update event, we need to unregister the Solve formula submenu and add a new one
                 unsigned int path_constraint_index = 0;
-                for (const auto& pc : tritonCtx.getPathConstraints()) {
-                    for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                        if (cur_ea == srcAddr && !taken) { // get the non taken branch for the path constraint the user clicked on          
+                for (const auto& pathConstraint : tritonCtx.getPathConstraints()) {
+                    for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstraint.getBranchConstraints()) {
+                        if (cur_ea == srcAddr && !taken) { // get the non taken branch for the path constraint the user clicked on
                             // Using the solve formula as template
                             attach_action_solve(dstAddr, path_constraint_index, form, popup_handle, 0);
                             break;
@@ -350,11 +350,11 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                 // Fix https://github.com/illera88/Ponce/issues/116
                 if (non_taken_branches_n <= 5) {
                     unsigned int path_constraint_index = 0;
-                    for (const auto& pc : tritonCtx.getPathConstraints()) {
-                        for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
+                    for (const auto& pathConstraint : tritonCtx.getPathConstraints()) {
+                        for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstraint.getBranchConstraints()) {
+                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on
                                 // Using the solve formula as template (If not we modify the name of the main solve formula menu)
-                                attach_action_solve(dstAddr, path_constraint_index, form, popup_handle, 1);    
+                                attach_action_solve(dstAddr, path_constraint_index, form, popup_handle, 1);
                                 break;
                             }
                         }
@@ -369,9 +369,9 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     unsigned int path_constraint_index = 0;
                     unsigned int count = 0;
                     // Show the first two
-                    for (const auto& pc : tritonCtx.getPathConstraints()) {
-                        for (auto const& [taken, srcAddr, dstAddr, pc] : pc.getBranchConstraints()) {
-                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
+                    for (const auto& pathConstraint : tritonCtx.getPathConstraints()) {
+                        for (auto const& [taken, srcAddr, dstAddr, constraint] : pathConstraint.getBranchConstraints()) {
+                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on
                                 if (count == 2) // Only adding the first two
                                     break;
                                 // Using the solve formula as template (If not we modify the name of the main solve formula menu)
@@ -395,8 +395,8 @@ ssize_t idaapi ui_callback(void* ud, int notification_code, va_list va)
                     struct pair_address_index holder[2] = {0};
                     // Show the last two
                     for (auto rit = std::rbegin(tritonCtx.getPathConstraints()); rit != std::rend(tritonCtx.getPathConstraints()); ++rit) {
-                        for (auto const& [taken, srcAddr, dstAddr, pc] : rit->getBranchConstraints()) {
-                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on          
+                        for (auto const& [taken, srcAddr, dstAddr, constraint] : rit->getBranchConstraints()) {
+                            if (cur_ea == srcAddr && taken) { // get the taken branch for the path constraint the user clicked on
                                 if (count == 2) // Only adding the first two
                                     break;
                                 // Using the solve formula as template (If not we modify the name of the main solve formula menu)
