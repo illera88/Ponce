@@ -16,7 +16,7 @@ jobs:
 
       - name: Clone IDA-SDKs repo
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/illera88/IDA-SDKs.git IDA_SDKs
+          git clone https://x-access-token:${{ secrets.SDK_REPO_ACCESS_TOKEN }}@github.com/illera88/IDA-SDKs.git IDA_SDKs
 
       - name: List SDK zips and extract versions
         id: sdk_versions
