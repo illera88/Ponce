@@ -34,11 +34,18 @@ jobs:
             fi
           done
           echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
+          ls -lha
+          ls -lha ..
+
 
       - name: Install Triton
         run: |
           echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
           vcpkg install triton
+
+
+      - name: Start SSH Debug Session
+        uses: lhotari/action-upterm@v1
 
       - name: Build Ponce for all SDKs
         shell: bash
@@ -49,6 +56,10 @@ jobs:
             sdkdir="idasdk${major}${minor}"
             builddir="build_x64_${major}.${minor}"
             echo "Building for IDA SDK $major.$minor"
+            
+            ls -lha ./$sdkdir
+            ls -lha ./$sdkdir/include
+
             cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
             cmake --build $builddir --config Release --parallel 2
           done

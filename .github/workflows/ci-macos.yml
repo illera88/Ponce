@@ -38,7 +38,7 @@ jobs:
       - name: Install Triton (delete first two lines when Triton last port is in the CI)
         run: |
           echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-osx.cmake
-          vcpkg install triton
+          vcpkg install --allow-unsupported triton
 
       - name: Build Ponce for all SDKs
         shell: bash
