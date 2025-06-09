@@ -36,7 +36,7 @@ jobs:
               echo "Found SDK version $major.$minor"
               versions+=("${major}.${minor}")
               # Unzip each SDK to its own folder
-              7z.exe x "$f" -o"../idasdk${major}${minor}"
+              7z.exe x "$f" -o"./idasdk${major}${minor}"
             fi
           done
           echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
@@ -47,7 +47,7 @@ jobs:
           for version in $VERSIONS; do
             major="${version%%.*}"
             minor="${version##*.}"
-            sdkdir="idasdk${major}${minor}"
+            sdkdir="./IDA_SDKs/idasdk${major}${minor}"
             builddir="build_x64_${major}.${minor}"
             echo "Building for IDA SDK $major.$minor"
             cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
