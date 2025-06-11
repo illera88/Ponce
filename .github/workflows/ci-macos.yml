@@ -23,8 +23,6 @@ jobs:
         shell: bash
         run: |
           cd IDA_SDKs
-          pwd
-          ls -lha
           versions=()
           for f in idasdk*.zip; do
             if [[ "$f" =~ idasdk([0-9])([0-9])\.zip ]]; then
@@ -36,9 +34,6 @@ jobs:
             fi
           done
           echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
-          pwd
-          ls -lha
-          ls -lha ..
 
       - name: Install Triton (delete first two lines when Triton last port is in the CI)
         run: |
@@ -54,9 +49,6 @@ jobs:
             major="${version%%.*}"
             minor="${version##*.}"
             sdkdir="./IDA_SDKs/idasdk${major}${minor}"
-            pwd
-            ls -lha
-            ls -lha ./$sdkdir
             builddir="build_x64_${major}.${minor}"
             echo "Building for IDA SDK $major.$minor"
             cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"

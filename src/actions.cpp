@@ -1,4 +1,4 @@
-﻿//! \file
+//! \file
 /*
 **  Copyright (c) 2020 - Ponce
 **  Authors:

@@ -12,7 +12,7 @@
 
 #define __END__ -1
 
-/* Depending on the IDA version the SDK allows or not using some of the fetures we have*/
+/* Depending on the IDA version the SDK allows or not using some of the features we have*/
 #if IDA_SDK_VERSION < 730
 const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_CHOOSER, __END__ };
 const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
@@ -21,10 +21,16 @@ const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, __END__ };
 const int ponce_banner_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, BWN_CHOOSER, __END__ };
 const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
 const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_DUMP, BWN_STKVIEW, __END__ };
-#elif IDA_SDK_VERSION >= 740
+#elif IDA_SDK_VERSION >= 740 && IDA_SDK_VERSION < 900
 const int ponce_banner_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, BWN_CHOOSER, __END__ };
 const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ };
 const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_DUMP, BWN_STKVIEW, __END__ };
+#elif IDA_SDK_VERSION >= 900
+// BWN_DUMP is no longer supported in IDA SDK >= 9.0
+#define BWN_DUMP BWN_HEXVIEW // The code uses BWN_DUMP so we replace it with BWN_HEXVIEW for IDA >= 9.0
+const int ponce_banner_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, BWN_CHOOSER, __END__ };
+const int ponce_taint_symbolize_mem_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, __END__ };
+const int ponce_taint_symbolize_reg_views[] = { BWN_DISASM, BWN_CPUREGS, BWN_HEXVIEW, BWN_STKVIEW, __END__ };
 #endif
 
 struct IDA_actions {

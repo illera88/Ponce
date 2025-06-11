@@ -34,9 +34,6 @@ jobs:
             fi
           done
           echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
-          pwd
-          ls -lha
-          ls -lha ..
 
       - name: Install Triton
         run: |
@@ -46,17 +43,12 @@ jobs:
       - name: Build Ponce for all SDKs
         shell: bash
         run: |
-          pwd
-          ls -lha
           for version in $VERSIONS; do
             major="${version%%.*}"
             minor="${version##*.}"
             sdkdir="./IDA_SDKs/idasdk${major}${minor}"
             builddir="build_x64_${major}.${minor}"
             echo "Building for IDA SDK $major.$minor"
-
-            ls -lha ./$sdkdir
-            ls -lha ./$sdkdir/include
 
             cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
             cmake --build $builddir --config Release --parallel 2
