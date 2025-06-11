@@ -153,26 +153,38 @@ int tritonize(ea_t pc, thid_t threadID)
     return 0;
 }
 
+int get_proc_id() {
+    #if IDA_SDK_VERSION < 750
+       return ph.id;
+    #else
+       return PH.id;
+    #endif
+}
+
 bool ponce_set_triton_architecture() {
-    if (ph.id == PLFM_386) {
-        if (ph.use64())
+    char procname[256];
+    bool is64;
+    int proc_id;
+ #if IDA_SDK_VERSION < 730
+    qstrncpy(procname, inf.procname, sizeof(procname));
+    is64 = inf.is_64bit();
+ #else
+    inf_get_procname(procname, sizeof(procname));
+    is64 = inf_is_64bit();
+ #endif
+    proc_id = get_proc_id();
+
+    if (proc_id == PLFM_386) {
+        if (is64)
             tritonCtx.setArchitecture(triton::arch::ARCH_X86_64);
-        else if (ph.use32())
+        else
             tritonCtx.setArchitecture(triton::arch::ARCH_X86);
-        else {
-            msg("[e] Wrong architecture\n");
-            return false;
-        }
     }
-    else if (ph.id == PLFM_ARM) {
-        if (ph.use64())
+    else if (proc_id == PLFM_ARM) {
+        if (is64)
             tritonCtx.setArchitecture(triton::arch::ARCH_AARCH64);
-        else if (ph.use32())
+        else
             tritonCtx.setArchitecture(triton::arch::ARCH_ARM32);
-        else {
-            msg("[e] Wrong architecture\n");
-            return false;
-        }
     }
     else {
         msg("[e] Architecture not supported by Ponce\n");
