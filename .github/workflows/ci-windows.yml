@@ -44,13 +44,18 @@ jobs:
       - name: Build Ponce for all SDKs
         shell: bash
         run: |
+          SKIP_VERSIONS="9.0" # IDA 9.0 is not supported yet
           for version in $VERSIONS; do
             major="${version%%.*}"
             minor="${version##*.}"
+            if [[ " $SKIP_VERSIONS " == *" $version "* ]]; then
+              echo "Skipping version $version"
+              continue
+            fi
             sdkdir="./IDA_SDKs/idasdk${major}${minor}"
             builddir="build_x64_${major}.${minor}"
             echo "Building for IDA SDK $major.$minor"
-            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_FLAGS="-Wno-format"
             cmake --build $builddir --config Release --parallel 2
             # Optionally, upload artifact here or collect for later
           done

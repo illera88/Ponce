@@ -43,15 +43,27 @@ jobs:
       - name: Build Ponce for all SDKs
         shell: bash
         run: |
-          pwd
-          ls -lha
+          SKIP_VERSIONS="9.0" # IDA 9.0 is not supported yet
           for version in $VERSIONS; do
             major="${version%%.*}"
             minor="${version##*.}"
+            if [[ " $SKIP_VERSIONS " == *" $version "* ]]; then
+              echo "Skipping version $version"
+              continue
+            fi
+
             sdkdir="./IDA_SDKs/idasdk${major}${minor}"
-            builddir="build_x64_${major}.${minor}"
-            echo "Building for IDA SDK $major.$minor"
-            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            builddir="build_${major}.${minor}"
+
+            # Determine architecture
+            if (( major < 8 )); then
+              ARCH="x86_64"
+            else
+              ARCH="arm64"
+            fi
+
+            echo "Building for IDA SDK $major.$minor ($ARCH)"
+            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_OSX_ARCHITECTURES="$ARCH" -DCMAKE_CXX_FLAGS="-Wno-format"
             cmake --build $builddir --config Release --parallel 2
           done
 
