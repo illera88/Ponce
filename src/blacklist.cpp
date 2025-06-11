@@ -116,10 +116,21 @@ std::vector<std::string> builtin_black_functions = {
 void concretizeAndUntaintVolatileRegisters()
 {
     //ToDo: check how different compilers behave regarding volatile registers
-#if defined(__i386) || defined(_M_IX86)
+    #if defined(__i386) || defined(_M_IX86)
     char const* volatile_regs[] = { "eax", "ecx", "edx" };
 #elif defined(__x86_64__) || defined(_M_X64)
-    char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r8", "r10", "r11", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
+    char const* volatile_regs[] = { "rax", "rcx", "rdx", "r8", "r9", "r10", "r11", 
+                                    "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", 
+                                    "xmm12", "xmm13", "xmm14", "xmm15" };
+#elif defined(__aarch64__) || defined(_M_ARM64) // ARM64 (Apple M1)
+    char const* volatile_regs[] = { "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", 
+                                    "x9", "x10", "x11", "x12", "x13", "x14", "x15", 
+                                    "x16", "x17", "v0", "v1", "v2", "v3", "v4", "v5", 
+                                    "v6", "v7", "v16", "v17", "v18", "v19", "v20", "v21", 
+                                    "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", 
+                                    "v30", "v31" };
+#else
+    #error "Unsupported architecture: volatile_regs is not defined for this platform."
 #endif
 
     for (const auto& [reg_id, reg] : tritonCtx.getAllRegisters())
