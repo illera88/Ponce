@@ -37,21 +37,17 @@ jobs:
           pwd
           ls -lha
           ls -lha ..
-          
-
 
       - name: Install Triton
         run: |
           echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
           vcpkg install triton
 
-
-      - name: Start SSH Debug Session
-        uses: lhotari/action-upterm@v1
-
       - name: Build Ponce for all SDKs
         shell: bash
         run: |
+          pwd
+          ls -lha
           for version in $VERSIONS; do
             major="${version%%.*}"
             minor="${version##*.}"
