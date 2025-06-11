@@ -167,7 +167,7 @@ jobs:
     needs: build
     steps:
       - name: Download all OSX arifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           path: ./my_artifacts
 
