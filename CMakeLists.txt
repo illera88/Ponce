@@ -28,8 +28,25 @@ file(GLOB PONCE_HEADER_FILES
     src/*.hpp
 )
 
-add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
-add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+# Check if 32-bit library exists (SDK 9.2+ doesn't have it)
+if(WIN32)
+    set(ida32_lib_path "${IDASDK_ROOT_DIR}/lib/x64_win_vc_32/ida.lib")
+elseif(APPLE)
+    set(ida32_lib_path "${IDASDK_ROOT_DIR}/lib/x64_mac_clang_32/libida.dylib")
+elseif(UNIX)
+    set(ida32_lib_path "${IDASDK_ROOT_DIR}/lib/x64_linux_gcc_32/libida.so")
+endif()
+
+if(EXISTS "${ida32_lib_path}")
+    message(STATUS "32-bit IDA library found - building both 32-bit and 64-bit plugins")
+    set(BUILD_32BIT_PLUGIN TRUE)
+    add_library(${PROJECT_NAME} SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+    add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+else()
+    message(STATUS "32-bit IDA library not found - building 64-bit plugin only")
+    set(BUILD_32BIT_PLUGIN FALSE)
+    add_library(${PROJECT_NAME}64 SHARED ${PONCE_SOURCE_FILES} ${PONCE_HEADER_FILES})
+endif()
 
 #                       #
 # Look for dependencies #
@@ -101,8 +118,10 @@ find_file(HEXRAYS_PATH hexrays.hpp PATHS ${IDA_INCLUDE_DIR} NO_DEFAULT_PATH)
 if(BUILD_HEXRAYS_SUPPORT)	
 	if (NOT HEXRAYS_PATH)	
 		message(FATAL_ERROR "You should add hexrays.hpp to ${IDA_INCLUDE_DIR}")	
-	else()	
-		target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_HEXRAYS_SUPPORT)	
+	else()
+		if(BUILD_32BIT_PLUGIN)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_HEXRAYS_SUPPORT)
+		endif()
 		target_compile_definitions(${PROJECT_NAME}64 PRIVATE BUILD_HEXRAYS_SUPPORT)	
 	endif()	
 endif()
@@ -112,15 +131,18 @@ get_filename_component(a_dir ${IDASDK_ROOT_DIR} DIRECTORY)
 
 
 # Now we create the projects (one for x86 and other for x64)
-target_include_directories(${PROJECT_NAME} PRIVATE ${IDA_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME}64 PRIVATE ${IDA_INCLUDE_DIR})
+if(BUILD_32BIT_PLUGIN)
+	target_include_directories(${PROJECT_NAME} PRIVATE ${IDA_INCLUDE_DIR})
+	target_link_libraries(
+		${PROJECT_NAME}
+		PRIVATE
+		triton::triton
+		${idasdk_ea32}
+	)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __IDP__)
+endif()
 
-target_link_libraries(
-    ${PROJECT_NAME}
-	PRIVATE
-    triton::triton
-	${idasdk_ea32}
-)
+target_include_directories(${PROJECT_NAME}64 PRIVATE ${IDA_INCLUDE_DIR})
 
 target_link_libraries(
     ${PROJECT_NAME}64
@@ -129,35 +151,40 @@ target_link_libraries(
 	${idasdk_ea64}
 )
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE __X64__ __IDP__)
 target_compile_definitions(${PROJECT_NAME}64 PRIVATE __X64__ __IDP__ __EA64__)
 
 if(WIN32)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __NT__)
+	if(BUILD_32BIT_PLUGIN)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE __NT__)
+		set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+	endif()
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __NT__)
 	set(PLUGIN_EXTENSION dll)
 	add_definitions(/MP)
 	# If using the static library we should use the static runtime too
-	set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 	set_property(TARGET ${PROJECT_NAME}64 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 elseif (APPLE)
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -dead_strip)
+	if(BUILD_32BIT_PLUGIN)
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -dead_strip)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
+		SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
+	endif()
 	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE -dead_strip)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __MAC__ USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
 	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
-	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
 	SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
 	set(PLUGIN_EXTENSION dylib)
 elseif (UNIX AND NOT APPLE)
-	set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-ffunction-sections -fdata-sections" )
+	if(BUILD_32BIT_PLUGIN)
+		set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-ffunction-sections -fdata-sections" )
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--gc-sections")
+		target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
+		SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
+	endif()
 	set_target_properties(${PROJECT_NAME}64 PROPERTIES COMPILE_FLAGS "-ffunction-sections -fdata-sections" )
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--gc-sections")
 	set_target_properties(${PROJECT_NAME}64 PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--gc-sections")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	target_compile_definitions(${PROJECT_NAME}64 PRIVATE __LINUX__ USE_DANGEROUS_FUNCTIONS)
 	# Prevent creating ponce binaries as libPonce.so but do Ponce.so
-	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "")
 	SET_TARGET_PROPERTIES(${PROJECT_NAME}64 PROPERTIES PREFIX "")
 	set(PLUGIN_EXTENSION so)
 endif()
@@ -169,9 +196,11 @@ if(NOT WIN32)
 		message(STATUS "[-] Symbols will be stripped using strip after build")
 		# Strip binary for release builds
 		if (CMAKE_BUILD_TYPE STREQUAL Release)
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-					COMMAND strip -S $<TARGET_FILE:${PROJECT_NAME}>
-					COMMENT "Symbols stripped from ${PROJECT_NAME}")
+			if(BUILD_32BIT_PLUGIN)
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+						COMMAND strip -S $<TARGET_FILE:${PROJECT_NAME}>
+						COMMENT "Symbols stripped from ${PROJECT_NAME}")
+			endif()
 			add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
 					COMMAND strip -S $<TARGET_FILE:${PROJECT_NAME}64>
 					COMMENT "Symbols stripped from ${PROJECT_NAME}64")
@@ -181,10 +210,12 @@ endif()
 
 if(IDA_INSTALLED_DIR)
 	message(STATUS "[-] Ponce built plugin and pdb file will be moved to '${IDA_INSTALLED_DIR}/plugins/'. The build system should have permisions to write there or it will error.")
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${IDA_INSTALLED_DIR}/plugins/Ponce.${PLUGIN_EXTENSION}
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
-	)
+	if(BUILD_32BIT_PLUGIN)
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${IDA_INSTALLED_DIR}/plugins/Ponce.${PLUGIN_EXTENSION}
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
+		)
+	endif()
 	
 	add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}64> ${IDA_INSTALLED_DIR}/plugins/Ponce64.${PLUGIN_EXTENSION}
@@ -193,10 +224,12 @@ if(IDA_INSTALLED_DIR)
 
 	# Move symbols for debugging in Windows
 	if(WIN32)
-		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce.pdb
-		COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
-		)
+		if(BUILD_32BIT_PLUGIN)
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce.pdb
+			COMMENT "Created ${IDA_INSTALLED_DIR}/plugins/${PROJECT_NAME}.${PLUGIN_EXTENSION}"
+			)
+		endif()
 		
 		add_custom_command(TARGET ${PROJECT_NAME}64 POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}64.pdb ${IDA_INSTALLED_DIR}/plugins/Ponce64.pdb

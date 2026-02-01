@@ -14,55 +14,49 @@ jobs:
         with:
           submodules: true
 
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v3
+        id: vcpkg-cache
+        with:
+          path: |
+            C:/vcpkg/installed
+            C:/vcpkg/packages
+            C:/vcpkg/buildtrees
+          key: vcpkg-cache-${{ runner.os }}
+
       - name: Install Triton
         run: |
           "`r`nset(VCPKG_BUILD_TYPE release)" | Add-Content "$env:VCPKG_INSTALLATION_ROOT\triplets\x64-windows-static.cmake"
           vcpkg install triton --triplet x64-windows-static
 
-      - name: Clone IDA-SDKs repo
-        run: |
-            git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/illera88/IDA-SDKs.git IDA_SDKs
+      - name: Save vcpkg cache
+        uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: |
+            C:/vcpkg/installed
+            C:/vcpkg/packages
+            C:/vcpkg/buildtrees
+          key: vcpkg-cache-${{ runner.os }}
 
-      - name: List SDK zips and extract versions
-        id: sdk_versions
-        shell: bash
+      - name: Download IDA SDK 9.2
         run: |
-          cd IDA_SDKs
-          versions=()
-          for f in idasdk*.zip; do
-            if [[ "$f" =~ idasdk([0-9])([0-9])\.zip ]]; then
-              major="${BASH_REMATCH[1]}"
-              minor="${BASH_REMATCH[2]}"
-              echo "Found SDK version $major.$minor"
-              versions+=("${major}.${minor}")
-              # Unzip each SDK to its own folder
-              7z.exe x "$f" -o"../idasdk${major}${minor}"
-            fi
-          done
-          echo "VERSIONS=${versions[*]}" >> $GITHUB_ENV
+          Invoke-WebRequest -Uri "https://codeload.github.com/HexRaysSA/ida-sdk/zip/refs/tags/v9.2" -OutFile "ida-sdk-9.2.zip"
+          Expand-Archive -Path "ida-sdk-9.2.zip" -DestinationPath "."
+          New-Item -ItemType Directory -Force -Path "sdk"
+          Move-Item -Path "ida-sdk-9.2" -Destination "sdk/ida-sdk-9.2"
       
-      - name: Build Ponce for all SDKs
-        shell: bash
+      - name: Build Ponce for IDA SDK 9.2
         run: |
-          for version in $VERSIONS; do
-            major="${version%%.*}"
-            minor="${version##*.}"
-            sdkdir="idasdk${major}${minor}"
-            builddir="build_x64_${major}.${minor}"
-            echo "Building for IDA SDK $major.$minor"
-            cmake -S . -B $builddir -DIDASDK_ROOT_DIR="./$sdkdir" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-            cmake --build $builddir --config Release --parallel 2
-            # Optionally, upload artifact here or collect for later
-          done
+          cmake -S . -B build_x64_9.2 -DIDASDK_ROOT_DIR="./sdk/ida-sdk-9.2/src" -DSTATICLIB=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build_x64_9.2 --config Release --parallel 2
       
-      # To upload the artifacts dynamically we need to do a little hack
-      - name: Upload all built DLLs
-        uses: actions/upload-artifact@v3
+      - name: Upload built DLLs
+        uses: actions/upload-artifact@v4
         with:
           name: ponce-windows-artifacts
           path: |
-            build_x64_*/Release/Ponce.dll
-            build_x64_*/Release/Ponce64.dll
+            build_x64_9.2/Release/Ponce64.dll
 
   release:
     runs-on: ubuntu-latest
@@ -70,7 +64,7 @@ jobs:
     needs: build
     steps:
       - name: Download all Windows arifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: ./my_artifacts
 

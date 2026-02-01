@@ -8,6 +8,7 @@
 #include <ida.hpp>
 #include <dbg.hpp>
 #include <auto.hpp>
+#include <idp.hpp>
 
 /*This function will create and fill the Triton object for every instruction
     Returns:
@@ -154,6 +155,10 @@ int tritonize(ea_t pc, thid_t threadID)
 }
 
 bool ponce_set_triton_architecture() {
+#if IDA_SDK_VERSION >= 900
+    // In SDK 9.0+, ph is accessed via PH macro or get_ph() function
+    #define ph PH
+#endif
     if (ph.id == PLFM_386) {
         if (ph.use64())
             tritonCtx.setArchitecture(triton::arch::ARCH_X86_64);
@@ -178,6 +183,9 @@ bool ponce_set_triton_architecture() {
         msg("[e] Architecture not supported by Ponce\n");
         return false;
     }
+#if IDA_SDK_VERSION >= 900
+    #undef ph
+#endif
     return true;
 }
 

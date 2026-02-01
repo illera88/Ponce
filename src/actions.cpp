@@ -174,7 +174,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
                 current_ea = ctx->cur_value;
         }
 #endif
-        else if (ctx->widget_type == BWN_DUMP) {
+        else if (ctx->widget_type == BWN_DUMP_COMPAT) {
             if (ctx->cur_flags & ACF_HAS_SELECTION){ // Only if there has been a valid selection
                 //We get the selection bounds from the action activation context
                 auto selection_starts = ctx->cur_sel.from.at->toea();
@@ -253,7 +253,7 @@ struct ah_taint_symbolize_memory_t : public action_handler_t
             }
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;
         }
-        else if (action_update_ctx_t->widget_type == BWN_DUMP) {
+        else if (action_update_ctx_t->widget_type == BWN_DUMP_COMPAT) {
             action_to_take = is_debugger_on() ? AST_ENABLE : AST_DISABLE;    
         }
 #if IDA_SDK_VERSION >= 730
